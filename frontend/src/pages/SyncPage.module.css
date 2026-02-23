@@ -1,0 +1,24 @@
+/* ─── SyncPage ───────────────────────────────────────────────────────────── */
+
+.page {
+  padding: 20px 0;
+}
+
+@media (min-width: 768px) {
+  .page { padding: 24px 0; }
+}
+
+/* Top section: control + status — stacked on mobile, side-by-side on tablet+ */
+.topRow {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (min-width: 768px) {
+  .topRow {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+}

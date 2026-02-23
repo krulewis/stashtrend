@@ -1,0 +1,158 @@
+/* ─── AccountsBreakdown ──────────────────────────────────────────────────── */
+
+.container {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+}
+
+@media (min-width: 768px) {
+  .container { padding: 20px 24px; }
+}
+
+.loading {
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 24px 0;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 16px;
+}
+
+@media (min-width: 768px) {
+  .title {
+    font-size: 16px;
+    margin-bottom: 20px;
+  }
+}
+
+/* Two-column layout: stacked on mobile, side-by-side on tablet+ */
+.columns {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .columns { grid-template-columns: 1fr 1px 1fr; }
+}
+
+.column {
+  min-width: 0;
+}
+
+/* Vertical divider — hidden on mobile (stacked layout) */
+.divider {
+  display: none;
+  background: var(--border);
+}
+
+@media (min-width: 768px) {
+  .divider { display: block; }
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.sectionLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+@media (min-width: 768px) {
+  .sectionLabel { font-size: 13px; }
+}
+
+/* sectionTotal color is data-driven (green / red) — set via inline style */
+.sectionTotal {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+@media (min-width: 768px) {
+  .sectionTotal { font-size: 20px; }
+}
+
+.groupList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.group {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.groupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  background: var(--bg-hover);
+  user-select: none;
+  min-height: 44px;
+}
+
+.groupName {
+  font-size: 13px;
+  font-weight: 500;
+  color: #e2e8f0;
+  text-transform: capitalize;
+}
+
+.groupTotal {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.accountList {
+  padding: 6px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #1a1f30;
+}
+
+.accountRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.accountName {
+  font-size: 13px;
+  color: #cbd5e1;
+}
+
+.accountInst {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.accountBalance {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  margin-left: 8px;
+}

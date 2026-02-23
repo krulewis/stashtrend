@@ -1,0 +1,149 @@
+/* ─── GroupsTimeChart ────────────────────────────────────────────────────── */
+
+.container {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+}
+
+@media (min-width: 768px) {
+  .container { padding: 20px 24px; }
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+@media (min-width: 600px) {
+  .header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .title { font-size: 16px; }
+}
+
+.rangeButtons {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-root);
+  border-radius: 8px;
+  padding: 4px;
+  flex-shrink: 0;
+}
+
+.rangeBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  min-height: 36px;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+@media (min-width: 768px) {
+  .rangeBtn {
+    padding: 4px 10px;
+    min-height: unset;
+  }
+}
+
+.rangeBtnActive {
+  background: var(--border);
+  color: var(--text-primary);
+}
+
+/* Group toggle chips */
+.chipsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+/* Chip: background/borderColor/color are data-driven — set via inline style */
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+  min-height: 36px;
+}
+
+/* Chip dot: background is data-driven */
+.chipDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.loading {
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  .loading { height: 320px; }
+}
+
+.emptyState {
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-style: italic;
+  text-align: center;
+  padding: 0 16px;
+}
+
+@media (min-width: 768px) {
+  .emptyState { height: 200px; }
+}
+
+.selectHint {
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-style: italic;
+}
+
+@media (min-width: 768px) {
+  .selectHint { height: 200px; }
+}

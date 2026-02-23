@@ -1,0 +1,120 @@
+/* ─── NetWorthChart ──────────────────────────────────────────────────────── */
+
+.container {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+@media (min-width: 768px) {
+  .header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .title { font-size: 16px; }
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (min-width: 480px) {
+  .controls {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+  }
+}
+
+.toggle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  user-select: none;
+}
+
+@media (min-width: 768px) {
+  .toggle { min-height: unset; }
+}
+
+.rangeButtons {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-root);
+  border-radius: 8px;
+  padding: 4px;
+  flex-wrap: wrap;
+}
+
+.rangeBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-height: 36px;
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+  .rangeBtn {
+    padding: 4px 10px;
+    min-height: unset;
+  }
+}
+
+.rangeBtnActive {
+  background: var(--border);
+  color: var(--text-primary);
+}
+
+/* Loading placeholder — height matches chart height at each breakpoint */
+.loading {
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  .loading { height: 340px; }
+}

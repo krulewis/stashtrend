@@ -1,0 +1,113 @@
+/* ─── SyncHistory ────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--bg-deep);
+  border: 1px solid var(--border-sub);
+  border-radius: 12px;
+  padding: 20px 16px;
+  margin-top: 24px;
+}
+
+@media (min-width: 768px) {
+  .card { padding: 24px; }
+}
+
+.title {
+  margin: 0 0 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+@media (min-width: 768px) {
+  .title { font-size: 16px; }
+}
+
+/* Horizontal scroll wrapper for the table on mobile */
+.tableWrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -16px;
+  padding: 0 16px;
+}
+
+@media (min-width: 768px) {
+  .tableWrap {
+    margin: 0;
+    padding: 0;
+    overflow-x: visible;
+  }
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 560px; /* prevent collapsing too small before scroll kicks in */
+}
+
+@media (min-width: 768px) {
+  .table { min-width: 0; }
+}
+
+.th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-sub);
+  white-space: nowrap;
+}
+
+.thRight {
+  text-align: right;
+}
+
+.td {
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-sub);
+  cursor: pointer;
+  transition: background 0.1s;
+  white-space: nowrap;
+}
+
+.tdActive {
+  background: #1e253533;
+}
+
+.tdRight {
+  text-align: right;
+}
+
+/* Status cell badge */
+.statusCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Entity pills */
+.entityPill {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--border-sub);
+  color: var(--text-secondary);
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 32px 0;
+  font-size: 13px;
+  color: var(--text-faint);
+}
