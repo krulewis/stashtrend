@@ -843,15 +843,24 @@ def update_settings():
 # Boot
 # ===========================================================================
 
-if __name__ == "__main__":
+def _startup() -> None:
+    """
+    Initialize the app — called from __main__ (dev) or wsgi.py (production).
+    Creates the data directory, bootstraps the token from env, initialises the
+    DB schema, starts the background scheduler, and restores the saved interval.
+    """
     ensure_data_dir()
     bootstrap_token_from_env()
     init_dashboard_schema()
-    scheduler.start()
-    # Re-apply saved schedule on restart
+    if not scheduler.running:
+        scheduler.start()
     conn = get_db()
     saved_interval = int(get_setting(conn, "sync_interval_hours", "0"))
     conn.close()
     _reschedule(saved_interval)
+
+
+if __name__ == "__main__":
+    _startup()
     print(f"Starting Monarch Dashboard API — reading from {DB_PATH}")
     app.run(host="0.0.0.0", port=5050, debug=True)

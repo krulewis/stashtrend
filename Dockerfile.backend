@@ -1,0 +1,26 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install pipeline first (layer cached unless pipeline/ changes)
+COPY pipeline/ ./pipeline/
+RUN pip install --no-cache-dir ./pipeline
+
+# Install backend deps
+# Strip the `-e ../pipeline` line — pipeline already installed above;
+# the relative path would not resolve correctly inside Docker anyway
+COPY backend/requirements.txt ./
+RUN grep -v '^-e ' requirements.txt > /tmp/req.txt \
+    && pip install --no-cache-dir -r /tmp/req.txt \
+    && pip install --no-cache-dir gunicorn
+
+# Copy backend source (separate layer from deps for cache efficiency)
+COPY backend/ ./backend/
+
+WORKDIR /app/backend
+
+EXPOSE 5050
+
+# 2 workers: one serves API while the other handles a running sync
+# 120s timeout: sync jobs can take 30-60 seconds
+CMD ["gunicorn", "--bind", "0.0.0.0:5050", "--workers", "2", "--timeout", "120", "wsgi:app"]
