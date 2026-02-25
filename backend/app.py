@@ -106,9 +106,10 @@ def get_db():
 
 
 def init_dashboard_schema():
-    """Create dashboard tables if they don't exist yet. Safe to run on every startup."""
+    """Create all tables (pipeline + dashboard) if they don't exist. Safe to run on every startup."""
+    pipeline_schema.init_db(DB_PATH)  # accounts, account_history, categories, transactions, budgets, sync_log
     conn = get_db()
-    conn.executescript(DASHBOARD_DDL)
+    conn.executescript(DASHBOARD_DDL)  # account_groups, account_group_members, sync_jobs, settings
     conn.commit()
     conn.close()
 
