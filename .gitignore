@@ -38,6 +38,11 @@ frontend/.vite/
 *.sqlite
 *.sqlite3
 
+# Pipeline build artifacts (source is committed, build output is not)
+pipeline/*.egg-info/
+pipeline/dist/
+pipeline/build/
+
 # Editor
 .vscode/
 .idea/

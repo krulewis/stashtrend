@@ -1,12 +1,14 @@
 """
 Monarch Dashboard — Flask API Backend
-Reads from ~/.monarch_pipeline/monarch.db and serves JSON to the React frontend.
+Reads from the monarch_pipeline database and serves JSON to the React frontend.
+
+The database path defaults to ~/.monarch_pipeline/monarch.db and can be
+overridden via the MONARCH_DATA_DIR environment variable (used by Docker).
 """
 
 import asyncio
 import json
 import sqlite3
-import sys
 import threading
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -16,16 +18,8 @@ from typing import Optional
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-# ---------------------------------------------------------------------------
-# Pipeline package import — works whether installed via pip or run in-place
-# ---------------------------------------------------------------------------
-_PIPELINE_DIR = Path(__file__).resolve().parents[3] / "monarch-pipeline"
-if str(_PIPELINE_DIR) not in sys.path:
-    sys.path.insert(0, str(_PIPELINE_DIR))
-
-from monarch_pipeline import auth, config, fetchers, schema as pipeline_schema, storage  # noqa: E402
-
-DB_PATH = Path.home() / ".monarch_pipeline" / "monarch.db"
+from monarch_pipeline import auth, fetchers, schema as pipeline_schema, storage
+from monarch_pipeline.config import DB_PATH, TOKEN_PATH, SESSION_PATH, ensure_data_dir
 
 app = Flask(__name__)
 CORS(app)  # Allow React dev server (localhost:5173) to call this API
@@ -213,8 +207,8 @@ def _run_sync_worker(job_id: int, entities: list, full_refresh: bool):
     async def _sync():
         nonlocal any_failed, top_level_error
         try:
-            mm = await auth.get_client(config.SESSION_PATH, config.TOKEN_PATH)
-            pipeline_conn = pipeline_schema.init_db(config.DB_PATH)
+            mm = await auth.get_client(SESSION_PATH, TOKEN_PATH)
+            pipeline_conn = pipeline_schema.init_db(DB_PATH)
 
             for entity in ordered_entities(entities):
                 before = snapshot_counts(conn, [entity])
@@ -668,10 +662,7 @@ def sync_last_status():
 # ===========================================================================
 
 if __name__ == "__main__":
-    if not DB_PATH.exists():
-        print(f"ERROR: Database not found at {DB_PATH}")
-        print("Run `monarch-pipeline sync` first to populate your database.")
-        exit(1)
+    ensure_data_dir()
     init_dashboard_schema()
     print(f"Starting Monarch Dashboard API — reading from {DB_PATH}")
-    app.run(port=5050, debug=True)
+    app.run(host="0.0.0.0", port=5050, debug=True)
