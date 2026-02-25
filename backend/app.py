@@ -16,6 +16,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
+try:
+    from apscheduler.schedulers.background import BackgroundScheduler
+except ImportError:  # pragma: no cover
+    class BackgroundScheduler:  # type: ignore[no-redef]
+        """No-op stub used when APScheduler is not installed (e.g., test sandbox)."""
+        def __init__(self, **kwargs): pass
+        def start(self): pass
+        def get_job(self, job_id): return None
+        def add_job(self, *args, **kwargs): pass
+        def remove_job(self, job_id): pass
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
@@ -24,6 +35,9 @@ from monarch_pipeline.config import DB_PATH, TOKEN_PATH, SESSION_PATH, ensure_da
 
 app = Flask(__name__)
 CORS(app)  # Allow React dev server (localhost:5173) to call this API
+
+scheduler = BackgroundScheduler(daemon=True)
+SYNC_JOB_ID = "auto_sync"
 
 
 # ---------------------------------------------------------------------------
@@ -76,6 +90,11 @@ CREATE TABLE IF NOT EXISTS sync_jobs (
     results      TEXT,
     error        TEXT
 );
+
+CREATE TABLE IF NOT EXISTS settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
 """
 
 
@@ -92,6 +111,66 @@ def init_dashboard_schema():
     conn.executescript(DASHBOARD_DDL)
     conn.commit()
     conn.close()
+
+
+# ---------------------------------------------------------------------------
+# Settings — key/value store helpers
+# ---------------------------------------------------------------------------
+
+def get_setting(conn: sqlite3.Connection, key: str, default: Optional[str] = None) -> Optional[str]:
+    """Return the stored value for key, or default if not found."""
+    row = conn.execute("SELECT value FROM settings WHERE key = ?", (key,)).fetchone()
+    return row["value"] if row else default
+
+
+def set_setting(conn: sqlite3.Connection, key: str, value: str) -> None:
+    """Upsert a setting value. Inserts or replaces if the key already exists."""
+    conn.execute(
+        "INSERT INTO settings (key, value) VALUES (?, ?)"
+        " ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+        (key, value),
+    )
+    conn.commit()
+
+
+# ---------------------------------------------------------------------------
+# Scheduler — auto sync
+# ---------------------------------------------------------------------------
+
+def run_scheduled_sync() -> None:
+    """
+    Called by APScheduler on the configured interval.
+    Starts a full sync in a background thread unless one is already running.
+    """
+    conn = get_db()
+    if get_running_job(conn):
+        conn.close()
+        return
+    job_id = create_sync_job(conn, list(ENTITY_RUN_ORDER), False)
+    conn.close()
+    thread = threading.Thread(
+        target=_run_sync_worker,
+        args=(job_id, list(ENTITY_RUN_ORDER), False),
+        daemon=True,
+    )
+    thread.start()
+
+
+def _reschedule(interval_hours: int) -> None:
+    """
+    Update the APScheduler auto-sync job.
+    interval_hours == 0 means disabled (job is removed if present).
+    interval_hours > 0 schedules a recurring interval job.
+    """
+    if scheduler.get_job(SYNC_JOB_ID):
+        scheduler.remove_job(SYNC_JOB_ID)
+    if interval_hours > 0:
+        scheduler.add_job(
+            run_scheduled_sync,
+            "interval",
+            hours=interval_hours,
+            id=SYNC_JOB_ID,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -710,6 +789,57 @@ def setup_token():
 
 
 # ===========================================================================
+# Settings endpoints — auto-sync scheduling
+# ===========================================================================
+
+@app.route("/api/settings", methods=["GET"])
+def get_settings():
+    """
+    Return the current dashboard settings.
+    Response: {"sync_interval_hours": int}  — 0 means auto-sync disabled.
+    """
+    conn = get_db()
+    interval = int(get_setting(conn, "sync_interval_hours", "0"))
+    conn.close()
+    return jsonify({"sync_interval_hours": interval})
+
+
+@app.route("/api/settings", methods=["POST"])
+def update_settings():
+    """
+    Persist settings and apply them immediately.
+    Body: {"sync_interval_hours": int}  — 0 to disable.
+    Returns 400 if the value is not a non-negative integer.
+    """
+    data = request.get_json() or {}
+
+    raw = data.get("sync_interval_hours")
+    if raw is None:
+        return jsonify({"error": "sync_interval_hours is required"}), 400
+
+    # Reject floats explicitly (1.5 is not a whole number of hours)
+    if isinstance(raw, float):
+        return jsonify({"error": "sync_interval_hours must be a whole number"}), 400
+
+    try:
+        interval = int(raw)
+        if str(interval) != str(raw):
+            raise ValueError("not an integer")
+    except (ValueError, TypeError):
+        return jsonify({"error": "sync_interval_hours must be an integer"}), 400
+
+    if interval < 0:
+        return jsonify({"error": "sync_interval_hours must be >= 0"}), 400
+
+    conn = get_db()
+    set_setting(conn, "sync_interval_hours", str(interval))
+    conn.close()
+
+    _reschedule(interval)
+    return jsonify({"sync_interval_hours": interval})
+
+
+# ===========================================================================
 # Boot
 # ===========================================================================
 
@@ -717,5 +847,11 @@ if __name__ == "__main__":
     ensure_data_dir()
     bootstrap_token_from_env()
     init_dashboard_schema()
+    scheduler.start()
+    # Re-apply saved schedule on restart
+    conn = get_db()
+    saved_interval = int(get_setting(conn, "sync_interval_hours", "0"))
+    conn.close()
+    _reschedule(saved_interval)
     print(f"Starting Monarch Dashboard API — reading from {DB_PATH}")
     app.run(host="0.0.0.0", port=5050, debug=True)

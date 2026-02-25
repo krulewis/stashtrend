@@ -63,6 +63,10 @@ export const MOCK_SYNC_JOB = {
   },
 }
 
+export const MOCK_SETTINGS = {
+  sync_interval_hours: 0,
+}
+
 export const MOCK_SYNC_HISTORY = [
   {
     id: 'job-1',
