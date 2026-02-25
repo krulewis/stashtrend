@@ -2,10 +2,13 @@
 
 .PHONY: install test run build up down dev clean help
 
-## Install all dependencies (backend venv + frontend node_modules)
+## Install all dependencies (backend venv + frontend node_modules) + git hooks
 install:
 	$(MAKE) -C backend install
 	$(MAKE) -C frontend install
+	@cp .githooks/pre-commit .git/hooks/pre-commit
+	@chmod +x .git/hooks/pre-commit
+	@echo "  ✓ pre-commit hook installed"
 
 ## Run all tests (backend pytest + frontend vitest)
 test:

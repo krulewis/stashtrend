@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+echo "→ Running test suite before commit..."
+make -C "$REPO_ROOT" test
+echo "✓ All tests passed."
