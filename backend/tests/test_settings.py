@@ -241,7 +241,11 @@ class TestUpdateSettingsEndpoint(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
 
     def test_persists_interval_to_db(self):
-        _, db, _ = self._post({"sync_interval_hours": 6})
+        # Prevent the endpoint from closing the connection so we can query it after
+        db = make_db()
+        db.close = lambda: None
+        with patch("app.get_db", return_value=db), patch("app._reschedule"):
+            self.client.post("/api/settings", json={"sync_interval_hours": 6})
         row = db.execute(
             "SELECT value FROM settings WHERE key='sync_interval_hours'"
         ).fetchone()
