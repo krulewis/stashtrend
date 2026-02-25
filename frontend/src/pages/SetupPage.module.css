@@ -1,0 +1,125 @@
+.root {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f1117;
+  padding: 1.5rem;
+}
+
+.card {
+  background: #1a1d27;
+  border: 1px solid #2a2d3a;
+  border-radius: 12px;
+  padding: 2.5rem 2rem;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.logo {
+  font-size: 2rem;
+  text-align: center;
+  margin-bottom: 0.75rem;
+  color: #6366f1;
+}
+
+.heading {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  color: #e2e8f0;
+  margin: 0 0 0.25rem;
+}
+
+.tagline {
+  text-align: center;
+  color: #64748b;
+  font-size: 0.875rem;
+  margin: 0 0 1.75rem;
+}
+
+.steps {
+  background: #12151f;
+  border: 1px solid #2a2d3a;
+  border-radius: 8px;
+  padding: 1rem 1rem 1rem 1.75rem;
+  margin: 0 0 1.75rem;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  line-height: 1.8;
+}
+
+.steps strong {
+  color: #cbd5e1;
+}
+
+.steps code {
+  background: #0f1117;
+  border: 1px solid #2a2d3a;
+  border-radius: 4px;
+  padding: 0 4px;
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: #818cf8;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.input {
+  background: #12151f;
+  border: 1px solid #2a2d3a;
+  border-radius: 8px;
+  padding: 0.6rem 0.875rem;
+  font-size: 0.9rem;
+  color: #e2e8f0;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.input:focus {
+  border-color: #6366f1;
+}
+
+.error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  color: #fca5a5;
+}
+
+.btn {
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  margin-top: 0.25rem;
+}
+
+.btn:hover:not(:disabled) {
+  background: #4f52d0;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -95,6 +95,8 @@ export const MOCK_SYNC_HISTORY = [
   },
 ]
 
+export const MOCK_SETUP_STATUS = { configured: true }
+
 /**
  * Set up global.fetch to return canned responses keyed by URL substring.
  * Call in beforeEach; pair with vi.restoreAllMocks() or afterEach cleanup.

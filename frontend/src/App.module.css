@@ -1,5 +1,15 @@
 /* ─── App shell ──────────────────────────────────────────────────────────── */
 
+.loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f1117;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
 .root {
   min-height: 100vh;
   background: var(--bg-root);

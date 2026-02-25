@@ -5,6 +5,7 @@ import NetWorthChart from './components/NetWorthChart'
 import AccountsBreakdown from './components/AccountsBreakdown'
 import GroupsPage from './pages/GroupsPage'
 import SyncPage from './pages/SyncPage'
+import SetupPage from './pages/SetupPage'
 
 async function fetchJSON(url) {
   const res = await fetch(url)
@@ -19,6 +20,7 @@ const TABS = [
 ]
 
 export default function App() {
+  const [configured, setConfigured] = useState(null) // null=loading, false=needs setup, true=ready
   const [activeTab, setActiveTab] = useState('networth')
 
   // Net Worth tab data
@@ -27,6 +29,13 @@ export default function App() {
   const [accounts, setAccounts] = useState(null)
   const [error,    setError]    = useState(null)
   const [lastUpdated, setLastUpdated] = useState(null)
+
+  useEffect(() => {
+    fetch('/api/setup/status')
+      .then((r) => r.json())
+      .then((d) => setConfigured(d.configured))
+      .catch(() => setConfigured(false))
+  }, [])
 
   useEffect(() => {
     Promise.all([
@@ -42,6 +51,9 @@ export default function App() {
       })
       .catch((err) => setError(err.message))
   }, [])
+
+  if (configured === null) return <div className={styles.loading}>Loading…</div>
+  if (configured === false) return <SetupPage onComplete={() => setConfigured(true)} />
 
   return (
     <div className={styles.root}>
