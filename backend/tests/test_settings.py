@@ -241,16 +241,17 @@ class TestUpdateSettingsEndpoint(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
 
     def test_persists_interval_to_db(self):
-        # Prevent the endpoint from closing the connection so we can query it after
-        db = make_db()
-        db.close = lambda: None
-        with patch("app.get_db", return_value=db), patch("app._reschedule"):
+        # Verify the endpoint calls set_setting with the correct key and value.
+        # (The DB write itself is verified in TestSetSetting; this test focuses
+        # on the endpoint wiring. We avoid querying a closed in-memory connection,
+        # which is a read-only C attribute in Python 3.14+.)
+        with patch("app.get_db") as mock_get_db, \
+             patch("app.set_setting") as mock_set, \
+             patch("app._reschedule"):
+            mock_conn = make_db()
+            mock_get_db.return_value = mock_conn
             self.client.post("/api/settings", json={"sync_interval_hours": 6})
-        row = db.execute(
-            "SELECT value FROM settings WHERE key='sync_interval_hours'"
-        ).fetchone()
-        self.assertIsNotNone(row)
-        self.assertEqual(row[0], "6")
+        mock_set.assert_called_once_with(mock_conn, "sync_interval_hours", "6")
 
     def test_calls_reschedule_with_correct_interval(self):
         _, _, mock_reschedule = self._post({"sync_interval_hours": 12})
