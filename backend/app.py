@@ -8,6 +8,7 @@ overridden via the MONARCH_DATA_DIR environment variable (used by Docker).
 
 import asyncio
 import json
+import os
 import sqlite3
 import threading
 from collections import defaultdict
@@ -23,6 +24,27 @@ from monarch_pipeline.config import DB_PATH, TOKEN_PATH, SESSION_PATH, ensure_da
 
 app = Flask(__name__)
 CORS(app)  # Allow React dev server (localhost:5173) to call this API
+
+
+# ---------------------------------------------------------------------------
+# Token management — setup helpers
+# ---------------------------------------------------------------------------
+
+def bootstrap_token_from_env():
+    """
+    If MONARCH_TOKEN env var is set, write it to the token file and clear it
+    from the environment. Called once at startup so Docker users can supply
+    their token via a .env file without it persisting in process memory.
+    """
+    token = os.environ.pop("MONARCH_TOKEN", None)
+    if token and token.strip():
+        auth.save_token(token.strip(), TOKEN_PATH)
+        print("[startup] Token written from MONARCH_TOKEN env var.")
+
+
+def has_token() -> bool:
+    """Returns True if a Monarch Money token is currently stored."""
+    return auth.load_token(TOKEN_PATH) is not None
 
 
 # ---------------------------------------------------------------------------
@@ -658,11 +680,42 @@ def sync_last_status():
 
 
 # ===========================================================================
+# Setup endpoints
+# ===========================================================================
+
+@app.route("/api/setup/status")
+def setup_status():
+    """Returns whether a Monarch Money token is configured. Used by the
+    frontend to decide whether to show the setup wizard or the dashboard."""
+    return jsonify({"configured": has_token()})
+
+
+@app.route("/api/setup/token", methods=["POST"])
+def setup_token():
+    """
+    Accepts a Monarch Money bearer token, validates it against the live API,
+    and saves it if valid. The frontend setup wizard calls this endpoint.
+
+    Returns 200 {"ok": true} on success.
+    Returns 400 {"error": "..."} if the token is missing, blank, or invalid.
+    """
+    token = (request.json or {}).get("token", "").strip()
+    if not token:
+        return jsonify({"error": "Token is required"}), 400
+    try:
+        asyncio.run(auth.login_with_token(token, TOKEN_PATH))
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": f"Token validation failed: {e}"}), 400
+
+
+# ===========================================================================
 # Boot
 # ===========================================================================
 
 if __name__ == "__main__":
     ensure_data_dir()
+    bootstrap_token_from_env()
     init_dashboard_schema()
     print(f"Starting Monarch Dashboard API — reading from {DB_PATH}")
     app.run(host="0.0.0.0", port=5050, debug=True)
