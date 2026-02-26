@@ -39,7 +39,7 @@
   left: 0;
   z-index: 1;
   background: var(--bg-card);
-  border-right: 1px solid var(--border);
+  box-shadow: 1px 0 0 var(--border);
 }
 
 .groupRow { background: var(--bg-deep); cursor: pointer; }
