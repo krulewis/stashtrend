@@ -924,6 +924,48 @@ def update_settings():
     return jsonify({"sync_interval_hours": interval})
 
 
+
+# ===========================================================================
+# AI Config
+# ===========================================================================
+
+@app.route("/api/ai/config", methods=["GET"])
+def get_ai_config():
+    """Return AI configuration status. Never returns the raw API key."""
+    conn = get_db()
+    api_key  = get_setting(conn, "ai_api_key")
+    model    = get_setting(conn, "ai_model")
+    provider = get_setting(conn, "ai_provider")
+    base_url = get_setting(conn, "ai_base_url", "")
+    return jsonify({
+        "configured": bool(api_key and model and provider),
+        "model":      model,
+        "provider":   provider,
+        "base_url":   base_url,
+    })
+
+
+@app.route("/api/ai/config", methods=["POST"])
+def save_ai_config():
+    """Persist AI provider credentials and model choice."""
+    data = request.get_json() or {}
+    required = ["api_key", "model", "provider"]
+    missing = [k for k in required if not data.get(k)]
+    if missing:
+        return jsonify({"error": f"Missing required fields: {', '.join(missing)}"}), 400
+
+    provider = data["provider"]
+    if provider not in ("anthropic", "openai_compatible"):
+        return jsonify({"error": "provider must be 'anthropic' or 'openai_compatible'"}), 400
+
+    conn = get_db()
+    set_setting(conn, "ai_api_key",  data["api_key"])
+    set_setting(conn, "ai_model",    data["model"])
+    set_setting(conn, "ai_provider", provider)
+    set_setting(conn, "ai_base_url", data.get("base_url", ""))
+    return jsonify({"ok": True})
+
+
 # ===========================================================================
 # Boot
 # ===========================================================================
