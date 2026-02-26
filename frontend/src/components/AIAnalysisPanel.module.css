@@ -1,0 +1,197 @@
+/* ─── AIAnalysisPanel ─────────────────────────────────────────────────────── */
+
+.panel {
+  background: #1e2130;
+  border: 1px solid #2d3348;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #f1f5f9;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.header:hover {
+  background: #232840;
+}
+
+.headerTitle {
+  color: #a5b4fc;
+}
+
+.chevron {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.body {
+  padding: 0 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Running state ── */
+.runningRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #94a3b8;
+  font-size: 14px;
+  padding: 8px 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #2d3348;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ── Analysis result ── */
+.analysisText {
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #cbd5e1;
+  background: #161b2e;
+  border: 1px solid #2d3348;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin: 0;
+}
+
+/* ── Configured view ── */
+.configuredView {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.badge {
+  background: #2d3348;
+  color: #a5b4fc;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 100px;
+}
+
+/* ── Config form ── */
+.configForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.formRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.optional {
+  color: #475569;
+  font-weight: 400;
+}
+
+.input {
+  background: #0f172a;
+  border: 1px solid #2d3348;
+  border-radius: 6px;
+  color: #f1f5f9;
+  font-size: 13px;
+  padding: 7px 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+  border-color: transparent;
+}
+
+/* ── Actions ── */
+.actionRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btnPrimary {
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnPrimary:hover {
+  background: #818cf8;
+}
+
+.btnGhost {
+  background: transparent;
+  color: #94a3b8;
+  border: 1px solid #2d3348;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btnGhost:hover {
+  color: #f1f5f9;
+  border-color: #475569;
+}
+
+/* ── Messages ── */
+.errorMsg {
+  font-size: 13px;
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+.loadingMsg {
+  font-size: 13px;
+  color: #94a3b8;
+  padding: 4px 0;
+}

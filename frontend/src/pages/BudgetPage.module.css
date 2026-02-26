@@ -1,0 +1,87 @@
+/* ─── BudgetPage ──────────────────────────────────────────────────────────── */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+@media (min-width: 768px) {
+  .page { gap: 24px; }
+}
+
+/* ── Header row ── */
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .title { font-size: 20px; }
+}
+
+/* ── Range buttons ── */
+.rangeButtons {
+  display: flex;
+  gap: 6px;
+}
+
+.rangeBtn {
+  background: #1e2130;
+  border: 1px solid #2d3348;
+  border-radius: 6px;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+
+.rangeBtn:hover {
+  border-color: #6366f1;
+  color: #f1f5f9;
+}
+
+.rangeBtnActive {
+  background: #6366f1;
+  border-color: #6366f1;
+  color: #fff;
+}
+
+/* ── States ── */
+.loadingMsg {
+  color: #94a3b8;
+  font-size: 14px;
+  padding: 24px 0;
+  text-align: center;
+}
+
+.errorBox {
+  background: #1e2130;
+  border: 1px solid #f87171;
+  border-radius: 10px;
+  padding: 20px 24px;
+}
+
+.errorTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #f87171;
+  margin-bottom: 6px;
+}
+
+.errorDetail {
+  font-size: 13px;
+  color: #94a3b8;
+  font-family: monospace;
+}

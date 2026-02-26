@@ -4,6 +4,7 @@ import StatsCards from './components/StatsCards'
 import NetWorthChart from './components/NetWorthChart'
 import AccountsBreakdown from './components/AccountsBreakdown'
 import GroupsPage from './pages/GroupsPage'
+import BudgetPage from './pages/BudgetPage'
 import SyncPage from './pages/SyncPage'
 import SetupPage from './pages/SetupPage'
 
@@ -16,6 +17,7 @@ async function fetchJSON(url) {
 const TABS = [
   { id: 'networth', label: '📈  Net Worth' },
   { id: 'groups',   label: '⬡  Account Groups' },
+  { id: 'budgets',  label: '💰  Budgets' },
   { id: 'sync',     label: '🔄  Sync Data' },
 ]
 
@@ -115,6 +117,8 @@ export default function App() {
         )}
 
         {activeTab === 'groups' && <GroupsPage />}
+
+        {activeTab === 'budgets' && <BudgetPage />}
 
         {activeTab === 'sync' && <SyncPage />}
       </main>

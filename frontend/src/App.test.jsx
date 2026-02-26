@@ -4,9 +4,10 @@ import App from './App'
 import { MOCK_STATS, MOCK_HISTORY, MOCK_ACCOUNTS, MOCK_SETUP_STATUS, mockFetch } from './test/fixtures'
 
 // Mock child pages so their own fetch calls don't interfere with App-level tests
-vi.mock('./pages/GroupsPage', () => ({ default: () => <div data-testid="groups-page" /> }))
-vi.mock('./pages/SyncPage',   () => ({ default: () => <div data-testid="sync-page" /> }))
-vi.mock('./pages/SetupPage',  () => ({ default: ({ onComplete }) => <div data-testid="setup-page" /> }))
+vi.mock('./pages/GroupsPage',  () => ({ default: () => <div data-testid="groups-page" /> }))
+vi.mock('./pages/BudgetPage',  () => ({ default: () => <div data-testid="budget-page" /> }))
+vi.mock('./pages/SyncPage',    () => ({ default: () => <div data-testid="sync-page" /> }))
+vi.mock('./pages/SetupPage',   () => ({ default: ({ onComplete }) => <div data-testid="setup-page" /> }))
 
 describe('App', () => {
   beforeEach(() => {
@@ -27,11 +28,12 @@ describe('App', () => {
     expect(await screen.findByText('Monarch Dashboard')).toBeInTheDocument()
   })
 
-  it('renders all three tab buttons', async () => {
+  it('renders all four tab buttons', async () => {
     render(<App />)
     // Use findByRole to wait for setup check to complete and tabs to appear
     expect(await screen.findByRole('button', { name: /Net Worth/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Account Groups/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Budgets/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Sync Data/ })).toBeInTheDocument()
   })
 
@@ -54,6 +56,14 @@ describe('App', () => {
     fireEvent.click(await screen.findByText(/Sync Data/))
     expect(screen.getByTestId('sync-page')).toBeInTheDocument()
     expect(screen.queryByTestId('groups-page')).not.toBeInTheDocument()
+  })
+
+  it('switches to Budgets tab when clicked', async () => {
+    render(<App />)
+    fireEvent.click(await screen.findByText(/Budgets/))
+    expect(screen.getByTestId('budget-page')).toBeInTheDocument()
+    expect(screen.queryByTestId('groups-page')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('sync-page')).not.toBeInTheDocument()
   })
 
   it('can switch back from Groups to Net Worth', async () => {
