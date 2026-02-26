@@ -39,12 +39,24 @@ def make_db():
 
 def seed_budgets(conn):
     conn.execute(
-        "INSERT OR IGNORE INTO categories (id, name, group_name) VALUES (?, ?, ?)",
-        ("cat_1", "Groceries", "Food & Drink"),
+        "INSERT OR IGNORE INTO categories (id, name, group_name, group_type) VALUES (?, ?, ?, ?)",
+        ("cat_income", "Paycheck", "Income", "income"),
     )
     conn.execute(
-        "INSERT OR IGNORE INTO categories (id, name, group_name) VALUES (?, ?, ?)",
-        ("cat_2", "Restaurants", "Food & Drink"),
+        "INSERT OR IGNORE INTO categories (id, name, group_name, group_type) VALUES (?, ?, ?, ?)",
+        ("cat_1", "Groceries", "Food & Drink", "expense"),
+    )
+    conn.execute(
+        "INSERT OR IGNORE INTO categories (id, name, group_name, group_type) VALUES (?, ?, ?, ?)",
+        ("cat_2", "Restaurants", "Food & Drink", "expense"),
+    )
+    conn.execute(
+        "INSERT OR IGNORE INTO budgets VALUES (?, ?, ?, ?, ?)",
+        ("cat_income", "2025-11-01", 6000.0, 6000.0, 0.0),
+    )
+    conn.execute(
+        "INSERT OR IGNORE INTO budgets VALUES (?, ?, ?, ?, ?)",
+        ("cat_income", "2025-12-01", 6000.0, 6200.0, -200.0),
     )
     # Groceries: avg variance = (-23 + 11) / 2 = -6 (mild over-spender)
     conn.execute(
@@ -131,6 +143,32 @@ class TestBudgetHistory(unittest.TestCase):
         months_12 = resp_12.get_json()["months"]
         months_1 = resp_1.get_json()["months"]
         self.assertLessEqual(len(months_1), len(months_12))
+
+    def test_income_categories_included_in_response(self):
+        """Income categories must appear in the categories list."""
+        with patch("app.get_db", return_value=self._db_with_data()):
+            resp = self.client.get("/api/budgets/history?months=12")
+        cat_names = [c["category_name"] for c in resp.get_json()["categories"]]
+        self.assertIn("Paycheck", cat_names)
+
+    def test_category_has_group_type_field(self):
+        """Each category in the response must include group_type."""
+        with patch("app.get_db", return_value=self._db_with_data()):
+            resp = self.client.get("/api/budgets/history?months=12")
+        cats = resp.get_json()["categories"]
+        for cat in cats:
+            self.assertIn("group_type", cat)
+
+    def test_totals_by_month_excludes_income(self):
+        """totals_by_month must reflect expense categories only, not income."""
+        with patch("app.get_db", return_value=self._db_with_data()):
+            resp = self.client.get("/api/budgets/history?months=12")
+        totals = resp.get_json()["totals_by_month"]
+        # Nov: Groceries(500/523) + Restaurants(200/215) = 700/738 — no Paycheck(6000)
+        nov = totals.get("2025-11-01")
+        self.assertIsNotNone(nov)
+        self.assertAlmostEqual(nov["budgeted"], 700.0)
+        self.assertAlmostEqual(nov["actual"], 738.0)
 
     def test_empty_db_returns_empty_lists(self):
         with patch("app.get_db", return_value=make_db()):

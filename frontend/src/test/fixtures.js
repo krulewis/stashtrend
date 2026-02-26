@@ -123,15 +123,27 @@ export function mockFetch(routes) {
 
 export const MOCK_BUDGET_HISTORY = {
   months: ['2025-11-01', '2025-12-01'],
+  // expense-only totals (used by the bar chart)
   totals_by_month: {
-    '2025-11-01': { budgeted: 3000, actual: 3200 },
-    '2025-12-01': { budgeted: 3000, actual: 2800 },
+    '2025-11-01': { budgeted: 700,  actual: 738 },  // 500+200, 523+215
+    '2025-12-01': { budgeted: 700,  actual: 674 },  // 500+200, 489+185
   },
   categories: [
+    {
+      category_id: 'cat_income_1',
+      category_name: 'Paycheck',
+      group_name: 'Income',
+      group_type: 'income',
+      months: {
+        '2025-11-01': { budgeted: 6000, actual: 6000, variance: 0 },
+        '2025-12-01': { budgeted: 6000, actual: 6200, variance: -200 },
+      },
+    },
     {
       category_id: 'cat_1',
       category_name: 'Groceries',
       group_name: 'Food & Drink',
+      group_type: 'expense',
       months: {
         '2025-11-01': { budgeted: 500, actual: 523, variance: -23 },
         '2025-12-01': { budgeted: 500, actual: 489, variance: 11 },
@@ -141,6 +153,7 @@ export const MOCK_BUDGET_HISTORY = {
       category_id: 'cat_2',
       category_name: 'Restaurants',
       group_name: 'Food & Drink',
+      group_type: 'expense',
       months: {
         '2025-11-01': { budgeted: 200, actual: 215, variance: -15 },
         '2025-12-01': { budgeted: 200, actual: 185, variance: 15 },

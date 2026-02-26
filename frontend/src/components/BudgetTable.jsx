@@ -13,17 +13,31 @@ function fmtDollar(n) {
   return `$${Math.round(Math.abs(n)).toLocaleString()}`
 }
 
-function CellValue({ budgeted, actual, variance }) {
+function CellValue({ budgeted, actual, variance, isIncome }) {
   if (budgeted == null) return <span className={styles.empty}>—</span>
-  const isOver = variance != null && variance < 0
+  // For income: variance < 0 means earned more than budgeted (good = under)
+  // For expenses: variance < 0 means spent more than budgeted (bad = over)
+  const isOver = !isIncome && variance != null && variance < 0
+  const isUnder = !isIncome && variance != null && variance > 0
+  const cls = isOver ? styles.over : isUnder ? styles.under : styles.neutral
   return (
-    <span className={isOver ? styles.over : styles.under}>
+    <span className={cls}>
       {fmtDollar(actual)} / {fmtDollar(budgeted)}
     </span>
   )
 }
 
-function CategoryGroup({ groupName, categories, months }) {
+function TotalCell({ months, categories, targetMonth, isIncome }) {
+  const budgeted = categories.reduce((sum, cat) => sum + (cat.months?.[targetMonth]?.budgeted ?? 0), 0)
+  const actual   = categories.reduce((sum, cat) => sum + (cat.months?.[targetMonth]?.actual   ?? 0), 0)
+  return (
+    <span className={styles.totalValue}>
+      {fmtDollar(actual)} / {fmtDollar(budgeted)}
+    </span>
+  )
+}
+
+function CategoryGroup({ groupName, categories, months, isIncome }) {
   const [open, setOpen] = useState(true)
   return (
     <>
@@ -45,6 +59,7 @@ function CategoryGroup({ groupName, categories, months }) {
                       budgeted={cell.budgeted}
                       actual={cell.actual}
                       variance={cell.variance}
+                      isIncome={isIncome}
                     />
                   : <span className={styles.empty}>—</span>
                 }
@@ -60,12 +75,15 @@ function CategoryGroup({ groupName, categories, months }) {
 export default function BudgetTable({ months, categories }) {
   if (!months || !categories) return null
 
-  // Group categories by group_name, preserving order
-  const groups = {}
-  for (const cat of categories) {
+  const incomeCategories  = categories.filter(c => c.group_type === 'income')
+  const expenseCategories = categories.filter(c => c.group_type !== 'income')
+
+  // Group expense categories by group_name, preserving order
+  const expenseGroups = {}
+  for (const cat of expenseCategories) {
     const g = cat.group_name || 'Other'
-    if (!groups[g]) groups[g] = []
-    groups[g].push(cat)
+    if (!expenseGroups[g]) expenseGroups[g] = []
+    expenseGroups[g].push(cat)
   }
 
   return (
@@ -82,14 +100,81 @@ export default function BudgetTable({ months, categories }) {
             </tr>
           </thead>
           <tbody>
-            {Object.entries(groups).map(([groupName, cats]) => (
+            {/* ── Income section ── */}
+            <tr className={styles.sectionHeader}>
+              <td colSpan={months.length + 1}>Income</td>
+            </tr>
+            {incomeCategories.map(cat => (
+              <tr key={cat.category_id} className={styles.catRow}>
+                <td className={styles.catName}>{cat.category_name}</td>
+                {months.map(m => {
+                  const cell = cat.months?.[m]
+                  return (
+                    <td key={m} className={styles.cell}>
+                      {cell
+                        ? <CellValue
+                            budgeted={cell.budgeted}
+                            actual={cell.actual}
+                            variance={cell.variance}
+                            isIncome={true}
+                          />
+                        : <span className={styles.empty}>—</span>
+                      }
+                    </td>
+                  )
+                })}
+              </tr>
+            ))}
+            <tr className={styles.totalRow}>
+              <td className={styles.totalLabel}>Total Income</td>
+              {months.map(m => (
+                <td key={m} className={styles.cell}>
+                  <TotalCell categories={incomeCategories} targetMonth={m} />
+                </td>
+              ))}
+            </tr>
+
+            {/* ── Expenses section ── */}
+            <tr className={styles.sectionHeader}>
+              <td colSpan={months.length + 1}>Expenses</td>
+            </tr>
+            {Object.entries(expenseGroups).map(([groupName, cats]) => (
               <CategoryGroup
                 key={groupName}
                 groupName={groupName}
                 categories={cats}
                 months={months}
+                isIncome={false}
               />
             ))}
+            <tr className={styles.totalRow}>
+              <td className={styles.totalLabel}>Total Expenses</td>
+              {months.map(m => (
+                <td key={m} className={styles.cell}>
+                  <TotalCell categories={expenseCategories} targetMonth={m} />
+                </td>
+              ))}
+            </tr>
+
+            {/* ── Net row ── */}
+            <tr className={styles.netRow}>
+              <td className={styles.totalLabel}>Net</td>
+              {months.map(m => {
+                const incBudgeted = incomeCategories.reduce((s, c) => s + (c.months?.[m]?.budgeted ?? 0), 0)
+                const incActual   = incomeCategories.reduce((s, c) => s + (c.months?.[m]?.actual   ?? 0), 0)
+                const expBudgeted = expenseCategories.reduce((s, c) => s + (c.months?.[m]?.budgeted ?? 0), 0)
+                const expActual   = expenseCategories.reduce((s, c) => s + (c.months?.[m]?.actual   ?? 0), 0)
+                const netBudgeted = incBudgeted - expBudgeted
+                const netActual   = incActual   - expActual
+                return (
+                  <td key={m} className={styles.cell}>
+                    <span className={netActual >= 0 ? styles.netPositive : styles.netNegative}>
+                      {fmtDollar(netActual)} / {fmtDollar(netBudgeted)}
+                    </span>
+                  </td>
+                )
+              })}
+            </tr>
           </tbody>
         </table>
       </div>

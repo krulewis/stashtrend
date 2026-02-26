@@ -705,8 +705,9 @@ def budget_history():
             b.budgeted_amount,
             b.actual_amount,
             b.variance,
-            c.name   AS category_name,
-            c.group_name
+            c.name      AS category_name,
+            c.group_name,
+            c.group_type
         FROM budgets b
         LEFT JOIN categories c ON c.id = b.category_id
         WHERE b.budgeted_amount IS NOT NULL
@@ -720,12 +721,13 @@ def budget_history():
 
     months_set = sorted({r["month"] for r in rows})
 
+    # Expense-only totals — used by the bar chart
     totals_by_month: dict = {}
     for m in months_set:
-        month_rows = [r for r in rows if r["month"] == m]
+        expense_rows = [r for r in rows if r["month"] == m and r["group_type"] != "income"]
         totals_by_month[m] = {
-            "budgeted": sum(r["budgeted_amount"] or 0 for r in month_rows),
-            "actual":   sum(r["actual_amount"]   or 0 for r in month_rows),
+            "budgeted": sum(r["budgeted_amount"] or 0 for r in expense_rows),
+            "actual":   sum(r["actual_amount"]   or 0 for r in expense_rows),
         }
 
     # Build per-category dict with running variance totals for sorting
@@ -737,6 +739,7 @@ def budget_history():
                 "category_id":   cid,
                 "category_name": row["category_name"],
                 "group_name":    row["group_name"],
+                "group_type":    row["group_type"],
                 "months":        {},
                 "_var_sum":      0.0,
                 "_var_count":    0,

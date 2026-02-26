@@ -11,24 +11,54 @@ describe('BudgetTable', () => {
     expect(screen.getByText('Category Detail')).toBeInTheDocument()
   })
 
-  it('renders category names', () => {
-    render(<BudgetTable months={months} categories={categories} />)
-    expect(screen.getByText('Groceries')).toBeInTheDocument()
-    expect(screen.getByText('Restaurants')).toBeInTheDocument()
-  })
-
-  it('renders group header', () => {
-    render(<BudgetTable months={months} categories={categories} />)
-    expect(screen.getByText('Food & Drink')).toBeInTheDocument()
-  })
-
   it('renders month column headers', () => {
     render(<BudgetTable months={months} categories={categories} />)
     expect(screen.getByText("Nov '25")).toBeInTheDocument()
     expect(screen.getByText("Dec '25")).toBeInTheDocument()
   })
 
-  it('over-budget cells have the over class (actual > budget)', () => {
+  it('renders Income section header', () => {
+    render(<BudgetTable months={months} categories={categories} />)
+    expect(screen.getByText('Income')).toBeInTheDocument()
+  })
+
+  it('renders Expenses section header', () => {
+    render(<BudgetTable months={months} categories={categories} />)
+    expect(screen.getByText('Expenses')).toBeInTheDocument()
+  })
+
+  it('renders income category name', () => {
+    render(<BudgetTable months={months} categories={categories} />)
+    expect(screen.getByText('Paycheck')).toBeInTheDocument()
+  })
+
+  it('renders expense category names', () => {
+    render(<BudgetTable months={months} categories={categories} />)
+    expect(screen.getByText('Groceries')).toBeInTheDocument()
+    expect(screen.getByText('Restaurants')).toBeInTheDocument()
+  })
+
+  it('renders expense group header', () => {
+    render(<BudgetTable months={months} categories={categories} />)
+    expect(screen.getByText('Food & Drink')).toBeInTheDocument()
+  })
+
+  it('renders Total Income row', () => {
+    render(<BudgetTable months={months} categories={categories} />)
+    expect(screen.getByText('Total Income')).toBeInTheDocument()
+  })
+
+  it('renders Total Expenses row', () => {
+    render(<BudgetTable months={months} categories={categories} />)
+    expect(screen.getByText('Total Expenses')).toBeInTheDocument()
+  })
+
+  it('renders Net row', () => {
+    render(<BudgetTable months={months} categories={categories} />)
+    expect(screen.getByText('Net')).toBeInTheDocument()
+  })
+
+  it('over-budget expense cells have the over class (actual > budget)', () => {
     const { container } = render(
       <BudgetTable months={months} categories={categories} />
     )
@@ -36,7 +66,7 @@ describe('BudgetTable', () => {
     expect(overCells.length).toBeGreaterThan(0)
   })
 
-  it('under-budget cells have the under class (actual < budget)', () => {
+  it('under-budget expense cells have the under class (actual < budget)', () => {
     const { container } = render(
       <BudgetTable months={months} categories={categories} />
     )
@@ -44,7 +74,7 @@ describe('BudgetTable', () => {
     expect(underCells.length).toBeGreaterThan(0)
   })
 
-  it('group header can be clicked to collapse rows', () => {
+  it('expense group header can be clicked to collapse rows', () => {
     render(<BudgetTable months={months} categories={categories} />)
     const groupHeader = screen.getByText('Food & Drink').closest('tr')
     expect(screen.getByText('Groceries')).toBeInTheDocument()
