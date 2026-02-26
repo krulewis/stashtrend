@@ -10,7 +10,8 @@ function fmtMonth(m) {
 
 function fmtDollar(n) {
   if (n == null) return '—'
-  return `$${Math.round(Math.abs(n)).toLocaleString()}`
+  const abs = `$${Math.round(Math.abs(n)).toLocaleString()}`
+  return n < 0 ? `(${abs})` : abs
 }
 
 function CellValue({ budgeted, actual, variance, isIncome }) {
