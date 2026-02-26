@@ -683,6 +683,90 @@ def groups_snapshot():
 
 
 # ===========================================================================
+# BUDGETS  — History endpoint
+# ===========================================================================
+
+@app.route("/api/budgets/history")
+def budget_history():
+    """Return budget vs actual per category per month for the last N months.
+
+    Query param: months (int, default 12) — how many completed prior months to return.
+    Excludes the current (incomplete) month.
+    Categories sorted by worst average variance first (most over-budget at top).
+    """
+    months_param = request.args.get("months", 12, type=int)
+    conn = get_db()
+
+    rows = conn.execute(
+        """
+        SELECT
+            b.category_id,
+            b.month,
+            b.budgeted_amount,
+            b.actual_amount,
+            b.variance,
+            c.name   AS category_name,
+            c.group_name
+        FROM budgets b
+        LEFT JOIN categories c ON c.id = b.category_id
+        WHERE b.budgeted_amount IS NOT NULL
+          AND b.month <  date('now', 'start of month')
+          AND b.month >= date('now', 'start of month', '-' || ? || ' months')
+        ORDER BY b.month ASC
+        """,
+        (months_param,),
+    ).fetchall()
+
+    months_set = sorted({r["month"] for r in rows})
+
+    totals_by_month: dict = {}
+    for m in months_set:
+        month_rows = [r for r in rows if r["month"] == m]
+        totals_by_month[m] = {
+            "budgeted": sum(r["budgeted_amount"] or 0 for r in month_rows),
+            "actual":   sum(r["actual_amount"]   or 0 for r in month_rows),
+        }
+
+    # Build per-category dict with running variance totals for sorting
+    cats_map: dict = {}
+    for row in rows:
+        cid = row["category_id"]
+        if cid not in cats_map:
+            cats_map[cid] = {
+                "category_id":   cid,
+                "category_name": row["category_name"],
+                "group_name":    row["group_name"],
+                "months":        {},
+                "_var_sum":      0.0,
+                "_var_count":    0,
+            }
+        cats_map[cid]["months"][row["month"]] = {
+            "budgeted": row["budgeted_amount"],
+            "actual":   row["actual_amount"],
+            "variance": row["variance"],
+        }
+        if row["variance"] is not None:
+            cats_map[cid]["_var_sum"]   += row["variance"]
+            cats_map[cid]["_var_count"] += 1
+
+    # Sort: most negative avg variance first (worst over-spender)
+    categories = sorted(
+        cats_map.values(),
+        key=lambda c: (c["_var_sum"] / c["_var_count"]) if c["_var_count"] else 0,
+    )
+    # Strip internal sort fields before returning
+    for cat in categories:
+        del cat["_var_sum"]
+        del cat["_var_count"]
+
+    return jsonify({
+        "months":          months_set,
+        "totals_by_month": totals_by_month,
+        "categories":      categories,
+    })
+
+
+# ===========================================================================
 # SYNC  — Trigger and status endpoints
 # ===========================================================================
 
