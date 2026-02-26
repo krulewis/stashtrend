@@ -120,3 +120,45 @@ export function mockFetch(routes) {
     })
   })
 }
+
+export const MOCK_BUDGET_HISTORY = {
+  months: ['2025-11-01', '2025-12-01'],
+  totals_by_month: {
+    '2025-11-01': { budgeted: 3000, actual: 3200 },
+    '2025-12-01': { budgeted: 3000, actual: 2800 },
+  },
+  categories: [
+    {
+      category_id: 'cat_1',
+      category_name: 'Groceries',
+      group_name: 'Food & Drink',
+      months: {
+        '2025-11-01': { budgeted: 500, actual: 523, variance: -23 },
+        '2025-12-01': { budgeted: 500, actual: 489, variance: 11 },
+      },
+    },
+    {
+      category_id: 'cat_2',
+      category_name: 'Restaurants',
+      group_name: 'Food & Drink',
+      months: {
+        '2025-11-01': { budgeted: 200, actual: 215, variance: -15 },
+        '2025-12-01': { budgeted: 200, actual: 185, variance: 15 },
+      },
+    },
+  ],
+}
+
+export const MOCK_AI_CONFIG_UNCONFIGURED = {
+  configured: false,
+  model: null,
+  provider: null,
+  base_url: '',
+}
+
+export const MOCK_AI_CONFIG_CONFIGURED = {
+  configured: true,
+  model: 'claude-opus-4-5',
+  provider: 'anthropic',
+  base_url: '',
+}
