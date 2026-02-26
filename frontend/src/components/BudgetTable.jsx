@@ -69,7 +69,10 @@ function SummaryTable({ months, incomeCategories, expenseCategories }) {
           <tr>
             <th className={styles.summaryRowLabel} />
             {months.map(m => (
-              <th key={m} className={styles.summaryMonthHeader}>{fmtMonth(m)}</th>
+              <th key={m} className={styles.summaryMonthHeader}>
+                <span className={styles.monthName}>{fmtMonth(m)}</span>
+                <span className={styles.monthSubLabel}>actual / budget</span>
+              </th>
             ))}
           </tr>
         </thead>
@@ -153,7 +156,10 @@ export default function BudgetTable({ months, categories }) {
             <tr>
               <th className={styles.catHeader}>Category</th>
               {months.map(m => (
-                <th key={m} className={styles.monthHeader}>{fmtMonth(m)}</th>
+                <th key={m} className={styles.monthHeader}>
+                  <span className={styles.monthName}>{fmtMonth(m)}</span>
+                  <span className={styles.monthSubLabel}>actual / budget</span>
+                </th>
               ))}
             </tr>
           </thead>

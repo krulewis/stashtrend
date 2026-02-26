@@ -94,6 +94,14 @@
 }
 .monthHeader { text-align: right; }
 
+.monthSubLabel {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-muted);
+  opacity: 0.75;
+}
+
 /* Sticky first column */
 .catHeader,
 .catName {

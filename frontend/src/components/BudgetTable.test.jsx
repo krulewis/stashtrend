@@ -18,6 +18,12 @@ describe('BudgetTable', () => {
     expect(screen.getAllByText("Dec '25").length).toBeGreaterThan(0)
   })
 
+  it('renders actual / budget sub-label in column headers', () => {
+    render(<BudgetTable months={months} categories={categories} />)
+    const subLabels = screen.getAllByText('actual / budget')
+    expect(subLabels.length).toBeGreaterThan(0)
+  })
+
   it('renders Income section header', () => {
     render(<BudgetTable months={months} categories={categories} />)
     expect(screen.getByText('Income')).toBeInTheDocument()

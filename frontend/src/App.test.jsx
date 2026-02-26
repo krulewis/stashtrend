@@ -25,7 +25,7 @@ describe('App', () => {
 
   it('renders the app name in the header', async () => {
     render(<App />)
-    expect(await screen.findByText('Monarch Dashboard')).toBeInTheDocument()
+    expect(await screen.findByText('Stashtrend')).toBeInTheDocument()
   })
 
   it('renders all four tab buttons', async () => {
@@ -39,7 +39,7 @@ describe('App', () => {
 
   it('shows Net Worth content by default (no other pages visible)', async () => {
     render(<App />)
-    await screen.findByText('Monarch Dashboard') // wait for app to load past setup check
+    await screen.findByText('Stashtrend') // wait for app to load past setup check
     expect(screen.queryByTestId('groups-page')).not.toBeInTheDocument()
     expect(screen.queryByTestId('sync-page')).not.toBeInTheDocument()
   })

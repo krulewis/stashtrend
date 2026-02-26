@@ -64,8 +64,8 @@ export default function App() {
         <div className={styles.headerLeft}>
           <div className={styles.logo}>◈</div>
           <div>
-            <div className={styles.appName}>Monarch Dashboard</div>
-            <div className={styles.appSub}>Personal Finance Intelligence</div>
+            <div className={styles.appName}>Stashtrend</div>
+            <div className={styles.appSub}>Personal Finance Intelligence Powered by Monarch Money Data</div>
           </div>
         </div>
         <div className={styles.headerRight}>
