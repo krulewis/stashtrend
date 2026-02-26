@@ -109,3 +109,104 @@ class TestAIConfig(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestAIAnalyze(unittest.TestCase):
+    def setUp(self):
+        self.client = app.test_client()
+
+    def _configured_db(self, provider="anthropic"):
+        db = make_db()
+        # Seed categories + budget data
+        db.execute(
+            "INSERT OR IGNORE INTO categories (id, name, group_name) VALUES (?, ?, ?)",
+            ("cat_1", "Groceries", "Food & Drink"),
+        )
+        db.execute(
+            "INSERT OR IGNORE INTO budgets VALUES (?, ?, ?, ?, ?)",
+            ("cat_1", "2025-11-01", 500.0, 523.0, -23.0),
+        )
+        db.execute(
+            "INSERT OR IGNORE INTO budgets VALUES (?, ?, ?, ?, ?)",
+            ("cat_1", "2025-12-01", 500.0, 489.0, 11.0),
+        )
+        db.commit()
+        # Save AI config
+        from app import set_setting
+        set_setting(db, "ai_api_key",  "test-key")
+        set_setting(db, "ai_model",    "claude-opus-4-5")
+        set_setting(db, "ai_provider", provider)
+        set_setting(db, "ai_base_url", "")
+        return db
+
+    def test_analyze_returns_400_when_not_configured(self):
+        with patch("app.get_db", return_value=make_db()):
+            resp = self.client.post("/api/ai/analyze")
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("configured", resp.get_json()["error"].lower())
+
+    def test_analyze_anthropic_returns_analysis(self):
+        mock_msg = MagicMock()
+        mock_msg.content = [MagicMock(text="Groceries is consistently over budget.")]
+
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_msg
+
+        with patch("app.get_db", return_value=self._configured_db("anthropic")):
+            with patch("anthropic.Anthropic", return_value=mock_client):
+                resp = self.client.post("/api/ai/analyze")
+
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertIn("analysis", data)
+        self.assertEqual(data["analysis"], "Groceries is consistently over budget.")
+        self.assertEqual(data["provider"], "anthropic")
+
+    def test_analyze_prompt_contains_budget_data(self):
+        captured = {}
+
+        def capture_call(**kwargs):
+            captured["messages"] = kwargs.get("messages", [])
+            mock_msg = MagicMock()
+            mock_msg.content = [MagicMock(text="Analysis result.")]
+            return mock_msg
+
+        mock_client = MagicMock()
+        mock_client.messages.create.side_effect = capture_call
+
+        with patch("app.get_db", return_value=self._configured_db("anthropic")):
+            with patch("anthropic.Anthropic", return_value=mock_client):
+                self.client.post("/api/ai/analyze")
+
+        prompt = captured["messages"][0]["content"]
+        self.assertIn("budget", prompt.lower())
+        self.assertIn("Groceries", prompt)
+
+    def test_analyze_openai_compatible_returns_analysis(self):
+        mock_choice = MagicMock()
+        mock_choice.message.content = "Spending looks off."
+        mock_resp = MagicMock()
+        mock_resp.choices = [mock_choice]
+
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = mock_resp
+
+        with patch("app.get_db", return_value=self._configured_db("openai_compatible")):
+            with patch("openai.OpenAI", return_value=mock_client):
+                resp = self.client.post("/api/ai/analyze")
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.get_json()["analysis"], "Spending looks off.")
+
+    def test_analyze_returns_400_when_no_budget_data(self):
+        db = make_db()
+        from app import set_setting
+        set_setting(db, "ai_api_key",  "key")
+        set_setting(db, "ai_model",    "claude-opus-4-5")
+        set_setting(db, "ai_provider", "anthropic")
+        set_setting(db, "ai_base_url", "")
+        # No budget rows seeded
+        with patch("app.get_db", return_value=db):
+            resp = self.client.post("/api/ai/analyze")
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("budget data", resp.get_json()["error"].lower())

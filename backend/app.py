@@ -966,6 +966,118 @@ def save_ai_config():
     return jsonify({"ok": True})
 
 
+@app.route("/api/ai/analyze", methods=["POST"])
+def ai_analyze():
+    """Fetch budget history, build prompt, call AI, return analysis text."""
+    conn = get_db()
+    api_key  = get_setting(conn, "ai_api_key")
+    model    = get_setting(conn, "ai_model")
+    provider = get_setting(conn, "ai_provider")
+    base_url = get_setting(conn, "ai_base_url", "")
+
+    if not (api_key and model and provider):
+        conn.close()
+        return jsonify({"error": "AI not configured. Save config via /api/ai/config first."}), 400
+
+    rows = conn.execute(
+        """
+        SELECT b.category_id, b.month, b.variance, c.name AS category_name
+        FROM budgets b
+        LEFT JOIN categories c ON c.id = b.category_id
+        WHERE b.budgeted_amount IS NOT NULL
+          AND b.month < date('now', 'start of month')
+          AND b.month >= date('now', 'start of month', '-12 months')
+        ORDER BY b.category_id, b.month ASC
+        """
+    ).fetchall()
+    conn.close()
+
+    if not rows:
+        return jsonify({"error": "No budget data found. Sync budget data first."}), 400
+
+    # Build tabular prompt data
+    all_months = sorted({r["month"] for r in rows})
+    cat_rows: dict = defaultdict(list)
+    cat_names: dict = {}
+    for row in rows:
+        cat_rows[row["category_id"]].append(row)
+        cat_names[row["category_id"]] = row["category_name"]
+
+    def fmt_month(m: str) -> str:
+        from datetime import datetime
+        return datetime.strptime(m, "%Y-%m-%d").strftime("%b '%y")
+
+    month_header = " | ".join(fmt_month(m) for m in all_months)
+    lines = [
+        f"Category           | {month_header} | Avg Variance",
+        "-" * (20 + 12 * len(all_months)),
+    ]
+    for cid, crows in sorted(cat_rows.items(), key=lambda x: cat_names[x[0]]):
+        month_map = {r["month"]: r["variance"] for r in crows}
+        variances = [v for v in month_map.values() if v is not None]
+        avg_var = sum(variances) / len(variances) if variances else 0
+        cells = []
+        for m in all_months:
+            v = month_map.get(m)
+            if v is None:
+                cells.append("  n/a ")
+            elif v >= 0:
+                cells.append(f"+${v:5.0f}")
+            else:
+                cells.append(f"-${abs(v):5.0f}")
+        avg_str = f"+${avg_var:.0f}/mo" if avg_var >= 0 else f"-${abs(avg_var):.0f}/mo"
+        lines.append(f"{cat_names[cid]:<18} | {' | '.join(cells)} | {avg_str}")
+
+    n_months = len(all_months)
+    table_text = "\n".join(lines)
+
+    prompt = f"""You are a personal finance analyst reviewing {n_months} months of budget vs. actual spending data.
+
+Here is the data (negative variance = over budget):
+
+{table_text}
+
+Please analyze this data and:
+1. Identify the categories that most consistently cause actual spending to exceed budget
+2. Quantify the magnitude — how much over, how often
+3. Note any seasonal patterns or trends
+4. Give 2-3 concise, practical suggestions for addressing the worst offenders. If the user is always over or never hits a category budget, suggest modifying total budget by moving allocated funds from another category budget or reducing savings
+
+Be specific to the numbers. Keep the response under 400 words."""
+
+    try:
+        if provider == "anthropic":
+            import anthropic as anthropic_sdk
+            client = anthropic_sdk.Anthropic(api_key=api_key)
+            response = client.messages.create(
+                model=model,
+                max_tokens=1024,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            analysis = response.content[0].text
+
+        elif provider == "openai_compatible":
+            from openai import OpenAI
+            kwargs: dict = {"api_key": api_key}
+            if base_url:
+                kwargs["base_url"] = base_url
+            client = OpenAI(**kwargs)
+            response = client.chat.completions.create(
+                model=model,
+                max_tokens=1024,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            analysis = response.choices[0].message.content
+
+        else:
+            return jsonify({"error": f"Unknown provider: {provider}"}), 400
+
+    except Exception as exc:
+        return jsonify({"error": f"AI call failed: {exc}"}), 500
+
+    return jsonify({"analysis": analysis, "model": model, "provider": provider})
+
+
 # ===========================================================================
 # Boot
 # ===========================================================================
