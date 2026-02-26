@@ -710,6 +710,7 @@ def budget_history():
         FROM budgets b
         LEFT JOIN categories c ON c.id = b.category_id
         WHERE b.budgeted_amount IS NOT NULL
+          AND (c.group_type IS NULL OR c.group_type <> 'transfer')
           AND b.month <  date('now', 'start of month')
           AND b.month >= date('now', 'start of month', '-' || ? || ' months')
         ORDER BY b.month ASC
@@ -985,6 +986,7 @@ def ai_analyze():
         FROM budgets b
         LEFT JOIN categories c ON c.id = b.category_id
         WHERE b.budgeted_amount IS NOT NULL
+          AND (c.group_type IS NULL OR c.group_type <> 'transfer')
           AND b.month < date('now', 'start of month')
           AND b.month >= date('now', 'start of month', '-12 months')
         ORDER BY b.category_id, b.month ASC

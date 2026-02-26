@@ -140,6 +140,26 @@ class TestBudgetHistory(unittest.TestCase):
         self.assertEqual(data["months"], [])
         self.assertEqual(data["categories"], [])
 
+    def test_excludes_transfer_categories(self):
+        """Transfer categories (group_type='transfer') must not appear in results."""
+        conn = make_db()
+        seed_budgets(conn)
+        # Add a transfer category and a budget row for it
+        conn.execute(
+            "INSERT OR IGNORE INTO categories (id, name, group_name, group_type) VALUES (?, ?, ?, ?)",
+            ("cat_transfer", "Credit Card Payment", "Transfers", "transfer"),
+        )
+        conn.execute(
+            "INSERT OR IGNORE INTO budgets VALUES (?, ?, ?, ?, ?)",
+            ("cat_transfer", "2025-11-01", 1500.0, 1500.0, 0.0),
+        )
+        conn.commit()
+        with patch("app.get_db", return_value=conn):
+            resp = self.client.get("/api/budgets/history?months=12")
+        data = resp.get_json()
+        cat_names = [c["category_name"] for c in data["categories"]]
+        self.assertNotIn("Credit Card Payment", cat_names)
+
 
 if __name__ == "__main__":
     unittest.main()
