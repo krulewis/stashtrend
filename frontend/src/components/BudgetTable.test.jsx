@@ -13,8 +13,9 @@ describe('BudgetTable', () => {
 
   it('renders month column headers', () => {
     render(<BudgetTable months={months} categories={categories} />)
-    expect(screen.getByText("Nov '25")).toBeInTheDocument()
-    expect(screen.getByText("Dec '25")).toBeInTheDocument()
+    // Headers appear in both summary and detail tables
+    expect(screen.getAllByText("Nov '25").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("Dec '25").length).toBeGreaterThan(0)
   })
 
   it('renders Income section header', () => {

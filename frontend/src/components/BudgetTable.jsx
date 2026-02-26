@@ -15,23 +15,11 @@ function fmtDollar(n) {
 
 function CellValue({ budgeted, actual, variance, isIncome }) {
   if (budgeted == null) return <span className={styles.empty}>—</span>
-  // For income: variance < 0 means earned more than budgeted (good = under)
-  // For expenses: variance < 0 means spent more than budgeted (bad = over)
-  const isOver = !isIncome && variance != null && variance < 0
+  const isOver  = !isIncome && variance != null && variance < 0
   const isUnder = !isIncome && variance != null && variance > 0
   const cls = isOver ? styles.over : isUnder ? styles.under : styles.neutral
   return (
     <span className={cls}>
-      {fmtDollar(actual)} / {fmtDollar(budgeted)}
-    </span>
-  )
-}
-
-function TotalCell({ months, categories, targetMonth, isIncome }) {
-  const budgeted = categories.reduce((sum, cat) => sum + (cat.months?.[targetMonth]?.budgeted ?? 0), 0)
-  const actual   = categories.reduce((sum, cat) => sum + (cat.months?.[targetMonth]?.actual   ?? 0), 0)
-  return (
-    <span className={styles.totalValue}>
       {fmtDollar(actual)} / {fmtDollar(budgeted)}
     </span>
   )
@@ -72,13 +60,73 @@ function CategoryGroup({ groupName, categories, months, isIncome }) {
   )
 }
 
+function SummaryTable({ months, incomeCategories, expenseCategories }) {
+  return (
+    <div className={styles.summaryWrap}>
+      <table className={styles.summaryTable}>
+        <thead>
+          <tr>
+            <th className={styles.summaryRowLabel} />
+            {months.map(m => (
+              <th key={m} className={styles.summaryMonthHeader}>{fmtMonth(m)}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td className={styles.summaryRowLabel}>Total Income</td>
+            {months.map(m => {
+              const budgeted = incomeCategories.reduce((s, c) => s + (c.months?.[m]?.budgeted ?? 0), 0)
+              const actual   = incomeCategories.reduce((s, c) => s + (c.months?.[m]?.actual   ?? 0), 0)
+              return (
+                <td key={m} className={styles.summaryCell}>
+                  {fmtDollar(actual)} / {fmtDollar(budgeted)}
+                </td>
+              )
+            })}
+          </tr>
+          <tr>
+            <td className={styles.summaryRowLabel}>Total Expenses</td>
+            {months.map(m => {
+              const budgeted = expenseCategories.reduce((s, c) => s + (c.months?.[m]?.budgeted ?? 0), 0)
+              const actual   = expenseCategories.reduce((s, c) => s + (c.months?.[m]?.actual   ?? 0), 0)
+              return (
+                <td key={m} className={styles.summaryCell}>
+                  {fmtDollar(actual)} / {fmtDollar(budgeted)}
+                </td>
+              )
+            })}
+          </tr>
+          <tr className={styles.summaryNetRow}>
+            <td className={styles.summaryRowLabel}>Net</td>
+            {months.map(m => {
+              const incActual   = incomeCategories.reduce((s, c) => s + (c.months?.[m]?.actual   ?? 0), 0)
+              const incBudgeted = incomeCategories.reduce((s, c) => s + (c.months?.[m]?.budgeted ?? 0), 0)
+              const expActual   = expenseCategories.reduce((s, c) => s + (c.months?.[m]?.actual   ?? 0), 0)
+              const expBudgeted = expenseCategories.reduce((s, c) => s + (c.months?.[m]?.budgeted ?? 0), 0)
+              const netActual   = incActual   - expActual
+              const netBudgeted = incBudgeted - expBudgeted
+              return (
+                <td key={m} className={styles.summaryCell}>
+                  <span className={netActual >= 0 ? styles.netPositive : styles.netNegative}>
+                    {fmtDollar(netActual)} / {fmtDollar(netBudgeted)}
+                  </span>
+                </td>
+              )
+            })}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 export default function BudgetTable({ months, categories }) {
   if (!months || !categories) return null
 
   const incomeCategories  = categories.filter(c => c.group_type === 'income')
   const expenseCategories = categories.filter(c => c.group_type !== 'income')
 
-  // Group expense categories by group_name, preserving order
   const expenseGroups = {}
   for (const cat of expenseCategories) {
     const g = cat.group_name || 'Other'
@@ -88,7 +136,16 @@ export default function BudgetTable({ months, categories }) {
 
   return (
     <div className={styles.container}>
-      <h3 className={styles.title}>Category Detail</h3>
+      {/* ── Summary ── */}
+      <h3 className={styles.title}>Summary</h3>
+      <SummaryTable
+        months={months}
+        incomeCategories={incomeCategories}
+        expenseCategories={expenseCategories}
+      />
+
+      {/* ── Category detail ── */}
+      <h3 className={styles.detailTitle}>Category Detail</h3>
       <div className={styles.tableWrap}>
         <table className={styles.table}>
           <thead>
@@ -100,7 +157,6 @@ export default function BudgetTable({ months, categories }) {
             </tr>
           </thead>
           <tbody>
-            {/* ── Income section ── */}
             <tr className={styles.sectionHeader}>
               <td colSpan={months.length + 1}>Income</td>
             </tr>
@@ -125,16 +181,7 @@ export default function BudgetTable({ months, categories }) {
                 })}
               </tr>
             ))}
-            <tr className={styles.totalRow}>
-              <td className={styles.totalLabel}>Total Income</td>
-              {months.map(m => (
-                <td key={m} className={styles.cell}>
-                  <TotalCell categories={incomeCategories} targetMonth={m} />
-                </td>
-              ))}
-            </tr>
 
-            {/* ── Expenses section ── */}
             <tr className={styles.sectionHeader}>
               <td colSpan={months.length + 1}>Expenses</td>
             </tr>
@@ -147,34 +194,6 @@ export default function BudgetTable({ months, categories }) {
                 isIncome={false}
               />
             ))}
-            <tr className={styles.totalRow}>
-              <td className={styles.totalLabel}>Total Expenses</td>
-              {months.map(m => (
-                <td key={m} className={styles.cell}>
-                  <TotalCell categories={expenseCategories} targetMonth={m} />
-                </td>
-              ))}
-            </tr>
-
-            {/* ── Net row ── */}
-            <tr className={styles.netRow}>
-              <td className={styles.totalLabel}>Net</td>
-              {months.map(m => {
-                const incBudgeted = incomeCategories.reduce((s, c) => s + (c.months?.[m]?.budgeted ?? 0), 0)
-                const incActual   = incomeCategories.reduce((s, c) => s + (c.months?.[m]?.actual   ?? 0), 0)
-                const expBudgeted = expenseCategories.reduce((s, c) => s + (c.months?.[m]?.budgeted ?? 0), 0)
-                const expActual   = expenseCategories.reduce((s, c) => s + (c.months?.[m]?.actual   ?? 0), 0)
-                const netBudgeted = incBudgeted - expBudgeted
-                const netActual   = incActual   - expActual
-                return (
-                  <td key={m} className={styles.cell}>
-                    <span className={netActual >= 0 ? styles.netPositive : styles.netNegative}>
-                      {fmtDollar(netActual)} / {fmtDollar(netBudgeted)}
-                    </span>
-                  </td>
-                )
-              })}
-            </tr>
           </tbody>
         </table>
       </div>

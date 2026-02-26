@@ -12,6 +12,68 @@
   margin: 0 0 var(--sp-4) 0;
 }
 
+.detailTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 24px 0 12px;
+}
+
+/* ── Summary table ── */
+.summaryWrap {
+  overflow-x: auto;
+  margin-bottom: 8px;
+}
+
+.summaryTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+  min-width: 480px;
+}
+
+.summaryMonthHeader {
+  padding: 6px 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 12px;
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+
+.summaryRowLabel {
+  padding: 9px 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  min-width: 160px;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--bg-card);
+  border-right: 1px solid var(--border);
+}
+
+.summaryCell {
+  padding: 9px 12px;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+
+.summaryNetRow {
+  border-top: 2px solid var(--border);
+}
+
+.summaryNetRow .summaryRowLabel,
+.summaryNetRow .summaryCell {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+/* ── Detail table ── */
 .tableWrap { overflow-x: auto; }
 
 .table {
@@ -34,8 +96,7 @@
 
 /* Sticky first column */
 .catHeader,
-.catName,
-.totalLabel {
+.catName {
   position: sticky;
   left: 0;
   z-index: 1;
@@ -84,20 +145,6 @@
   color: #6366f1;
 }
 
-/* Total rows */
-.totalRow { border-top: 1px solid var(--border); }
-.totalRow td { padding: 8px 12px; }
-.totalLabel {
-  font-weight: 600;
-  color: var(--text-primary);
-  font-size: 13px;
-  padding-left: 12px !important;
-  background: var(--bg-card);
-}
-.totalValue { color: var(--text-primary); font-weight: 500; }
-
-/* Net row */
-.netRow { border-top: 2px solid var(--border); }
-.netRow td { padding: 9px 12px; }
+/* Net colors (used in summary table) */
 .netPositive { color: var(--green); font-weight: 600; }
 .netNegative { color: var(--red);   font-weight: 600; }
