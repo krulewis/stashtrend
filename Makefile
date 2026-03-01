@@ -1,6 +1,6 @@
 ## Root-level Makefile
 
-.PHONY: install test run build up down dev clean help
+.PHONY: install test run build up down dev clean push deploy help
 
 ## Install all dependencies (backend venv + frontend node_modules) + git hooks
 install:
@@ -41,6 +41,20 @@ clean:
 	$(MAKE) -C backend clean
 	$(MAKE) -C frontend clean
 
+## Bump patch version, commit, and push to origin
+push:
+	@cd frontend && npm version patch --no-git-tag-version --silent
+	@VERSION=$$(node -p "require('./frontend/package.json').version"); \
+	git add frontend/package.json && \
+	git commit -m "chore: bump version to v$$VERSION" && \
+	git push && \
+	echo "  ✓ Pushed v$$VERSION"
+
+## Bump version, commit, push, and rebuild the Docker stack
+deploy: push
+	docker compose up --build -d
+	@echo "  ✓ Deployed"
+
 ## Show available commands
 help:
 	@echo ""
@@ -57,4 +71,8 @@ help:
 	@echo "    make test    — run all tests (backend + frontend)"
 	@echo "    make run     — start Flask (:5050) + Vite (:5173)"
 	@echo "    make clean   — remove backend venv and frontend node_modules"
+	@echo ""
+	@echo "  Release:"
+	@echo "    make push    — bump patch version, commit, git push"
+	@echo "    make deploy  — push + docker compose up --build -d"
 	@echo ""

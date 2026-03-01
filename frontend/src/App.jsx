@@ -8,6 +8,7 @@ import BudgetPage from './pages/BudgetPage.jsx'
 import SyncPage from './pages/SyncPage.jsx'
 import SetupPage from './pages/SetupPage.jsx'
 import { fetchNetworthStats, fetchNetworthHistory, fetchAccountsSummary } from './api.js'
+import { version } from '../package.json'
 
 const TABS = [
   { id: 'networth', label: '📈  Net Worth' },
@@ -74,6 +75,7 @@ export default function App() {
           </div>
         </div>
         <div className={styles.headerRight}>
+          <span className={styles.versionBadge}>v{version}</span>
           {lastUpdated && (
             <span className={styles.updatedAt}>Updated at {lastUpdated}</span>
           )}

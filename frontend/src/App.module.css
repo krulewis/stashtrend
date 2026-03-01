@@ -71,6 +71,12 @@
   gap: 8px;
 }
 
+.versionBadge {
+  font-size: 11px;
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
 .updatedAt {
   display: none;
   font-size: 12px;
