@@ -3,22 +3,7 @@ import styles from './GroupsPage.module.css'
 import GroupsTimeChart from '../components/GroupsTimeChart'
 import GroupsSnapshot from '../components/GroupsSnapshot'
 import GroupManager from '../components/GroupManager'
-
-async function fetchJSON(url) {
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.json()
-}
-
-async function postJSON(url, body) {
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.json()
-}
+import { fetchJSON, postJSON } from '../api.js'
 
 export default function GroupsPage() {
   const [groups,          setGroups]          = useState([])

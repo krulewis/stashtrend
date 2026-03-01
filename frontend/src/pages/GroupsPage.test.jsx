@@ -107,4 +107,17 @@ describe('GroupsPage', () => {
     // since Debt may appear in GroupManager regardless.
     expect(screen.getAllByText('Liquid Cash').length).toBeGreaterThan(0)
   })
+
+  it('shows a loading indicator while data is being fetched', () => {
+    global.fetch = vi.fn(() => new Promise(() => {}))
+    render(<GroupsPage />)
+    expect(screen.getByText('Loading…')).toBeInTheDocument()
+  })
+
+  it('fetches accounts only once on mount (not when groups change)', async () => {
+    render(<GroupsPage />)
+    await waitFor(() => screen.getByText('Manage Groups'))
+    const accountsCalls = global.fetch.mock.calls.filter(([url]) => url === '/api/accounts/summary')
+    expect(accountsCalls).toHaveLength(1)
+  })
 })

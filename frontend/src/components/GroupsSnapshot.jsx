@@ -11,24 +11,8 @@ import {
 } from 'recharts'
 import styles from './GroupsSnapshot.module.css'
 import { useResponsive } from '../hooks/useResponsive'
-import GroupSnapshotControls from './GroupSnapshotControls'
-
-const fmtCompact = (n) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    notation: 'compact',
-    maximumFractionDigits: 1,
-  }).format(n)
-
-const fmtFull = (n) =>
-  n == null
-    ? '—'
-    : new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        maximumFractionDigits: 0,
-      }).format(n)
+import GroupSnapshotControls from './GroupSnapshotControls.jsx'
+import { fmtCompact, fmtFull, GRID_STROKE } from './chartUtils.jsx'
 
 // Tooltip rendered by recharts — keep inline
 const tooltipStyles = {
@@ -146,7 +130,7 @@ export default function GroupsSnapshot({
               margin={{ top: 20, right: 16, left: 0, bottom: 0 }}
               barCategoryGap="30%"
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#2d3348" horizontal vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} horizontal vertical={false} />
               <XAxis
                 dataKey="name"
                 tick={{ fill: '#94a3b8', fontSize: 12 }}
