@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { vi, describe, it, expect, afterEach } from 'vitest'
-import SetupPage from './SetupPage'
+import SetupPage from './SetupPage.jsx'
 
 afterEach(() => {
   vi.restoreAllMocks()

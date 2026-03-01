@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
-import SyncControl from './SyncControl'
-import { MOCK_SYNC_LAST_STATUS, mockFetch } from '../test/fixtures'
+import SyncControl from './SyncControl.jsx'
+import { MOCK_SYNC_LAST_STATUS, mockFetch } from '../test/fixtures.js'
 
 const onSyncStarted = vi.fn()
 

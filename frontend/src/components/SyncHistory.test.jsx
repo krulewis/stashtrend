@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { vi, describe, it, expect } from 'vitest'
-import SyncHistory from './SyncHistory'
-import { MOCK_SYNC_HISTORY } from '../test/fixtures'
+import SyncHistory from './SyncHistory.jsx'
+import { MOCK_SYNC_HISTORY } from '../test/fixtures.js'
 
 const onSelectJob = vi.fn()
 

@@ -70,41 +70,6 @@
   .toggle { min-height: unset; }
 }
 
-.rangeButtons {
-  display: flex;
-  gap: 4px;
-  background: var(--bg-root);
-  border-radius: 8px;
-  padding: 4px;
-  flex-wrap: wrap;
-}
-
-.rangeBtn {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  font-size: 13px;
-  font-weight: 500;
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s;
-  min-height: 36px;
-  white-space: nowrap;
-}
-
-@media (min-width: 768px) {
-  .rangeBtn {
-    padding: 4px 10px;
-    min-height: unset;
-  }
-}
-
-.rangeBtnActive {
-  background: var(--border);
-  color: var(--text-primary);
-}
-
 /* Loading placeholder — height matches chart height at each breakpoint */
 .loading {
   height: 220px;

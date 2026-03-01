@@ -201,6 +201,12 @@
   margin-bottom: 8px;
 }
 
+.listError {
+  color: var(--color-negative);
+  font-size: 13px;
+  padding: 8px 0;
+}
+
 .label {
   font-size: 12px;
   font-weight: 600;

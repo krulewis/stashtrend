@@ -50,7 +50,7 @@
   min-height: 52px;
 }
 
-.entityRowLast {
+.entityRow:last-child {
   border-bottom: none;
 }
 
@@ -147,4 +147,13 @@
   cursor: pointer;
   transition: background 0.15s;
   min-height: 44px;
+}
+
+.errorMsg {
+  color: var(--color-negative);
+  font-size: 13px;
+  margin-top: 8px;
+  padding: 6px 8px;
+  background: color-mix(in srgb, var(--color-negative) 10%, transparent);
+  border-radius: 6px;
 }

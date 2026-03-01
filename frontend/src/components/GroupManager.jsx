@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react'
 import styles from './GroupManager.module.css'
+import { fmtFull } from './chartUtils.jsx'
+import { createGroup, updateGroup, deleteGroup } from '../api.js'
 
 const PRESET_COLORS = [
   '#6366f1', // indigo
@@ -11,15 +13,6 @@ const PRESET_COLORS = [
   '#fb923c', // orange
   '#4ade80', // green
 ]
-
-const fmt = (n) =>
-  n == null
-    ? '—'
-    : new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        maximumFractionDigits: 0,
-      }).format(n)
 
 function groupAccountsByType(accounts) {
   const groups = {}
@@ -159,7 +152,7 @@ function GroupForm({ initial, accounts, onSave, onCancel, saving, error }) {
                       <div className={styles.accountInst}>{acct.institution}</div>
                     )}
                   </div>
-                  <div className={styles.accountBal}>{fmt(acct.current_balance)}</div>
+                  <div className={styles.accountBal}>{fmtFull(acct.current_balance)}</div>
                 </div>
               ))}
             </div>
@@ -184,30 +177,80 @@ function GroupForm({ initial, accounts, onSave, onCancel, saving, error }) {
   )
 }
 
+// ─── Group list panel ─────────────────────────────────────────────────────────
+function GroupList({ groups, editingGroupId, showingNewForm, onNew, onEdit, onDelete }) {
+  return (
+    <div className={styles.listPanel}>
+      <div className={styles.listHeader}>
+        <span className={styles.listTitle}>Groups</span>
+        <button className={styles.btnNew} onClick={onNew}>+ New Group</button>
+      </div>
+
+      {groups.length === 0 && !showingNewForm && (
+        <div className={styles.emptyState}>
+          <div className={styles.emptyIcon}>⬡</div>
+          <div className={styles.emptyTitle}>No groups yet</div>
+          <div className={styles.emptyMsg}>Create a group to start tracking custom account buckets.</div>
+          <button className={styles.btnNewLarge} onClick={onNew}>Create your first group</button>
+        </div>
+      )}
+
+      {groups.map((g) => {
+        const isEditing = editingGroupId === g.id
+        return (
+          <div
+            key={g.id}
+            className={styles.groupCard}
+            style={{
+              background:  isEditing ? 'var(--bg-hover)' : '#1a1f30',
+              borderColor: isEditing ? g.color           : 'var(--border)',
+            }}
+          >
+            <div className={styles.groupCardLeft}>
+              <div className={styles.groupDot} style={{ background: g.color }} />
+              <div>
+                <div className={styles.groupName}>{g.name}</div>
+                <div className={styles.groupMeta}>{g.account_ids.length} accounts</div>
+              </div>
+            </div>
+            <div className={styles.groupCardActions}>
+              <button className={styles.iconBtn} onClick={() => onEdit(g)} title="Edit">✎</button>
+              <button
+                className={styles.iconBtn}
+                style={{ color: 'var(--color-negative)' }}
+                onClick={() => onDelete(g)}
+                title="Delete"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ─── Main GroupManager ────────────────────────────────────────────────────────
 export default function GroupManager({ groups, accounts, onGroupsChanged }) {
-  const [mode, setMode]           = useState(null)
-  const [saving, setSaving]       = useState(false)
+  const [mode,      setMode]      = useState(null)
+  const [saving,    setSaving]    = useState(false)
   const [formError, setFormError] = useState(null)
+  const [listError, setListError] = useState(null)
 
-  const openNew   = () => { setMode('new'); setFormError(null) }
-  const openEdit  = (g) => { setMode({ edit: g }); setFormError(null) }
+  const openNew   = () => { setMode({ type: 'new' }); setFormError(null) }
+  const openEdit  = (g) => { setMode({ type: 'edit', group: g }); setFormError(null) }
   const closeForm = () => { setMode(null); setFormError(null) }
 
   const handleSave = async (data) => {
     setSaving(true)
     setFormError(null)
     try {
-      const isEdit = mode !== 'new'
-      const url    = isEdit ? `/api/groups/${mode.edit.id}` : '/api/groups'
-      const method = isEdit ? 'PUT' : 'POST'
-      const res    = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error || 'Save failed')
+      if (mode.type === 'edit') {
+        await updateGroup(mode.group.id, data)
+      } else {
+        await createGroup(data)
+      }
       onGroupsChanged()
       closeForm()
     } catch (err) {
@@ -219,67 +262,35 @@ export default function GroupManager({ groups, accounts, onGroupsChanged }) {
 
   const handleDelete = async (group) => {
     if (!window.confirm(`Delete group "${group.name}"?`)) return
-    const res = await fetch(`/api/groups/${group.id}`, { method: 'DELETE' })
-    if (res.ok) onGroupsChanged()
+    setListError(null)
+    try {
+      await deleteGroup(group.id)
+      onGroupsChanged()
+    } catch (err) {
+      setListError(err.message)
+    }
   }
 
   return (
     <div className={styles.root}>
-      {/* Left: group list */}
-      <div className={styles.listPanel}>
-        <div className={styles.listHeader}>
-          <span className={styles.listTitle}>Groups</span>
-          <button className={styles.btnNew} onClick={openNew}>+ New Group</button>
-        </div>
-
-        {groups.length === 0 && mode !== 'new' && (
-          <div className={styles.emptyState}>
-            <div className={styles.emptyIcon}>⬡</div>
-            <div className={styles.emptyTitle}>No groups yet</div>
-            <div className={styles.emptyMsg}>Create a group to start tracking custom account buckets.</div>
-            <button className={styles.btnNewLarge} onClick={openNew}>Create your first group</button>
-          </div>
-        )}
-
-        {groups.map((g) => {
-          const isEditing = mode?.edit?.id === g.id
-          return (
-            <div
-              key={g.id}
-              className={styles.groupCard}
-              style={{
-                background:  isEditing ? '#252a3d' : '#1a1f30',
-                borderColor: isEditing ? g.color   : '#2d3348',
-              }}
-            >
-              <div className={styles.groupCardLeft}>
-                <div className={styles.groupDot} style={{ background: g.color }} />
-                <div>
-                  <div className={styles.groupName}>{g.name}</div>
-                  <div className={styles.groupMeta}>{g.account_ids.length} accounts</div>
-                </div>
-              </div>
-              <div className={styles.groupCardActions}>
-                <button className={styles.iconBtn} onClick={() => openEdit(g)} title="Edit">✎</button>
-                <button
-                  className={styles.iconBtn}
-                  style={{ color: '#f87171' }}
-                  onClick={() => handleDelete(g)}
-                  title="Delete"
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-          )
-        })}
+      <div>
+        {listError && <div className={styles.listError}>{listError}</div>}
+        <GroupList
+          groups={groups}
+          editingGroupId={mode?.type === 'edit' ? mode.group.id : null}
+          showingNewForm={mode?.type === 'new'}
+          onNew={openNew}
+          onEdit={openEdit}
+          onDelete={handleDelete}
+        />
       </div>
 
       {/* Right: form panel */}
       {mode && (
         <div className={styles.formPanel}>
           <GroupForm
-            initial={mode === 'new' ? null : mode.edit}
+            key={mode.type === 'edit' ? mode.group.id : 'new'}
+            initial={mode.type === 'edit' ? mode.group : null}
             accounts={accounts}
             onSave={handleSave}
             onCancel={closeForm}

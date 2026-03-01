@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { vi, describe, it, expect } from 'vitest'
-import NetWorthChart from './NetWorthChart'
-import { MOCK_HISTORY } from '../test/fixtures'
+import NetWorthChart from './NetWorthChart.jsx'
+import { MOCK_HISTORY } from '../test/fixtures.js'
 
 vi.mock('recharts')
 vi.mock('../hooks/useResponsive', () => ({

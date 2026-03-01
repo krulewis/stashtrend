@@ -1,13 +1,13 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
-import App from './App'
-import { MOCK_STATS, MOCK_HISTORY, MOCK_ACCOUNTS, MOCK_SETUP_STATUS, mockFetch } from './test/fixtures'
+import App from './App.jsx'
+import { MOCK_STATS, MOCK_HISTORY, MOCK_ACCOUNTS, MOCK_SETUP_STATUS, mockFetch } from './test/fixtures.js'
 
 // Mock child pages so their own fetch calls don't interfere with App-level tests
-vi.mock('./pages/GroupsPage',  () => ({ default: () => <div data-testid="groups-page" /> }))
-vi.mock('./pages/BudgetPage',  () => ({ default: () => <div data-testid="budget-page" /> }))
-vi.mock('./pages/SyncPage',    () => ({ default: () => <div data-testid="sync-page" /> }))
-vi.mock('./pages/SetupPage',   () => ({ default: ({ onComplete }) => <div data-testid="setup-page" /> }))
+vi.mock('./pages/GroupsPage.jsx',  () => ({ default: () => <div data-testid="groups-page" /> }))
+vi.mock('./pages/BudgetPage.jsx',  () => ({ default: () => <div data-testid="budget-page" /> }))
+vi.mock('./pages/SyncPage.jsx',    () => ({ default: () => <div data-testid="sync-page" /> }))
+vi.mock('./pages/SetupPage.jsx',   () => ({ default: ({ onComplete }) => <div data-testid="setup-page" /> }))
 
 describe('App', () => {
   beforeEach(() => {

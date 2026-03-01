@@ -1,12 +1,6 @@
 import { useState } from 'react'
 import styles from './BudgetTable.module.css'
-
-function fmtMonth(m) {
-  const d = new Date(m + 'T00:00:00')
-  const month = d.toLocaleDateString('en-US', { month: 'short' })
-  const year = d.toLocaleDateString('en-US', { year: '2-digit' })
-  return `${month} '${year}`
-}
+import { fmtBudgetMonth } from './chartUtils.jsx'
 
 function fmtDollar(n) {
   if (n == null) return '—'
@@ -62,6 +56,15 @@ function CategoryGroup({ groupName, categories, months, isIncome }) {
 }
 
 function SummaryTable({ months, incomeCategories, expenseCategories }) {
+  const summaryByMonth = {}
+  for (const m of months) {
+    const incActual   = incomeCategories.reduce((s, c) => s + (c.months?.[m]?.actual   ?? 0), 0)
+    const incBudgeted = incomeCategories.reduce((s, c) => s + (c.months?.[m]?.budgeted ?? 0), 0)
+    const expActual   = expenseCategories.reduce((s, c) => s + (c.months?.[m]?.actual   ?? 0), 0)
+    const expBudgeted = expenseCategories.reduce((s, c) => s + (c.months?.[m]?.budgeted ?? 0), 0)
+    summaryByMonth[m] = { incActual, incBudgeted, expActual, expBudgeted }
+  }
+
   return (
     <div className={styles.summaryWrap}>
       <table className={styles.summaryTable}>
@@ -70,7 +73,7 @@ function SummaryTable({ months, incomeCategories, expenseCategories }) {
             <th className={styles.summaryRowLabel} />
             {months.map(m => (
               <th key={m} className={styles.summaryMonthHeader}>
-                <span className={styles.monthName}>{fmtMonth(m)}</span>
+                <span className={styles.monthName}>{fmtBudgetMonth(m)}</span>
                 <span className={styles.monthSubLabel}>actual / budget</span>
               </th>
             ))}
@@ -80,11 +83,10 @@ function SummaryTable({ months, incomeCategories, expenseCategories }) {
           <tr>
             <td className={styles.summaryRowLabel}>Total Income</td>
             {months.map(m => {
-              const budgeted = incomeCategories.reduce((s, c) => s + (c.months?.[m]?.budgeted ?? 0), 0)
-              const actual   = incomeCategories.reduce((s, c) => s + (c.months?.[m]?.actual   ?? 0), 0)
+              const { incActual, incBudgeted } = summaryByMonth[m]
               return (
                 <td key={m} className={styles.summaryCell}>
-                  {fmtDollar(actual)} / {fmtDollar(budgeted)}
+                  {fmtDollar(incActual)} / {fmtDollar(incBudgeted)}
                 </td>
               )
             })}
@@ -92,11 +94,10 @@ function SummaryTable({ months, incomeCategories, expenseCategories }) {
           <tr>
             <td className={styles.summaryRowLabel}>Total Expenses</td>
             {months.map(m => {
-              const budgeted = expenseCategories.reduce((s, c) => s + (c.months?.[m]?.budgeted ?? 0), 0)
-              const actual   = expenseCategories.reduce((s, c) => s + (c.months?.[m]?.actual   ?? 0), 0)
+              const { expActual, expBudgeted } = summaryByMonth[m]
               return (
                 <td key={m} className={styles.summaryCell}>
-                  {fmtDollar(actual)} / {fmtDollar(budgeted)}
+                  {fmtDollar(expActual)} / {fmtDollar(expBudgeted)}
                 </td>
               )
             })}
@@ -104,10 +105,7 @@ function SummaryTable({ months, incomeCategories, expenseCategories }) {
           <tr className={styles.summaryNetRow}>
             <td className={styles.summaryRowLabel}>Net</td>
             {months.map(m => {
-              const incActual   = incomeCategories.reduce((s, c) => s + (c.months?.[m]?.actual   ?? 0), 0)
-              const incBudgeted = incomeCategories.reduce((s, c) => s + (c.months?.[m]?.budgeted ?? 0), 0)
-              const expActual   = expenseCategories.reduce((s, c) => s + (c.months?.[m]?.actual   ?? 0), 0)
-              const expBudgeted = expenseCategories.reduce((s, c) => s + (c.months?.[m]?.budgeted ?? 0), 0)
+              const { incActual, incBudgeted, expActual, expBudgeted } = summaryByMonth[m]
               const netActual   = incActual   - expActual
               const netBudgeted = incBudgeted - expBudgeted
               return (
@@ -157,7 +155,7 @@ export default function BudgetTable({ months, categories }) {
               <th className={styles.catHeader}>Category</th>
               {months.map(m => (
                 <th key={m} className={styles.monthHeader}>
-                  <span className={styles.monthName}>{fmtMonth(m)}</span>
+                  <span className={styles.monthName}>{fmtBudgetMonth(m)}</span>
                   <span className={styles.monthSubLabel}>actual / budget</span>
                 </th>
               ))}

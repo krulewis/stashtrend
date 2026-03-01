@@ -2,52 +2,14 @@
  * SyncHistory — table of the last 10 sync runs.
  * Clicking a row makes it the "active" job shown in SyncJobStatus.
  */
-import styles from "./SyncHistory.module.css"
-
-function fmtDate(iso) {
-  if (!iso) return "—"
-  try {
-    const d = new Date(iso)
-    return d.toLocaleString(undefined, {
-      month: "short", day: "numeric", year: "numeric",
-      hour: "numeric", minute: "2-digit",
-    })
-  } catch { return iso }
-}
-
-function duration(startedAt, finishedAt) {
-  if (!startedAt || !finishedAt) return "—"
-  const secs = Math.round((new Date(finishedAt) - new Date(startedAt)) / 1000)
-  if (secs < 60) return `${secs}s`
-  return `${Math.floor(secs / 60)}m ${secs % 60}s`
-}
+import styles from './SyncHistory.module.css'
+import { fmtDatetime, durationFinal } from './chartUtils.jsx'
+import { SYNC_ENTITY_SHORT, SYNC_STATUS_ICON } from '../constants/syncEntities.js'
 
 function totalRecords(results) {
-  if (!results) return "—"
+  if (!results) return '—'
   const total = Object.values(results).reduce((sum, r) => sum + (r.count || 0), 0)
   return total.toLocaleString()
-}
-
-const STATUS_COLOR = {
-  success: "#34d399",
-  partial: "#f59e0b",
-  failed:  "#f87171",
-  running: "#f59e0b",
-}
-
-const STATUS_ICON = {
-  success: "✓",
-  partial: "⚠",
-  failed:  "✗",
-  running: "⟳",
-}
-
-const ENTITY_SHORT = {
-  accounts:        "Accounts",
-  account_history: "History",
-  categories:      "Categories",
-  transactions:    "Transactions",
-  budgets:         "Budgets",
 }
 
 export default function SyncHistory({ history, activeJobId, onSelectJob }) {
@@ -79,43 +41,44 @@ export default function SyncHistory({ history, activeJobId, onSelectJob }) {
           <tbody>
             {history.map(job => {
               const isActive = job.id === activeJobId
+              const td = (extra = '') => [styles.td, isActive && styles.tdActive, extra].filter(Boolean).join(' ')
               return (
                 <tr
                   key={job.id}
                   onClick={() => onSelectJob(job)}
-                  style={{ cursor: "pointer" }}
+                  style={{ cursor: 'pointer' }}
                 >
-                  <td className={`${styles.td} ${isActive ? styles.tdActive : ''}`} title={job.started_at}>
-                    {fmtDate(job.started_at)}
+                  <td className={td()} title={job.started_at}>
+                    {fmtDatetime(job.started_at)}
                   </td>
-                  <td className={`${styles.td} ${isActive ? styles.tdActive : ''}`}>
+                  <td className={td()}>
                     {/* statusCell color is data-driven */}
                     <span
                       className={styles.statusCell}
-                      style={{ color: STATUS_COLOR[job.status] || "#64748b" }}
+                      style={{ color: SYNC_STATUS_ICON[job.status]?.color || 'var(--text-muted)' }}
                     >
-                      {STATUS_ICON[job.status] || "?"} {job.status}
+                      {SYNC_STATUS_ICON[job.status]?.icon || '?'} {job.status}
                     </span>
                   </td>
-                  <td className={`${styles.td} ${isActive ? styles.tdActive : ''}`}>
-                    <span style={{ color: job.full_refresh ? "#6366f1" : "#475569" }}>
-                      {job.full_refresh ? "Full" : "Incremental"}
+                  <td className={td()}>
+                    <span style={{ color: job.full_refresh ? 'var(--color-accent)' : 'var(--text-faint)' }}>
+                      {job.full_refresh ? 'Full' : 'Incremental'}
                     </span>
                   </td>
-                  <td className={`${styles.td} ${isActive ? styles.tdActive : ''}`}>
+                  <td className={td()}>
                     {(job.entities || []).map(e => (
                       <span key={e} className={styles.entityPill}>
-                        {ENTITY_SHORT[e] || e}
+                        {SYNC_ENTITY_SHORT[e] || e}
                       </span>
                     ))}
                   </td>
-                  <td className={`${styles.td} ${styles.tdRight} ${isActive ? styles.tdActive : ''}`}>
+                  <td className={td(styles.tdRight)}>
                     {totalRecords(job.results)}
                   </td>
-                  <td className={`${styles.td} ${styles.tdRight} ${isActive ? styles.tdActive : ''}`}>
-                    {job.status === "running"
-                      ? <span style={{ color: "#f59e0b" }}>running…</span>
-                      : duration(job.started_at, job.finished_at)
+                  <td className={td(styles.tdRight)}>
+                    {job.status === 'running'
+                      ? <span style={{ color: 'var(--amber)' }}>running…</span>
+                      : durationFinal(job.started_at, job.finished_at)
                     }
                   </td>
                 </tr>

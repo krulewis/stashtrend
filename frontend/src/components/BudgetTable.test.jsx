@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect } from 'vitest'
-import BudgetTable from './BudgetTable'
-import { MOCK_BUDGET_HISTORY } from '../test/fixtures'
+import BudgetTable from './BudgetTable.jsx'
+import { MOCK_BUDGET_HISTORY } from '../test/fixtures.js'
 
 const { months, categories } = MOCK_BUDGET_HISTORY
 

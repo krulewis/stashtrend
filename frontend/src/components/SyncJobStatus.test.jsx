@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, it, expect } from 'vitest'
-import SyncJobStatus from './SyncJobStatus'
-import { MOCK_SYNC_JOB } from '../test/fixtures'
+import SyncJobStatus from './SyncJobStatus.jsx'
+import { MOCK_SYNC_JOB } from '../test/fixtures.js'
 
 const RUNNING_JOB = {
   id: 'job-running',

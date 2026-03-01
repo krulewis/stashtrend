@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import styles from './AIAnalysisPanel.module.css'
+import { fetchAiConfig, saveAiConfig, runAiAnalysis } from '../api.js'
 
 export default function AIAnalysisPanel() {
   const [expanded,  setExpanded]  = useState(false)
@@ -16,8 +17,7 @@ export default function AIAnalysisPanel() {
 
   // Fetch AI config on mount
   useEffect(() => {
-    fetch('/api/ai/config')
-      .then(r => r.json())
+    fetchAiConfig()
       .then(setConfig)
       .catch(() => setConfig({ configured: false }))
   }, [])
@@ -27,9 +27,7 @@ export default function AIAnalysisPanel() {
     setAnalysis('')
     setError('')
     try {
-      const res = await fetch('/api/ai/analyze', { method: 'POST' })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
+      const data = await runAiAnalysis()
       setAnalysis(data.analysis ?? '')
       setStatus('done')
     } catch (err) {
@@ -42,14 +40,7 @@ export default function AIAnalysisPanel() {
     e.preventDefault()
     setError('')
     try {
-      const body = { provider, api_key: apiKey, model, base_url: baseUrl }
-      const res = await fetch('/api/ai/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
+      const data = await saveAiConfig({ provider, api_key: apiKey, model, base_url: baseUrl })
       setConfig(data)
       await runAnalysis()
     } catch (err) {
@@ -58,6 +49,10 @@ export default function AIAnalysisPanel() {
   }
 
   function handleReconfigure() {
+    setProvider(config?.provider ?? 'anthropic')
+    setApiKey('')
+    setModel(config?.model ?? '')
+    setBaseUrl(config?.base_url ?? '')
     setConfig(prev => ({ ...prev, configured: false }))
     setStatus('idle')
     setAnalysis('')
@@ -109,6 +104,7 @@ export default function AIAnalysisPanel() {
                 <span className={styles.badge}>{config.provider}</span>
                 <span className={styles.badge}>{config.model}</span>
               </div>
+              {error && <div className={styles.errorMsg}>{error}</div>}
               <div className={styles.actionRow}>
                 <button className={styles.btnPrimary} onClick={runAnalysis}>
                   Run Analysis
@@ -186,10 +182,6 @@ export default function AIAnalysisPanel() {
           {/* ── Config still loading ── */}
           {status === 'idle' && !config && (
             <div className={styles.loadingMsg}>Loading…</div>
-          )}
-
-          {error && status !== 'idle' && (
-            <div className={styles.errorMsg}>{error}</div>
           )}
         </div>
       )}

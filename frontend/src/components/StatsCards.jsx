@@ -1,9 +1,5 @@
 import styles from './StatsCards.module.css'
-
-const fmt = (n) =>
-  n == null
-    ? '—'
-    : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
+import { fmtFull } from './chartUtils.jsx'
 
 const fmtPct = (n) => (n == null ? '—' : `${n > 0 ? '+' : ''}${n.toFixed(1)}%`)
 
@@ -19,12 +15,12 @@ const Arrow = ({ value }) => {
 const Card = ({ label, value, change, pct, sublabel }) => (
   <div className={styles.card}>
     <div className={styles.cardLabel}>{label}</div>
-    <div className={styles.cardValue}>{fmt(value)}</div>
+    <div className={styles.cardValue}>{fmtFull(value)}</div>
     {change != null && (
       <div className={styles.cardChange}>
         <Arrow value={change} />
         <span style={{ color: change >= 0 ? '#34d399' : '#f87171', marginLeft: 4 }}>
-          {fmt(change)} ({fmtPct(pct)})
+          {fmtFull(change)} ({fmtPct(pct)})
         </span>
         <span className={styles.cardSublabel}> vs {sublabel}</span>
       </div>

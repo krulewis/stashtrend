@@ -26,6 +26,11 @@
   --red:        #f87171;
   --amber:      #f59e0b;
 
+  /* Semantic aliases for interactive state colours */
+  --color-accent:   var(--accent);
+  --color-positive: var(--green);
+  --color-negative: var(--red);
+
   /* Spacing scale */
   --sp-1: 4px;
   --sp-2: 8px;

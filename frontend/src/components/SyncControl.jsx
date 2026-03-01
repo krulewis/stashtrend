@@ -1,46 +1,32 @@
-/**
- * SyncControl — entity checkboxes, mode toggle, and Start Sync button.
- * Shows when each entity was last synced from the pipeline's sync_log.
- */
-import { useEffect, useState } from "react"
-import styles from "./SyncControl.module.css"
+import { useEffect, useState } from 'react'
+import styles from './SyncControl.module.css'
+import { fetchSyncLastStatus, startSync } from '../api.js'
+import { fmtDatetime } from './chartUtils.jsx'
+import { SYNC_ENTITY_ORDER, SYNC_ENTITY_LABELS, SYNC_ENTITY_DESCS } from '../constants/syncEntities.js'
 
-const ENTITIES = [
-  { key: "accounts",        label: "Accounts",        desc: "Account names, balances, and metadata" },
-  { key: "account_history", label: "Account History",  desc: "Daily balance snapshots for all accounts" },
-  { key: "categories",      label: "Categories",       desc: "Transaction category definitions" },
-  { key: "transactions",    label: "Transactions",     desc: "Individual transaction records" },
-  { key: "budgets",         label: "Budgets",          desc: "Monthly budget vs. actual data" },
-]
-
-function fmtDate(iso) {
-  if (!iso) return "Never"
-  try {
-    const d = new Date(iso)
-    return d.toLocaleString(undefined, {
-      month: "short", day: "numeric", year: "numeric",
-      hour: "numeric", minute: "2-digit",
-    })
-  } catch {
-    return iso
-  }
-}
+const ENTITIES = SYNC_ENTITY_ORDER.map(key => ({
+  key,
+  label: SYNC_ENTITY_LABELS[key],
+  desc:  SYNC_ENTITY_DESCS[key],
+}))
 
 export default function SyncControl({ isRunning, onSyncStarted }) {
-  const [selected,   setSelected]   = useState(new Set(ENTITIES.map(e => e.key)))
-  const [fullMode,   setFullMode]   = useState(false)
-  const [lastStatus, setLastStatus] = useState({})
-  const [loading,    setLoading]    = useState(false)
+  const [selected,    setSelected]    = useState(new Set(ENTITIES.map(e => e.key)))
+  const [fullMode,    setFullMode]    = useState(false)
+  const [lastStatus,  setLastStatus]  = useState({})
+  const [loadError,   setLoadError]   = useState(null)
+  const [isStarting,  setIsStarting]  = useState(false)
+  const [startError,  setStartError]  = useState(null)
 
   useEffect(() => {
-    fetch("/api/sync/last-status")
-      .then(r => r.json())
+    setLoadError(null)
+    fetchSyncLastStatus()
       .then(rows => {
         const map = {}
         rows.forEach(r => { map[r.entity] = r })
         setLastStatus(map)
       })
-      .catch(() => {})
+      .catch(() => setLoadError('Could not load last sync status'))
   }, [isRunning])
 
   function toggle(key) {
@@ -52,30 +38,22 @@ export default function SyncControl({ isRunning, onSyncStarted }) {
   }
 
   async function handleStart() {
-    if (isRunning || selected.size === 0 || loading) return
-    setLoading(true)
+    if (isRunning || selected.size === 0 || isStarting) return
+    setIsStarting(true)
+    setStartError(null)
     try {
-      const res = await fetch("/api/sync/start", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ entities: [...selected], full: fullMode }),
-      })
-      const data = await res.json()
-      if (res.ok) {
-        onSyncStarted(data.job_id)
-      } else {
-        alert(data.error || "Failed to start sync")
-      }
-    } catch {
-      alert("Could not reach the backend")
+      const data = await startSync([...selected], fullMode)
+      onSyncStarted(data.job_id)
+    } catch (err) {
+      setStartError(err.message || 'Failed to start sync')
     } finally {
-      setLoading(false)
+      setIsStarting(false)
     }
   }
 
   const allSelected  = selected.size === ENTITIES.length
   const noneSelected = selected.size === 0
-  const btnDisabled  = isRunning || noneSelected || loading
+  const btnDisabled  = isRunning || noneSelected || isStarting
 
   return (
     <div className={styles.card}>
@@ -90,16 +68,15 @@ export default function SyncControl({ isRunning, onSyncStarted }) {
             : setSelected(new Set(ENTITIES.map(e => e.key)))
         }
       >
-        {allSelected ? "Deselect all" : "Select all"}
+        {allSelected ? 'Deselect all' : 'Select all'}
       </button>
 
-      {ENTITIES.map((e, i) => {
-        const log    = lastStatus[e.key]
-        const isLast = i === ENTITIES.length - 1
+      {ENTITIES.map((e) => {
+        const log = lastStatus[e.key]
         return (
           <div
             key={e.key}
-            className={`${styles.entityRow} ${isLast ? styles.entityRowLast : ''}`}
+            className={styles.entityRow}
             onClick={() => toggle(e.key)}
           >
             <input
@@ -116,11 +93,11 @@ export default function SyncControl({ isRunning, onSyncStarted }) {
             <div className={styles.lastSync}>
               {log ? (
                 <>
-                  <div>{fmtDate(log.last_synced_at)}</div>
-                  <div style={{ color: "#334155" }}>{log.total_records?.toLocaleString()} rows</div>
+                  <div>{fmtDatetime(log.last_synced_at)}</div>
+                  <div style={{ color: 'var(--text-faint)' }}>{log.total_records?.toLocaleString()} rows</div>
                 </>
               ) : (
-                <span style={{ color: "#334155" }}>Never synced</span>
+                <span style={{ color: 'var(--text-faint)' }}>Never synced</span>
               )}
             </div>
           </div>
@@ -136,8 +113,8 @@ export default function SyncControl({ isRunning, onSyncStarted }) {
           <button
             className={styles.modeBtn}
             style={{
-              background: !fullMode ? "#6366f1" : "transparent",
-              color:      !fullMode ? "#fff"    : "#64748b",
+              background: !fullMode ? 'var(--color-accent)' : 'transparent',
+              color:      !fullMode ? '#fff'                : 'var(--text-muted)',
             }}
             onClick={() => setFullMode(false)}
           >
@@ -146,8 +123,8 @@ export default function SyncControl({ isRunning, onSyncStarted }) {
           <button
             className={styles.modeBtn}
             style={{
-              background: fullMode ? "#6366f1" : "transparent",
-              color:      fullMode ? "#fff"    : "#64748b",
+              background: fullMode ? 'var(--color-accent)' : 'transparent',
+              color:      fullMode ? '#fff'               : 'var(--text-muted)',
             }}
             onClick={() => setFullMode(true)}
           >
@@ -155,22 +132,30 @@ export default function SyncControl({ isRunning, onSyncStarted }) {
           </button>
         </div>
         <span className={styles.modeHint}>
-          {fullMode ? "Re-fetches all historical data" : "Only fetches new data since last sync"}
+          {fullMode ? 'Re-fetches all historical data' : 'Only fetches new data since last sync'}
         </span>
       </div>
+
+      {loadError && (
+        <div className={styles.errorMsg}>{loadError}</div>
+      )}
+
+      {startError && (
+        <div className={styles.errorMsg}>{startError}</div>
+      )}
 
       {/* Start button colors are data-driven */}
       <button
         className={styles.startBtn}
         style={{
-          background: btnDisabled ? "#1e2535" : "#6366f1",
-          color:      btnDisabled ? "#475569" : "#fff",
-          cursor:     btnDisabled ? "not-allowed" : "pointer",
+          background: btnDisabled ? 'var(--border-sub)'   : 'var(--color-accent)',
+          color:      btnDisabled ? 'var(--text-faint)' : '#fff',
+          cursor:     btnDisabled ? 'not-allowed' : 'pointer',
         }}
         disabled={btnDisabled}
         onClick={handleStart}
       >
-        {isRunning ? "⟳ Sync in progress…" : loading ? "Starting…" : "▶ Start Sync"}
+        {isRunning ? '⟳ Sync in progress…' : isStarting ? 'Starting…' : '▶ Start Sync'}
       </button>
     </div>
   )

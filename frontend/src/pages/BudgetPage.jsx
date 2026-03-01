@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import BudgetChart from '../components/BudgetChart'
-import BudgetTable from '../components/BudgetTable'
-import AIAnalysisPanel from '../components/AIAnalysisPanel'
+import BudgetChart from '../components/BudgetChart.jsx'
+import BudgetTable from '../components/BudgetTable.jsx'
+import AIAnalysisPanel from '../components/AIAnalysisPanel.jsx'
 import styles from './BudgetPage.module.css'
+import { fetchBudgetHistory } from '../api.js'
 
 const RANGE_OPTIONS = [3, 6, 12]
 
@@ -15,19 +16,10 @@ export default function BudgetPage() {
   useEffect(() => {
     setLoading(true)
     setError(null)
-    fetch(`/api/budgets/history?months=${months}`)
-      .then(r => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`)
-        return r.json()
-      })
-      .then(data => {
-        setBudgetData(data)
-        setLoading(false)
-      })
-      .catch(err => {
-        setError(err.message)
-        setLoading(false)
-      })
+    fetchBudgetHistory(months)
+      .then(data => setBudgetData(data))
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false))
   }, [months])
 
   return (

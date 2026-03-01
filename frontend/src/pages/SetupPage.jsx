@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import styles from './SetupPage.module.css'
+import { setupToken } from '../api.js'
 
 export default function SetupPage({ onComplete }) {
   const [token,   setToken]   = useState('')
@@ -11,19 +12,10 @@ export default function SetupPage({ onComplete }) {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/api/setup/token', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ token }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        setError(data.error || 'Connection failed. Please try again.')
-      } else {
-        onComplete()
-      }
+      await setupToken(token)
+      onComplete()
     } catch (err) {
-      setError(err.message)
+      setError(err.message || 'Connection failed. Please try again.')
     } finally {
       setLoading(false)
     }

@@ -1,11 +1,11 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
-import AIAnalysisPanel from './AIAnalysisPanel'
+import AIAnalysisPanel from './AIAnalysisPanel.jsx'
 import {
   MOCK_AI_CONFIG_UNCONFIGURED,
   MOCK_AI_CONFIG_CONFIGURED,
   mockFetch,
-} from '../test/fixtures'
+} from '../test/fixtures.js'
 
 const MOCK_ANALYSIS = { analysis: 'You spent $3,200 on Food & Drink in November, 7% over budget.' }
 
@@ -108,5 +108,23 @@ describe('AIAnalysisPanel', () => {
       const calls = global.fetch.mock.calls.filter(c => c[0].includes('/api/ai/analyze'))
       expect(calls.length).toBe(2)
     })
+  })
+
+  it('Reconfigure pre-fills form with saved provider and model', async () => {
+    mockFetch({
+      '/api/ai/config':   MOCK_AI_CONFIG_CONFIGURED,
+      '/api/ai/analyze':  MOCK_ANALYSIS,
+    })
+    render(<AIAnalysisPanel />)
+    fireEvent.click(screen.getByRole('button', { name: /Analyze with AI/i }))
+    fireEvent.click(await screen.findByRole('button', { name: /Run Analysis/i }))
+    await screen.findByText(/You spent/i)
+
+    fireEvent.click(screen.getByRole('button', { name: /Reconfigure/i }))
+
+    const providerSelect = await screen.findByRole('combobox', { name: /Provider/i })
+    const modelInput = screen.getByLabelText(/Model/i)
+    expect(providerSelect).toHaveValue(MOCK_AI_CONFIG_CONFIGURED.provider)
+    expect(modelInput).toHaveValue(MOCK_AI_CONFIG_CONFIGURED.model)
   })
 })

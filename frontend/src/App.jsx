@@ -1,18 +1,13 @@
 import { useEffect, useState } from 'react'
 import styles from './App.module.css'
-import StatsCards from './components/StatsCards'
-import NetWorthChart from './components/NetWorthChart'
-import AccountsBreakdown from './components/AccountsBreakdown'
-import GroupsPage from './pages/GroupsPage'
-import BudgetPage from './pages/BudgetPage'
-import SyncPage from './pages/SyncPage'
-import SetupPage from './pages/SetupPage'
-
-async function fetchJSON(url) {
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`)
-  return res.json()
-}
+import StatsCards from './components/StatsCards.jsx'
+import NetWorthChart from './components/NetWorthChart.jsx'
+import AccountsBreakdown from './components/AccountsBreakdown.jsx'
+import GroupsPage from './pages/GroupsPage.jsx'
+import BudgetPage from './pages/BudgetPage.jsx'
+import SyncPage from './pages/SyncPage.jsx'
+import SetupPage from './pages/SetupPage.jsx'
+import { fetchNetworthStats, fetchNetworthHistory, fetchAccountsSummary } from './api.js'
 
 const TABS = [
   { id: 'networth', label: '📈  Net Worth' },
@@ -32,6 +27,10 @@ export default function App() {
   const [error,    setError]    = useState(null)
   const [lastUpdated, setLastUpdated] = useState(null)
 
+  // NOTE: This app is designed for local-only use (localhost). It relies on the
+  // /api/setup/status configured flag rather than session-based authentication,
+  // because all data stays on the user's own machine. If ever exposed beyond
+  // localhost, add token or session authentication before the setup check.
   useEffect(() => {
     fetch('/api/setup/status')
       .then((r) => r.json())
@@ -39,20 +38,26 @@ export default function App() {
       .catch(() => setConfigured(false))
   }, [])
 
-  useEffect(() => {
+  function loadDashboardData() {
+    setError(null)
     Promise.all([
-      fetchJSON('/api/networth/stats'),
-      fetchJSON('/api/networth/history'),
-      fetchJSON('/api/accounts/summary'),
+      fetchNetworthStats(),
+      fetchNetworthHistory(),
+      fetchAccountsSummary(),
     ])
-      .then(([s, h, a]) => {
-        setStats(s)
-        setHistory(h)
-        setAccounts(a)
+      .then(([stats, history, accounts]) => {
+        setStats(stats)
+        setHistory(history)
+        setAccounts(accounts)
         setLastUpdated(new Date().toLocaleTimeString())
       })
       .catch((err) => setError(err.message))
-  }, [])
+  }
+
+  useEffect(() => {
+    if (configured !== true) return
+    loadDashboardData()
+  }, [configured])
 
   if (configured === null) return <div className={styles.loading}>Loading…</div>
   if (configured === false) return <SetupPage onComplete={() => setConfigured(true)} />
@@ -72,7 +77,7 @@ export default function App() {
           {lastUpdated && (
             <span className={styles.updatedAt}>Updated at {lastUpdated}</span>
           )}
-          <button className={styles.refreshBtn} onClick={() => window.location.reload()}>
+          <button className={styles.refreshBtn} onClick={loadDashboardData}>
             ↻ Refresh
           </button>
         </div>

@@ -1,56 +1,13 @@
 import { useState, useMemo } from 'react'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts'
+import { LineChart, Line, ResponsiveContainer } from 'recharts'
 import styles from './GroupsTimeChart.module.css'
-import { useResponsive } from '../hooks/useResponsive'
-
-const RANGES = [
-  { label: '3M',  months: 3  },
-  { label: '6M',  months: 6  },
-  { label: '1Y',  months: 12 },
-  { label: '2Y',  months: 24 },
-  { label: 'All', months: null },
-]
-
-const fmtCompact = (n) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    notation: 'compact',
-    maximumFractionDigits: 1,
-  }).format(n)
-
-const fmtFull = (n) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(n)
-
-function filterByRange(series, months) {
-  if (!months || !series.length) return series
-  const cutoff = new Date()
-  cutoff.setMonth(cutoff.getMonth() - months)
-  const cutoffStr = cutoff.toISOString().slice(0, 10)
-  return series.filter((d) => d.date >= cutoffStr)
-}
-
-function sample(data, maxPoints = 200) {
-  if (data.length <= maxPoints) return data
-  const step = Math.ceil(data.length / maxPoints)
-  return data.filter((_, i) => i % step === 0 || i === data.length - 1)
-}
+import { useResponsive } from '../hooks/useResponsive.js'
+import RangeSelector from './RangeSelector.jsx'
+import { fmtFull, filterByRange, downsample, GRID_STROKE, COMMON_RANGES, sharedChartElements, TOOLTIP_STYLE } from './chartUtils.jsx'
 
 // Tooltip rendered by recharts — keep inline
 const tooltipStyles = {
-  wrap: { background: '#1e2130', border: '1px solid #2d3348', borderRadius: 8, padding: '10px 14px', fontSize: 13, minWidth: 200 },
+  wrap: { ...TOOLTIP_STYLE, borderRadius: 8, padding: '10px 14px', minWidth: 200 },
   date: { color: '#94a3b8', marginBottom: 8, fontSize: 12, fontWeight: 600 },
   row:  { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginBottom: 4 },
 }
@@ -79,8 +36,8 @@ export default function GroupsTimeChart({ historyData }) {
   const [selectedGroups, setSelectedGroups] = useState(new Set())
   const { isMobile } = useResponsive()
 
-  const { series, groups_meta: groupsMeta } = historyData || { series: [], groups_meta: {} }
-  const groupNames = Object.keys(groupsMeta || {})
+  const { series, groups_meta: groupsMeta } = historyData ?? {}
+  const groupNames = Object.keys(groupsMeta ?? {})
   const activeGroupNames = groupNames.filter((name) => selectedGroups.has(name))
 
   const toggleGroup = (name) => {
@@ -91,9 +48,9 @@ export default function GroupsTimeChart({ historyData }) {
     })
   }
 
-  const activeMonths = RANGES.find((r) => r.label === range)?.months
-  const filtered = useMemo(() => filterByRange(series || [], activeMonths), [series, activeMonths])
-  const data = useMemo(() => sample(filtered), [filtered])
+  const activeRange  = COMMON_RANGES.find((r) => r.label === range) ?? COMMON_RANGES[0]
+  const filtered = useMemo(() => filterByRange(series ?? [], activeRange.months), [series, activeRange])
+  const data = useMemo(() => downsample(filtered), [filtered])
 
   // Chart props not settable via CSS
   const chartHeight = isMobile ? 220 : 300
@@ -122,17 +79,7 @@ export default function GroupsTimeChart({ historyData }) {
       {/* Header row: title + range selector */}
       <div className={styles.header}>
         <h2 className={styles.title}>Group Balances Over Time</h2>
-        <div className={styles.rangeButtons}>
-          {RANGES.map((r) => (
-            <button
-              key={r.label}
-              onClick={() => setRange(r.label)}
-              className={`${styles.rangeBtn} ${range === r.label ? styles.rangeBtnActive : ''}`}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
+        <RangeSelector ranges={COMMON_RANGES} activeRange={range} onSelect={setRange} />
       </div>
 
       {/* Group toggle chips */}
@@ -148,13 +95,13 @@ export default function GroupsTimeChart({ historyData }) {
               className={styles.chip}
               style={{
                 background:  active ? `${color}22` : 'transparent',
-                borderColor: active ? color         : '#2d3348',
+                borderColor: active ? color         : GRID_STROKE,
                 color:       active ? '#f1f5f9'     : '#64748b',
               }}
             >
               <span
                 className={styles.chipDot}
-                style={{ background: active ? color : '#2d3348' }}
+                style={{ background: active ? color : GRID_STROKE }}
               />
               {name}
             </button>
@@ -170,26 +117,7 @@ export default function GroupsTimeChart({ historyData }) {
       ) : (
         <ResponsiveContainer width="100%" height={chartHeight}>
           <LineChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2d3348" vertical={false} />
-            <XAxis
-              dataKey="date"
-              tick={{ fill: '#64748b', fontSize: 11 }}
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={(d) => {
-                const dt = new Date(d + 'T00:00:00')
-                return dt.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
-              }}
-              interval="preserveStartEnd"
-            />
-            <YAxis
-              tickFormatter={fmtCompact}
-              tick={{ fill: '#64748b', fontSize: 11 }}
-              tickLine={false}
-              axisLine={false}
-              width={yAxisWidth}
-            />
-            <Tooltip content={<CustomTooltip />} />
+            {sharedChartElements({ yAxisWidth, tooltip: <CustomTooltip /> })}
             {activeGroupNames.map((name) => (
               <Line
                 key={name}

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, it, expect } from 'vitest'
-import StatsCards from './StatsCards'
-import { MOCK_STATS } from '../test/fixtures'
+import StatsCards from './StatsCards.jsx'
+import { MOCK_STATS } from '../test/fixtures.js'
 
 describe('StatsCards', () => {
   it('renders skeleton placeholder cards when stats is null', () => {

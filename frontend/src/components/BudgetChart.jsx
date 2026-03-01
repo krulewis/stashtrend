@@ -2,38 +2,17 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
-import { useResponsive } from '../hooks/useResponsive'
+import { useResponsive } from '../hooks/useResponsive.js'
 import styles from './BudgetChart.module.css'
-
-const tooltipStyles = {
-  wrap: {
-    background: '#1e2130',
-    border: '1px solid #2d3348',
-    borderRadius: 6,
-    padding: '8px 12px',
-    color: '#f1f5f9',
-    fontSize: 13,
-  },
-}
-
-function fmtMonth(m) {
-  const d = new Date(m + 'T00:00:00')
-  return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
-}
-
-function fmtDollar(n) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency', currency: 'USD', maximumFractionDigits: 0,
-  }).format(n)
-}
+import { GRID_STROKE, COLOR_ACCENT, COLOR_POSITIVE, fmtFull, fmtCompact, fmtBudgetMonth, TOOLTIP_STYLE } from './chartUtils.jsx'
 
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
   return (
-    <div style={tooltipStyles.wrap}>
-      <div style={{ marginBottom: 4, fontWeight: 600 }}>{fmtMonth(label)}</div>
+    <div style={TOOLTIP_STYLE}>
+      <div style={{ marginBottom: 4, fontWeight: 600 }}>{fmtBudgetMonth(label)}</div>
       {payload.map(p => (
-        <div key={p.name}>{p.name}: {fmtDollar(p.value)}</div>
+        <div key={p.name}>{p.name}: {fmtFull(p.value)}</div>
       ))}
     </div>
   )
@@ -59,21 +38,21 @@ export default function BudgetChart({ months, totalsByMonth }) {
       <h3 className={styles.title}>Monthly Totals</h3>
       <ResponsiveContainer width="100%" height={chartHeight}>
         <BarChart data={data} margin={{ top: 8, right: 16, left: 8, bottom: 4 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#2d3348" />
+          <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
           <XAxis
             dataKey="month"
-            tickFormatter={fmtMonth}
+            tickFormatter={fmtBudgetMonth}
             tick={{ fill: '#94a3b8', fontSize: 12 }}
           />
           <YAxis
-            tickFormatter={v => `$${(v / 1000).toFixed(0)}k`}
+            tickFormatter={fmtCompact}
             tick={{ fill: '#94a3b8', fontSize: 12 }}
             width={52}
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend wrapperStyle={{ color: '#94a3b8', fontSize: 13 }} />
-          <Bar dataKey="Budget" fill="#6366f1" radius={[3, 3, 0, 0]} />
-          <Bar dataKey="Actual" fill="#34d399" radius={[3, 3, 0, 0]} />
+          <Bar dataKey="Budget" fill={COLOR_ACCENT}   radius={[3, 3, 0, 0]} />
+          <Bar dataKey="Actual" fill={COLOR_POSITIVE} radius={[3, 3, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

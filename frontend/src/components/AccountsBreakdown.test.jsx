@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { vi, describe, it, expect } from 'vitest'
-import AccountsBreakdown from './AccountsBreakdown'
-import { MOCK_ACCOUNTS } from '../test/fixtures'
+import AccountsBreakdown from './AccountsBreakdown.jsx'
+import { MOCK_ACCOUNTS } from '../test/fixtures.js'
 
 vi.mock('recharts')
 vi.mock('../hooks/useResponsive', () => ({
@@ -58,5 +58,11 @@ describe('AccountsBreakdown', () => {
     render(<AccountsBreakdown accounts={MOCK_ACCOUNTS} />)
     fireEvent.click(screen.getByText('checking'))
     expect(screen.getByText('Chase')).toBeInTheDocument()
+  })
+
+  it('displays liabilities section total as a positive absolute value', () => {
+    render(<AccountsBreakdown accounts={MOCK_ACCOUNTS} />)
+    // MOCK_ACCOUNTS mortgage has current_balance: -200000; section total must be $200,000 (abs), not -$200,000
+    expect(screen.getByText('$200,000')).toBeInTheDocument()
   })
 })

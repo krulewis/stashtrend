@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
-import GroupManager from './GroupManager'
-import { MOCK_GROUPS, MOCK_ACCOUNTS, mockFetch } from '../test/fixtures'
+import GroupManager from './GroupManager.jsx'
+import { MOCK_GROUPS, MOCK_ACCOUNTS, mockFetch } from '../test/fixtures.js'
 
 const onGroupsChanged = vi.fn()
 
@@ -124,6 +124,18 @@ describe('GroupManager', () => {
       render(<GroupManager groups={MOCK_GROUPS} accounts={MOCK_ACCOUNTS} onGroupsChanged={onGroupsChanged} />)
       fireEvent.click(screen.getAllByTitle('Delete')[0])
       expect(onGroupsChanged).not.toHaveBeenCalled()
+    })
+
+    it('shows an error message when DELETE fails', async () => {
+      global.fetch = vi.fn(() =>
+        Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve({ error: 'Server error' }) })
+      )
+      window.confirm = vi.fn(() => true)
+      render(<GroupManager groups={MOCK_GROUPS} accounts={MOCK_ACCOUNTS} onGroupsChanged={onGroupsChanged} />)
+      fireEvent.click(screen.getAllByTitle('Delete')[0])
+      await waitFor(() => {
+        expect(screen.getByText('Server error')).toBeInTheDocument()
+      })
     })
   })
 })

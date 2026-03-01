@@ -1,0 +1,60 @@
+.settingsCard {
+  background: #1e2535;
+  border: 1px solid #2d3a4f;
+  border-radius: 12px;
+  padding: 20px 24px;
+}
+
+.settingsTitle {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.settingsSubtitle {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.intervalRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.intervalLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.intervalSelect {
+  background: #0f172a;
+  border: 1px solid #2d3a4f;
+  border-radius: 6px;
+  color: #f1f5f9;
+  font-size: 13px;
+  padding: 6px 10px;
+  cursor: pointer;
+  min-width: 160px;
+}
+
+.intervalSelect:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.intervalSelect:focus {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+.settingsError {
+  color: var(--color-negative);
+  font-size: 13px;
+  margin-top: 8px;
+}

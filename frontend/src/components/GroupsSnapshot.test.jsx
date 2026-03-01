@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { vi, describe, it, expect } from 'vitest'
-import GroupsSnapshot from './GroupsSnapshot'
-import { MOCK_SNAPSHOT } from '../test/fixtures'
+import GroupsSnapshot from './GroupsSnapshot.jsx'
+import { MOCK_SNAPSHOT } from '../test/fixtures.js'
 
 vi.mock('recharts')
 vi.mock('../hooks/useResponsive', () => ({

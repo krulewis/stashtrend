@@ -1,9 +1,9 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
-import BudgetPage from './BudgetPage'
-import { MOCK_BUDGET_HISTORY, MOCK_AI_CONFIG_UNCONFIGURED, mockFetch } from '../test/fixtures'
+import BudgetPage from './BudgetPage.jsx'
+import { MOCK_BUDGET_HISTORY, MOCK_AI_CONFIG_UNCONFIGURED, mockFetch } from '../test/fixtures.js'
 
-vi.mock('../components/BudgetChart', () => ({
+vi.mock('../components/BudgetChart.jsx', () => ({
   default: ({ months, totalsByMonth }) => (
     <div data-testid="budget-chart">
       {months && <span>chart-months:{months.length}</span>}
@@ -11,7 +11,7 @@ vi.mock('../components/BudgetChart', () => ({
   ),
 }))
 
-vi.mock('../components/BudgetTable', () => ({
+vi.mock('../components/BudgetTable.jsx', () => ({
   default: ({ months, categories }) => (
     <div data-testid="budget-table">
       {categories && <span>table-categories:{categories.length}</span>}
@@ -19,7 +19,7 @@ vi.mock('../components/BudgetTable', () => ({
   ),
 }))
 
-vi.mock('../components/AIAnalysisPanel', () => ({
+vi.mock('../components/AIAnalysisPanel.jsx', () => ({
   default: () => <div data-testid="ai-analysis-panel" />,
 }))
 

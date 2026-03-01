@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { vi, describe, it, expect } from 'vitest'
-import GroupsTimeChart from './GroupsTimeChart'
-import { MOCK_HISTORY_DATA } from '../test/fixtures'
+import GroupsTimeChart from './GroupsTimeChart.jsx'
+import { MOCK_HISTORY_DATA } from '../test/fixtures.js'
 
 vi.mock('recharts')
 vi.mock('../hooks/useResponsive', () => ({

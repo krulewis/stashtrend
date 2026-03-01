@@ -1,12 +1,8 @@
 import { useState } from 'react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import styles from './AccountsBreakdown.module.css'
-import { useResponsive } from '../hooks/useResponsive'
-
-const fmt = (n) =>
-  n == null
-    ? '—'
-    : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
+import { useResponsive } from '../hooks/useResponsive.js'
+import { fmtFull, TOOLTIP_STYLE } from './chartUtils.jsx'
 
 // Group accounts by type and compute totals
 function groupAccounts(accounts) {
@@ -28,9 +24,9 @@ const CustomTooltip = ({ active, payload }) => {
   if (!active || !payload?.length) return null
   const d = payload[0]
   return (
-    <div style={{ background: '#1e2130', border: '1px solid #2d3348', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}>
+    <div style={TOOLTIP_STYLE}>
       <div style={{ color: '#94a3b8', marginBottom: 4 }}>{d.name}</div>
-      <div style={{ color: '#f1f5f9', fontWeight: 600 }}>{fmt(d.value)}</div>
+      <div style={{ fontWeight: 600 }}>{fmtFull(d.value)}</div>
     </div>
   )
 }
@@ -59,7 +55,7 @@ function AccountGroup({ group, color }) {
           <span className={styles.groupName}>{group.type}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span className={styles.groupTotal}>{fmt(group.total)}</span>
+          <span className={styles.groupTotal}>{fmtFull(group.total)}</span>
           <span style={{ color: '#64748b', fontSize: 12 }}>{open ? '▲' : '▼'}</span>
         </div>
       </div>
@@ -71,11 +67,49 @@ function AccountGroup({ group, color }) {
                 <div className={styles.accountName}>{acct.name}</div>
                 {acct.institution && <div className={styles.accountInst}>{acct.institution}</div>}
               </div>
-              <div className={styles.accountBalance}>{fmt(acct.current_balance)}</div>
+              <div className={styles.accountBalance}>{fmtFull(acct.current_balance)}</div>
             </div>
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+function AccountSection({ label, total, totalColor, pieData, groups, colors, pieHeight, pieInnerRadius, pieOuterRadius }) {
+  return (
+    <div className={styles.column}>
+      <div className={styles.sectionHeader}>
+        <span className={styles.sectionLabel}>{label}</span>
+        {/* Color is data-driven */}
+        <span className={styles.sectionTotal} style={{ color: totalColor }}>{fmtFull(total)}</span>
+      </div>
+      {pieData.length > 0 && (
+        <ResponsiveContainer width="100%" height={pieHeight}>
+          <PieChart>
+            <Pie
+              data={pieData}
+              cx="50%"
+              cy="50%"
+              innerRadius={pieInnerRadius}
+              outerRadius={pieOuterRadius}
+              dataKey="value"
+              labelLine={false}
+              label={renderLabel}
+            >
+              {pieData.map((_, i) => (
+                <Cell key={i} fill={colors[i % colors.length]} />
+              ))}
+            </Pie>
+            <Tooltip content={<CustomTooltip />} />
+          </PieChart>
+        </ResponsiveContainer>
+      )}
+      <div className={styles.groupList}>
+        {groups.map((g, i) => (
+          <AccountGroup key={g.type} group={g} color={colors[i % colors.length]} />
+        ))}
+      </div>
     </div>
   )
 }
@@ -91,14 +125,15 @@ export default function AccountsBreakdown({ accounts }) {
     )
   }
 
-  const assets      = accounts.filter((a) => a.is_asset === 1)
-  const liabilities = accounts.filter((a) => a.is_asset === 0)
+  const isAsset     = (a) => Boolean(a.is_asset)
+  const assets      = accounts.filter(isAsset)
+  const liabilities = accounts.filter((a) => !isAsset(a))
 
   const assetGroups = groupAccounts(assets)
   const liabGroups  = groupAccounts(liabilities)
 
   const totalAssets = assets.reduce((s, a) => s + (a.current_balance || 0), 0)
-  const totalLiab   = liabilities.reduce((s, a) => s + (a.current_balance || 0), 0)
+  const totalLiab   = liabilities.reduce((s, a) => s + Math.abs(a.current_balance || 0), 0)
 
   const assetPieData = assetGroups.map((g) => ({ name: g.type, value: g.total }))
   const liabPieData  = liabGroups.map((g) => ({ name: g.type, value: Math.abs(g.total) }))
@@ -112,78 +147,31 @@ export default function AccountsBreakdown({ accounts }) {
     <div className={styles.container}>
       <h2 className={styles.title}>Account Breakdown</h2>
       <div className={styles.columns}>
-        {/* ASSETS */}
-        <div className={styles.column}>
-          <div className={styles.sectionHeader}>
-            <span className={styles.sectionLabel}>Assets</span>
-            {/* Color is data-driven */}
-            <span className={styles.sectionTotal} style={{ color: '#34d399' }}>{fmt(totalAssets)}</span>
-          </div>
-          {assetPieData.length > 0 && (
-            <ResponsiveContainer width="100%" height={pieHeight}>
-              <PieChart>
-                <Pie
-                  data={assetPieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={pieInnerRadius}
-                  outerRadius={pieOuterRadius}
-                  dataKey="value"
-                  labelLine={false}
-                  label={renderLabel}
-                >
-                  {assetPieData.map((_, i) => (
-                    <Cell key={i} fill={ASSET_COLORS[i % ASSET_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-              </PieChart>
-            </ResponsiveContainer>
-          )}
-          <div className={styles.groupList}>
-            {assetGroups.map((g, i) => (
-              <AccountGroup key={g.type} group={g} color={ASSET_COLORS[i % ASSET_COLORS.length]} />
-            ))}
-          </div>
-        </div>
+        <AccountSection
+          label="Assets"
+          total={totalAssets}
+          totalColor="var(--color-positive)"
+          pieData={assetPieData}
+          groups={assetGroups}
+          colors={ASSET_COLORS}
+          pieHeight={pieHeight}
+          pieInnerRadius={pieInnerRadius}
+          pieOuterRadius={pieOuterRadius}
+        />
 
-        {/* Vertical divider */}
         <div className={styles.divider} />
 
-        {/* LIABILITIES */}
-        <div className={styles.column}>
-          <div className={styles.sectionHeader}>
-            <span className={styles.sectionLabel}>Liabilities</span>
-            {/* Color is data-driven */}
-            <span className={styles.sectionTotal} style={{ color: '#f87171' }}>{fmt(totalLiab)}</span>
-          </div>
-          {liabPieData.length > 0 && (
-            <ResponsiveContainer width="100%" height={pieHeight}>
-              <PieChart>
-                <Pie
-                  data={liabPieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={pieInnerRadius}
-                  outerRadius={pieOuterRadius}
-                  dataKey="value"
-                  labelLine={false}
-                  label={renderLabel}
-                >
-                  {liabPieData.map((_, i) => (
-                    <Cell key={i} fill={LIAB_COLORS[i % LIAB_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-              </PieChart>
-            </ResponsiveContainer>
-          )}
-          <div className={styles.groupList}>
-            {liabGroups.map((g, i) => (
-              <AccountGroup key={g.type} group={g} color={LIAB_COLORS[i % LIAB_COLORS.length]} />
-            ))}
-          </div>
-        </div>
+        <AccountSection
+          label="Liabilities"
+          total={totalLiab}
+          totalColor="var(--color-negative)"
+          pieData={liabPieData}
+          groups={liabGroups}
+          colors={LIAB_COLORS}
+          pieHeight={pieHeight}
+          pieInnerRadius={pieInnerRadius}
+          pieOuterRadius={pieOuterRadius}
+        />
       </div>
     </div>
   )
