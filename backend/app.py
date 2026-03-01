@@ -612,7 +612,8 @@ def update_group(group_id):
 
 @app.route("/api/groups/<int:group_id>", methods=["DELETE"])
 def delete_group(group_id):
-    """Delete a group (members cascade-deleted via FK)."""
+    """Delete a group (members cascade-deleted via FK).
+    Also removes the deleted group_id from any saved group configs."""
     conn = get_db()
     existing = conn.execute(
         "SELECT id FROM account_groups WHERE id = ?", (group_id,)
@@ -623,8 +624,82 @@ def delete_group(group_id):
 
     conn.execute("DELETE FROM account_groups WHERE id = ?", (group_id,))
     conn.commit()
+
+    # Remove stale group_id from saved configs
+    raw = get_setting(conn, "group_configs", "[]")
+    try:
+        configs = json.loads(raw)
+    except (json.JSONDecodeError, TypeError):
+        configs = []
+    for c in configs:
+        c["group_ids"] = [gid for gid in c.get("group_ids", []) if gid != group_id]
+    set_setting(conn, "group_configs", json.dumps(configs))
+    # Clear active pointer if that config is now empty
+    active_raw = get_setting(conn, "group_active_config_id", "")
+    try:
+        active_id = int(active_raw) if active_raw else None
+    except (ValueError, TypeError):
+        active_id = None
+    active_cfg = next((c for c in configs if c.get("id") == active_id), None)
+    if active_cfg is not None and not active_cfg["group_ids"]:
+        set_setting(conn, "group_active_config_id", "")
+
     conn.close()
     return jsonify({"deleted": group_id})
+
+
+# ===========================================================================
+# ACCOUNT GROUPS  — Group configs (saved selections)
+# ===========================================================================
+
+@app.route("/api/groups/configs", methods=["GET"])
+def get_group_configs():
+    """Return saved group configs and the last-active config id."""
+    conn = get_db()
+    raw    = get_setting(conn, "group_configs", "[]")
+    active = get_setting(conn, "group_active_config_id", "")
+    conn.close()
+    try:
+        configs = json.loads(raw)
+    except (json.JSONDecodeError, TypeError):
+        configs = []
+    try:
+        active_id = int(active) if active else None
+    except (ValueError, TypeError):
+        active_id = None
+    return jsonify({"configs": configs, "active_config_id": active_id})
+
+
+@app.route("/api/groups/configs", methods=["POST"])
+def save_group_configs():
+    """Atomically replace the full config list and persist the active config id."""
+    data      = request.get_json() or {}
+    configs   = data.get("configs", [])
+    active_id = data.get("active_config_id")
+
+    # Validate and sanitise each config entry
+    clean = []
+    for c in configs:
+        name      = str(c.get("name", "")).strip()[:100]
+        group_ids = [gid for gid in c.get("group_ids", []) if isinstance(gid, int)]
+        if not name:
+            continue
+        clean.append({"id": c.get("id"), "name": name, "group_ids": group_ids})
+
+    # Assign sequential IDs to entries that lack one
+    existing_ids = {c["id"] for c in clean if c.get("id")}
+    next_id = max(existing_ids, default=0) + 1
+    for c in clean:
+        if not c.get("id"):
+            c["id"] = next_id
+            next_id += 1
+
+    conn = get_db()
+    set_setting(conn, "group_configs", json.dumps(clean))
+    set_setting(conn, "group_active_config_id",
+                str(active_id) if active_id is not None else "")
+    conn.close()
+    return jsonify({"configs": clean, "active_config_id": active_id})
 
 
 # ===========================================================================

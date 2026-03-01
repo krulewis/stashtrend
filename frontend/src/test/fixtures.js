@@ -162,6 +162,21 @@ export const MOCK_BUDGET_HISTORY = {
   ],
 }
 
+export const MOCK_CONFIGS = [
+  { id: 1, name: 'Net Worth View', group_ids: [1] },
+  { id: 2, name: 'Full Picture',   group_ids: [1, 2] },
+]
+
+export const MOCK_CONFIGS_RESPONSE = {
+  configs: MOCK_CONFIGS,
+  active_config_id: 1,
+}
+
+export const MOCK_CONFIGS_EMPTY = {
+  configs: [],
+  active_config_id: null,
+}
+
 export const MOCK_AI_CONFIG_UNCONFIGURED = {
   configured: false,
   model: null,

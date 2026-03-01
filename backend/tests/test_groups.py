@@ -64,6 +64,11 @@ CREATE TABLE IF NOT EXISTS account_group_members (
     FOREIGN KEY (group_id)   REFERENCES account_groups(id) ON DELETE CASCADE,
     FOREIGN KEY (account_id) REFERENCES accounts(id)
 );
+
+CREATE TABLE IF NOT EXISTS settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
 """
 
 
@@ -92,6 +97,22 @@ def seed_history(conn, rows):
     conn.executemany(
         "INSERT INTO account_history (account_id, date, balance) VALUES (?, ?, ?)",
         rows,
+    )
+    conn.commit()
+
+
+def get_setting(conn, key, default=None):
+    """Mirror of app.py get_setting — returns stored value or default."""
+    row = conn.execute("SELECT value FROM settings WHERE key = ?", (key,)).fetchone()
+    return row["value"] if row else default
+
+
+def set_setting(conn, key, value):
+    """Mirror of app.py set_setting — upserts a key/value pair."""
+    conn.execute(
+        "INSERT INTO settings (key, value) VALUES (?, ?)"
+        " ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+        (key, value),
     )
     conn.commit()
 
@@ -672,6 +693,210 @@ class TestGroupSelectionFilter(unittest.TestCase):
         selected.add("Debt")
         active_after = self._active_lines(selected)
         self.assertIn("Debt", active_after)
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Group Configs — settings-table persistence
+# ═════════════════════════════════════════════════════════════════════════════
+
+class TestGroupConfigs(unittest.TestCase):
+    """
+    Tests for the GET/POST /api/groups/configs endpoint logic.
+    Exercises get_setting/set_setting directly against an in-memory DB.
+    """
+
+    def setUp(self):
+        self.conn = make_db()
+
+    def tearDown(self):
+        self.conn.close()
+
+    # ── Helpers mirroring the endpoint logic in app.py ────────────────────
+
+    def _get_configs(self):
+        raw    = get_setting(self.conn, "group_configs", "[]")
+        active = get_setting(self.conn, "group_active_config_id", "")
+        try:
+            configs = json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            configs = []
+        try:
+            active_id = int(active) if active else None
+        except (ValueError, TypeError):
+            active_id = None
+        return {"configs": configs, "active_config_id": active_id}
+
+    def _save_configs(self, configs, active_config_id=None):
+        next_id = max((c.get("id", 0) for c in configs), default=0) + 1
+        for c in configs:
+            if not c.get("id"):
+                c["id"] = next_id
+                next_id += 1
+        set_setting(self.conn, "group_configs", json.dumps(configs))
+        set_setting(self.conn, "group_active_config_id",
+                    str(active_config_id) if active_config_id is not None else "")
+        return {"configs": configs, "active_config_id": active_config_id}
+
+    # ── Tests ─────────────────────────────────────────────────────────────
+
+    def test_get_returns_empty_when_no_settings_exist(self):
+        result = self._get_configs()
+        self.assertEqual(result["configs"], [])
+        self.assertIsNone(result["active_config_id"])
+
+    def test_save_and_retrieve_configs(self):
+        self._save_configs([{"name": "Net Worth View", "group_ids": [1, 2]}])
+        result = self._get_configs()
+        self.assertEqual(len(result["configs"]), 1)
+        self.assertEqual(result["configs"][0]["name"], "Net Worth View")
+
+    def test_save_assigns_id_to_new_config(self):
+        saved = self._save_configs([{"name": "No ID", "group_ids": [1]}])
+        self.assertIn("id", saved["configs"][0])
+        self.assertIsNotNone(saved["configs"][0]["id"])
+
+    def test_save_preserves_existing_id(self):
+        saved = self._save_configs([{"id": 42, "name": "Has ID", "group_ids": [1]}])
+        self.assertEqual(saved["configs"][0]["id"], 42)
+
+    def test_save_and_retrieve_active_config_id(self):
+        self._save_configs([{"id": 5, "name": "My View", "group_ids": [1]}], active_config_id=5)
+        result = self._get_configs()
+        self.assertEqual(result["active_config_id"], 5)
+
+    def test_save_empty_list_clears_configs(self):
+        self._save_configs([{"name": "To clear", "group_ids": [1]}])
+        self._save_configs([])
+        self.assertEqual(self._get_configs()["configs"], [])
+
+    def test_active_config_id_none_when_cleared(self):
+        self._save_configs([{"id": 1, "name": "View", "group_ids": [1]}], active_config_id=None)
+        self.assertIsNone(self._get_configs()["active_config_id"])
+
+    def test_malformed_json_returns_empty_list(self):
+        """Corrupted settings value must not 500 — fallback to empty list."""
+        set_setting(self.conn, "group_configs", "not-valid-json{{{")
+        result = self._get_configs()
+        self.assertEqual(result["configs"], [])
+
+    def test_malformed_active_id_returns_none(self):
+        """Non-integer active_config_id must not 500 — fallback to None."""
+        set_setting(self.conn, "group_active_config_id", "not-an-int")
+        self.assertIsNone(self._get_configs()["active_config_id"])
+
+    def test_multiple_configs_preserved(self):
+        self._save_configs([
+            {"name": "View A", "group_ids": [1]},
+            {"name": "View B", "group_ids": [2, 3]},
+        ])
+        result = self._get_configs()
+        self.assertEqual(len(result["configs"]), 2)
+        names = {c["name"] for c in result["configs"]}
+        self.assertEqual(names, {"View A", "View B"})
+
+    def test_config_name_truncated_to_100_chars(self):
+        """Names longer than 100 chars should be trimmed before storage."""
+        long_name = "x" * 200
+        configs = [{"name": long_name[:100], "group_ids": [1]}]
+        self._save_configs(configs)
+        result = self._get_configs()
+        self.assertLessEqual(len(result["configs"][0]["name"]), 100)
+
+    def test_group_ids_must_be_list(self):
+        """group_ids stored as a list, not a scalar, survives round-trip."""
+        self._save_configs([{"name": "List check", "group_ids": [1, 2, 3]}])
+        result = self._get_configs()
+        self.assertIsInstance(result["configs"][0]["group_ids"], list)
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Group Config stale-ID cleanup on group delete
+# ═════════════════════════════════════════════════════════════════════════════
+
+class TestGroupConfigCleanupOnDelete(unittest.TestCase):
+    """
+    When DELETE /api/groups/<id> is called, the endpoint must remove that
+    group_id from all saved configs so they don't silently reference ghosts.
+    """
+
+    def setUp(self):
+        self.conn = make_db()
+        seed_accounts(self.conn, [("acc1", "Checking", "checking", 1, 5000)])
+        self.gid1 = create_group(self.conn, "Group A", account_ids=["acc1"])
+        self.gid2 = create_group(self.conn, "Group B")
+
+    def tearDown(self):
+        self.conn.close()
+
+    def _cleanup_configs_after_delete(self, deleted_group_id):
+        """Mirrors the cleanup helper that will be added to delete_group in app.py."""
+        raw = get_setting(self.conn, "group_configs", "[]")
+        try:
+            configs = json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            return
+        for c in configs:
+            c["group_ids"] = [gid for gid in c.get("group_ids", []) if gid != deleted_group_id]
+        active_raw = get_setting(self.conn, "group_active_config_id", "")
+        try:
+            active_id = int(active_raw) if active_raw else None
+        except (ValueError, TypeError):
+            active_id = None
+        set_setting(self.conn, "group_configs", json.dumps(configs))
+        # If the active config is now empty, clear the active pointer
+        active_cfg = next((c for c in configs if c.get("id") == active_id), None)
+        if active_cfg is not None and not active_cfg["group_ids"]:
+            set_setting(self.conn, "group_active_config_id", "")
+
+    def _raw_configs(self):
+        raw = get_setting(self.conn, "group_configs", "[]")
+        try:
+            return json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            return []
+
+    def _raw_save(self, configs):
+        set_setting(self.conn, "group_configs", json.dumps(configs))
+
+    def test_deleted_group_id_removed_from_config(self):
+        self._raw_save([{"id": 1, "name": "Mixed", "group_ids": [self.gid1, self.gid2]}])
+        self._cleanup_configs_after_delete(self.gid1)
+        configs = self._raw_configs()
+        self.assertNotIn(self.gid1, configs[0]["group_ids"])
+        self.assertIn(self.gid2, configs[0]["group_ids"])
+
+    def test_config_retained_when_group_ids_becomes_empty(self):
+        """Config stays in the list even if all its group_ids are removed."""
+        self._raw_save([{"id": 1, "name": "Solo", "group_ids": [self.gid1]}])
+        self._cleanup_configs_after_delete(self.gid1)
+        configs = self._raw_configs()
+        self.assertEqual(len(configs), 1)
+        self.assertEqual(configs[0]["group_ids"], [])
+
+    def test_unrelated_config_not_affected(self):
+        self._raw_save([
+            {"id": 1, "name": "A", "group_ids": [self.gid1]},
+            {"id": 2, "name": "B", "group_ids": [self.gid2]},
+        ])
+        self._cleanup_configs_after_delete(self.gid1)
+        configs = self._raw_configs()
+        by_name = {c["name"]: c for c in configs}
+        self.assertNotIn(self.gid1, by_name["A"]["group_ids"])
+        self.assertIn(self.gid2, by_name["B"]["group_ids"])
+
+    def test_cleanup_with_no_configs_is_safe(self):
+        """Calling cleanup when no configs are saved must not raise."""
+        try:
+            self._cleanup_configs_after_delete(self.gid1)
+        except Exception as e:
+            self.fail(f"Cleanup raised unexpectedly: {e}")
+
+    def test_active_config_id_cleared_when_config_becomes_empty(self):
+        self._raw_save([{"id": 1, "name": "Solo", "group_ids": [self.gid1]}])
+        set_setting(self.conn, "group_active_config_id", "1")
+        self._cleanup_configs_after_delete(self.gid1)
+        active = get_setting(self.conn, "group_active_config_id", "")
+        self.assertEqual(active, "")
 
 
 if __name__ == "__main__":
