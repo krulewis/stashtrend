@@ -11,23 +11,8 @@ import {
 } from 'recharts'
 import styles from './GroupsSnapshot.module.css'
 import { useResponsive } from '../hooks/useResponsive'
-
-const fmtCompact = (n) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    notation: 'compact',
-    maximumFractionDigits: 1,
-  }).format(n)
-
-const fmtFull = (n) =>
-  n == null
-    ? '—'
-    : new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        maximumFractionDigits: 0,
-      }).format(n)
+import GroupSnapshotControls from './GroupSnapshotControls.jsx'
+import { fmtCompact, fmtFull, GRID_STROKE } from './chartUtils.jsx'
 
 // Tooltip rendered by recharts — keep inline
 const tooltipStyles = {
@@ -68,8 +53,21 @@ const CustomBarLabel = ({ x, y, width, value }) => {
   )
 }
 
-export default function GroupsSnapshot({ snapshot }) {
+export default function GroupsSnapshot({
+  snapshot,
+  groups = [],
+  selectedGroupIds = null,
+  configs = [],
+  activeConfigId = null,
+  conflictMap = {},
+  onGroupToggle,
+  onSelectConfig,
+  onSaveConfig,
+  onDeleteConfig,
+}) {
   const { isMobile } = useResponsive()
+
+  const showControls = groups.length > 0
 
   if (!snapshot) {
     return (
@@ -79,7 +77,7 @@ export default function GroupsSnapshot({ snapshot }) {
     )
   }
 
-  if (snapshot.length === 0) {
+  if (snapshot.length === 0 && groups.length === 0) {
     return (
       <div className={styles.container}>
         <h2 className={styles.title}>Current Snapshot</h2>
@@ -106,55 +104,77 @@ export default function GroupsSnapshot({ snapshot }) {
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={chartHeight}>
-        <BarChart
-          data={data}
-          margin={{ top: 20, right: 16, left: 0, bottom: 0 }}
-          barCategoryGap="30%"
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="#2d3348" horizontal vertical={false} />
-          <XAxis
-            dataKey="name"
-            tick={{ fill: '#94a3b8', fontSize: 12 }}
-            tickLine={false}
-            axisLine={false}
-          />
-          <YAxis
-            tickFormatter={fmtCompact}
-            tick={{ fill: '#64748b', fontSize: 11 }}
-            tickLine={false}
-            axisLine={false}
-            width={yAxisWidth}
-          />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
-          <Bar dataKey="total" radius={[6, 6, 0, 0]}>
-            {data.map((entry) => (
-              <Cell key={entry.id} fill={entry.color} />
-            ))}
-            <LabelList content={<CustomBarLabel />} dataKey="total" position="insideTop" />
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+      {showControls && (
+        <GroupSnapshotControls
+          groups={groups}
+          selectedGroupIds={selectedGroupIds}
+          configs={configs}
+          activeConfigId={activeConfigId}
+          conflictMap={conflictMap}
+          onGroupToggle={onGroupToggle}
+          onSelectConfig={onSelectConfig}
+          onSaveConfig={onSaveConfig}
+          onDeleteConfig={onDeleteConfig}
+        />
+      )}
 
-      {/* Summary table */}
-      <div className={styles.table}>
-        {data.map((g) => (
-          <div key={g.id} className={styles.tableRow}>
-            <div className={styles.tableLeft}>
-              {/* dot background is data-driven */}
-              <div className={styles.dot} style={{ background: g.color }} />
-              <span className={styles.tableName}>{g.name}</span>
-              <span className={styles.tableAccounts}>{g.account_count} acct{g.account_count !== 1 ? 's' : ''}</span>
-            </div>
-            <div className={styles.tableRight}>
-              <span className={styles.tableAmt}>{fmtFull(g.total)}</span>
-              <span className={styles.tablePct}>
-                {total !== 0 ? `${((g.total / Math.abs(total)) * 100).toFixed(1)}%` : '—'}
-              </span>
-            </div>
+      {snapshot.length === 0 ? (
+        <div className={styles.emptyState}>
+          No groups selected — click a group above to show it here.
+        </div>
+      ) : (
+        <>
+          <ResponsiveContainer width="100%" height={chartHeight}>
+            <BarChart
+              data={data}
+              margin={{ top: 20, right: 16, left: 0, bottom: 0 }}
+              barCategoryGap="30%"
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} horizontal vertical={false} />
+              <XAxis
+                dataKey="name"
+                tick={{ fill: '#94a3b8', fontSize: 12 }}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                tickFormatter={fmtCompact}
+                tick={{ fill: '#64748b', fontSize: 11 }}
+                tickLine={false}
+                axisLine={false}
+                width={yAxisWidth}
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+              <Bar dataKey="total" radius={[6, 6, 0, 0]}>
+                {data.map((entry) => (
+                  <Cell key={entry.id} fill={entry.color} />
+                ))}
+                <LabelList content={<CustomBarLabel />} dataKey="total" position="insideTop" />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+
+          {/* Summary table */}
+          <div className={styles.table}>
+            {data.map((g) => (
+              <div key={g.id} className={styles.tableRow}>
+                <div className={styles.tableLeft}>
+                  {/* dot background is data-driven */}
+                  <div className={styles.dot} style={{ background: g.color }} />
+                  <span className={styles.tableName}>{g.name}</span>
+                  <span className={styles.tableAccounts}>{g.account_count} acct{g.account_count !== 1 ? 's' : ''}</span>
+                </div>
+                <div className={styles.tableRight}>
+                  <span className={styles.tableAmt}>{fmtFull(g.total)}</span>
+                  <span className={styles.tablePct}>
+                    {total !== 0 ? `${((g.total / Math.abs(total)) * 100).toFixed(1)}%` : '—'}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      )}
     </div>
   )
 }

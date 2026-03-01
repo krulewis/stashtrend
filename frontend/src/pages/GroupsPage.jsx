@@ -1,22 +1,20 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import styles from './GroupsPage.module.css'
 import GroupsTimeChart from '../components/GroupsTimeChart'
 import GroupsSnapshot from '../components/GroupsSnapshot'
 import GroupManager from '../components/GroupManager'
-
-async function fetchJSON(url) {
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.json()
-}
+import { fetchJSON, postJSON } from '../api.js'
 
 export default function GroupsPage() {
-  const [groups,      setGroups]      = useState([])
-  const [accounts,    setAccounts]    = useState([])
-  const [historyData, setHistoryData] = useState(null)
-  const [snapshot,    setSnapshot]    = useState(null)
-  const [loading,     setLoading]     = useState(true)
-  const [error,       setError]       = useState(null)
+  const [groups,          setGroups]          = useState([])
+  const [accounts,        setAccounts]        = useState([])
+  const [historyData,     setHistoryData]     = useState(null)
+  const [snapshot,        setSnapshot]        = useState(null)
+  const [configs,         setConfigs]         = useState([])
+  const [activeConfigId,  setActiveConfigId]  = useState(null)
+  const [selectedGroupIds, setSelectedGroupIds] = useState(new Set())
+  const [loading,         setLoading]         = useState(true)
+  const [error,           setError]           = useState(null)
 
   // Load accounts once (doesn't change when groups change)
   useEffect(() => {
@@ -25,18 +23,25 @@ export default function GroupsPage() {
       .catch((err) => setError(err.message))
   }, [])
 
-  // Load groups + visualization data — re-runs whenever groups are mutated
+  // Load groups + visualization data + configs — re-runs whenever groups are mutated
   const loadGroupData = useCallback(() => {
     setLoading(true)
     Promise.all([
       fetchJSON('/api/groups'),
       fetchJSON('/api/groups/history'),
       fetchJSON('/api/groups/snapshot'),
+      fetchJSON('/api/groups/configs'),
     ])
-      .then(([g, h, snap]) => {
+      .then(([g, h, snap, cfgData]) => {
         setGroups(g)
         setHistoryData(h)
         setSnapshot(snap)
+        setConfigs(cfgData.configs)
+        // Restore the last active config's group selection
+        const activeId = cfgData.active_config_id
+        const active   = cfgData.configs.find((c) => c.id === activeId)
+        setActiveConfigId(activeId)
+        setSelectedGroupIds(active ? new Set(active.group_ids) : new Set())
         setError(null)
       })
       .catch((err) => setError(err.message))
@@ -46,6 +51,77 @@ export default function GroupsPage() {
   useEffect(() => {
     loadGroupData()
   }, [loadGroupData])
+
+  // Conflict map: group_id → Set of group_ids that share at least one account
+  const conflictMap = useMemo(() => {
+    const accountToGroups = {}
+    for (const g of groups) {
+      for (const aid of g.account_ids) {
+        if (!accountToGroups[aid]) accountToGroups[aid] = []
+        accountToGroups[aid].push(g.id)
+      }
+    }
+    const result = {}
+    for (const g of groups) {
+      const conflicts = new Set()
+      for (const aid of g.account_ids) {
+        for (const otherId of accountToGroups[aid] || []) {
+          if (otherId !== g.id) conflicts.add(otherId)
+        }
+      }
+      result[g.id] = conflicts
+    }
+    return result
+  }, [groups])
+
+  // Snapshot filtered to the selected group ids
+  const filteredSnapshot = useMemo(() => {
+    if (!snapshot) return null
+    return snapshot.filter((g) => selectedGroupIds.has(g.id))
+  }, [snapshot, selectedGroupIds])
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
+
+  const handleGroupToggle = useCallback((groupId) => {
+    setSelectedGroupIds((prev) => {
+      const next = new Set(prev)
+      next.has(groupId) ? next.delete(groupId) : next.add(groupId)
+      return next
+    })
+    setActiveConfigId(null) // manual toggle clears the saved-config pointer
+  }, [])
+
+  const handleSelectConfig = useCallback((config) => {
+    setSelectedGroupIds(new Set(config.group_ids))
+    setActiveConfigId(config.id)
+    // Persist the last-active config (fire and forget — best effort)
+    postJSON('/api/groups/configs', { configs, active_config_id: config.id }).catch(() => {})
+  }, [configs])
+
+  const handleSaveConfig = useCallback(async (name) => {
+    const selectedIds = [...selectedGroupIds]
+    const updated     = [...configs, { name, group_ids: selectedIds }]
+    try {
+      const data = await postJSON('/api/groups/configs', { configs: updated, active_config_id: activeConfigId })
+      setConfigs(data.configs)
+    } catch {
+      // Non-critical — selection still works, just not persisted
+    }
+  }, [configs, selectedGroupIds, activeConfigId])
+
+  const handleDeleteConfig = useCallback(async (configId) => {
+    const updated     = configs.filter((c) => c.id !== configId)
+    const newActiveId = activeConfigId === configId ? null : activeConfigId
+    try {
+      const data = await postJSON('/api/groups/configs', { configs: updated, active_config_id: newActiveId })
+      setConfigs(data.configs)
+      setActiveConfigId(newActiveId)
+    } catch {
+      // Non-critical
+    }
+  }, [configs, activeConfigId])
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   if (error) {
     return (
@@ -66,7 +142,18 @@ export default function GroupsPage() {
           <GroupsTimeChart historyData={historyData} />
         </div>
         <div className={styles.snapshotCol}>
-          <GroupsSnapshot snapshot={snapshot} />
+          <GroupsSnapshot
+            snapshot={filteredSnapshot}
+            groups={groups}
+            selectedGroupIds={selectedGroupIds}
+            configs={configs}
+            activeConfigId={activeConfigId}
+            conflictMap={conflictMap}
+            onGroupToggle={handleGroupToggle}
+            onSelectConfig={handleSelectConfig}
+            onSaveConfig={handleSaveConfig}
+            onDeleteConfig={handleDeleteConfig}
+          />
         </div>
       </div>
 
