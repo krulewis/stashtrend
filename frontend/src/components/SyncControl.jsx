@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import PropTypes from 'prop-types'
 import styles from './SyncControl.module.css'
 import { fetchSyncLastStatus, startSync } from '../api.js'
 import { fmtDatetime } from './chartUtils.jsx'
@@ -159,4 +160,9 @@ export default function SyncControl({ isRunning, onSyncStarted }) {
       </button>
     </div>
   )
+}
+
+SyncControl.propTypes = {
+  isRunning: PropTypes.bool.isRequired,
+  onSyncStarted: PropTypes.func.isRequired,
 }

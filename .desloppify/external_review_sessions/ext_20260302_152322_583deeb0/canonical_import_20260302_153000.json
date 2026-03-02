@@ -1,0 +1,420 @@
+{
+  "assessments": {
+    "naming_quality": 88,
+    "logic_clarity": 90,
+    "type_safety": 68,
+    "contract_coherence": 85,
+    "error_consistency": 80,
+    "abstraction_fitness": 88,
+    "ai_generated_debt": 92,
+    "high_level_elegance": 90,
+    "mid_level_elegance": 85,
+    "low_level_elegance": 87,
+    "cross_module_architecture": 82,
+    "initialization_coupling": 95,
+    "convention_outlier": 82,
+    "dependency_health": 92,
+    "test_strategy": 82,
+    "api_surface_coherence": 80,
+    "authorization_consistency": 90,
+    "incomplete_migration": 78,
+    "package_organization": 88,
+    "design_coherence": 82
+  },
+  "findings": [
+    {
+      "dimension": "naming_quality",
+      "identifier": "generic-handler-names",
+      "summary": "Several handler functions use generic 'handle' prefix without domain specificity, while nearby siblings use more descriptive names",
+      "related_files": [
+        "frontend/src/components/GroupManager.jsx",
+        "frontend/src/pages/GroupsPage.jsx"
+      ],
+      "evidence": [
+        "GroupManager.jsx line 245: 'handleSave' \u2014 ambiguous when the component manages both create and update operations; 'handleGroupSave' or 'saveGroup' would disambiguate in stack traces",
+        "GroupManager.jsx line 263: 'handleDelete' \u2014 same issue, 'confirmAndDeleteGroup' would capture the confirm-gate behavior",
+        "GroupsPage.jsx has the opposite pattern done well: 'handleGroupToggle', 'handleSelectConfig', 'handleSaveConfig' are all domain-specific"
+      ],
+      "suggestion": "Align GroupManager's internal handler names with the domain-specific naming pattern already established in GroupsPage. Use 'saveGroupForm' / 'confirmDeleteGroup' style names.",
+      "confidence": "low"
+    },
+    {
+      "dimension": "logic_clarity",
+      "identifier": "filterByRange-date-comparison",
+      "summary": "filterByRange compares date strings lexicographically, which works for ISO format but is a subtle correctness dependency with no guardrail",
+      "related_files": [
+        "frontend/src/components/chartUtils.jsx"
+      ],
+      "evidence": [
+        "chartUtils.jsx line 63: 'return data.filter((d) => d.date >= cutoffStr)' \u2014 relies on YYYY-MM-DD string comparison being equivalent to chronological order",
+        "No comment or assertion documents this assumption; if a non-ISO date format ever enters the pipeline the filter silently produces wrong results"
+      ],
+      "suggestion": "Add a brief inline comment noting the ISO-format prerequisite, or parse both sides to Date objects for an explicit numeric comparison. The performance difference is negligible for the data sizes involved.",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "type_safety",
+      "identifier": "missing-proptypes-on-multiple-components",
+      "summary": "Several production components lack PropTypes validation. While PropTypes have been added to key components (AccountsBreakdown, GroupsSnapshot, GroupSnapshotControls, SyncControl), many others still have none.",
+      "related_files": [
+        "frontend/src/components/StatsCards.jsx",
+        "frontend/src/components/NetWorthChart.jsx",
+        "frontend/src/components/GroupsTimeChart.jsx",
+        "frontend/src/components/BudgetChart.jsx",
+        "frontend/src/components/BudgetTable.jsx",
+        "frontend/src/components/SyncHistory.jsx",
+        "frontend/src/components/SyncJobStatus.jsx",
+        "frontend/src/components/RangeSelector.jsx",
+        "frontend/src/components/GroupManager.jsx",
+        "frontend/src/components/AIAnalysisPanel.jsx",
+        "frontend/src/App.jsx",
+        "frontend/src/pages/SetupPage.jsx"
+      ],
+      "evidence": [
+        "StatsCards.jsx: no PropTypes on the default export despite receiving a complex 'stats' object with nested 'current', 'mom', 'yoy' properties",
+        "NetWorthChart.jsx: no PropTypes on 'history' prop (expects an array of { date, net_worth, assets, liabilities })",
+        "BudgetChart.jsx: no PropTypes despite three props including the complex 'totalsByMonth' map",
+        "BudgetTable.jsx: no PropTypes despite complex 'categories' array-of-objects prop",
+        "SyncHistory.jsx, SyncJobStatus.jsx: no PropTypes despite complex job/history data shapes",
+        "RangeSelector.jsx: no PropTypes despite being a reusable shared component",
+        "GroupManager.jsx: no PropTypes on the main export or its sub-components (GroupForm, GroupList)"
+      ],
+      "suggestion": "Add PropTypes to all production components that accept props. This is especially important for the shared/reusable components (RangeSelector, BudgetChart, BudgetTable) and page-level components that receive complex data shapes. Consider migrating to TypeScript for stronger guarantees.",
+      "confidence": "high"
+    },
+    {
+      "dimension": "contract_coherence",
+      "identifier": "groupspage-uses-raw-fetchjson-not-api-module",
+      "summary": "GroupsPage bypasses the named API module exports, calling fetchJSON and postJSON directly with raw URL strings instead of using the domain-specific wrappers in api.js",
+      "related_files": [
+        "frontend/src/pages/GroupsPage.jsx",
+        "frontend/src/api.js"
+      ],
+      "evidence": [
+        "GroupsPage.jsx line 7: 'import { fetchJSON, postJSON } from '../api.js'' \u2014 imports the low-level primitives",
+        "GroupsPage.jsx line 22: 'fetchJSON('/api/accounts/summary')' \u2014 should use fetchAccountsSummary()",
+        "GroupsPage.jsx line 30-33: 'fetchJSON('/api/groups'), fetchJSON('/api/groups/history'), fetchJSON('/api/groups/snapshot'), fetchJSON('/api/groups/configs')' \u2014 the first three have named wrappers (fetchGroups, fetchGroupsHistory, fetchGroupsSnapshot) that should be used, the last (/api/groups/configs) has no wrapper at all",
+        "GroupsPage.jsx line 98: 'postJSON('/api/groups/configs', ...)' \u2014 used in multiple places with no wrapper",
+        "All other pages (BudgetPage, SyncPage, SetupPage, App) consistently use the named api.js exports"
+      ],
+      "suggestion": "Add fetchGroupsConfigs() and saveGroupsConfigs() wrappers to api.js, then update GroupsPage to import only named domain functions. This maintains the single-source-of-truth pattern established by api.js and matches the pattern used by all other pages.",
+      "confidence": "high"
+    },
+    {
+      "dimension": "error_consistency",
+      "identifier": "mixed-error-surfacing-patterns",
+      "summary": "Error handling across pages and components uses inconsistent strategies for surfacing errors to users \u2014 some use state-driven error displays, others use console.warn fire-and-forget",
+      "related_files": [
+        "frontend/src/pages/GroupsPage.jsx",
+        "frontend/src/components/GroupManager.jsx",
+        "frontend/src/App.jsx"
+      ],
+      "evidence": [
+        "GroupsPage.jsx line 98: 'postJSON(...).catch((err) => console.warn('Failed to persist active config:', err))' \u2014 config save failures are silently swallowed from the user's perspective",
+        "GroupsPage.jsx lines 107-108: 'console.warn('Failed to save config:', err)' \u2014 same pattern for save/delete/rename config operations",
+        "GroupManager.jsx line 256-258: handleSave properly shows formError on failure \u2014 the right approach",
+        "GroupManager.jsx line 269-271: handleDelete properly shows listError on failure",
+        "App.jsx line 54: setError(err.message) \u2014 proper error surfacing for dashboard data fetch"
+      ],
+      "suggestion": "Replace the console.warn catch handlers in GroupsPage's config operations with a user-visible toast or inline error message. The user should know when their saved view configurations fail to persist. Even a transient notification would be better than silent failure.",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "abstraction_fitness",
+      "identifier": "wide-prop-drilling-groupssnapshot",
+      "summary": "GroupsSnapshot receives 11 props and passes 10 of them straight through to GroupSnapshotControls \u2014 a prop-drilling pass-through pattern",
+      "related_files": [
+        "frontend/src/components/GroupsSnapshot.jsx",
+        "frontend/src/components/GroupSnapshotControls.jsx",
+        "frontend/src/pages/GroupsPage.jsx"
+      ],
+      "evidence": [
+        "GroupsSnapshot.jsx lines 57-69: receives groups, selectedGroupIds, configs, activeConfigId, conflictMap, onGroupToggle, onSelectConfig, onSaveConfig, onDeleteConfig, onRenameConfig \u2014 then passes all of them to GroupSnapshotControls at lines 110-121",
+        "GroupsPage.jsx could render GroupSnapshotControls directly alongside GroupsSnapshot, avoiding the pass-through"
+      ],
+      "suggestion": "Consider rendering GroupSnapshotControls directly in GroupsPage (or as a sibling to GroupsSnapshot) rather than routing all control props through GroupsSnapshot. GroupsSnapshot's core responsibility is displaying the chart and summary table, not relaying control callbacks.",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "ai_generated_debt",
+      "identifier": "tooltip-style-duplication",
+      "summary": "Multiple components define nearly identical tooltip style objects, a pattern suggestive of copy-paste across feature additions",
+      "related_files": [
+        "frontend/src/components/NetWorthChart.jsx",
+        "frontend/src/components/GroupsSnapshot.jsx",
+        "frontend/src/components/GroupsTimeChart.jsx",
+        "frontend/src/components/chartUtils.jsx"
+      ],
+      "evidence": [
+        "chartUtils.jsx line 97-104: exports TOOLTIP_STYLE with background '#1e2130', border '1px solid #2d3348', borderRadius 6, etc.",
+        "NetWorthChart.jsx line 12: defines local tooltipStyles.wrap with the same background and border values but borderRadius 8",
+        "GroupsSnapshot.jsx line 19-24: defines local tooltipStyles.wrap with same values, borderRadius 8",
+        "GroupsTimeChart.jsx line 10: spreads TOOLTIP_STYLE then overrides borderRadius to 8 and padding \u2014 partial reuse",
+        "BudgetChart.jsx line 12: correctly uses TOOLTIP_STYLE directly without redefinition"
+      ],
+      "suggestion": "Standardize on the shared TOOLTIP_STYLE from chartUtils.jsx. If 8px border radius is preferred, update the constant once. NetWorthChart and GroupsSnapshot should spread TOOLTIP_STYLE with any overrides rather than redefining the same values.",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "high_level_elegance",
+      "identifier": "chartutils-mixed-concerns",
+      "summary": "chartUtils.jsx combines formatting functions, chart constants, sync-related duration helpers, and JSX chart element factories \u2014 it serves too many domains",
+      "related_files": [
+        "frontend/src/components/chartUtils.jsx"
+      ],
+      "evidence": [
+        "chartUtils.jsx exports 20+ symbols spanning: currency formatting (fmtCompact, fmtFull), date formatting (formatDateLabel, fmtBudgetMonth, fmtDatetime, fmtDatetimeSecs), data transformation (filterByRange, downsample), sync duration helpers (durationFinal, durationElapsed, formatSeconds), chart constants (AXIS_TICK, GRID_STROKE, TOOLTIP_STYLE, COLOR_*), range options (COMMON_RANGES), and JSX factory (sharedChartElements)",
+        "Duration helpers (durationFinal, durationElapsed) are only used by sync components (SyncHistory, SyncJobStatus), not by chart components",
+        "fmtDatetime and fmtDatetimeSecs are also only used by sync components"
+      ],
+      "suggestion": "Extract sync-specific formatters (fmtDatetime, fmtDatetimeSecs, durationFinal, durationElapsed) into a separate syncUtils.js file in the constants or components directory. chartUtils should only contain chart-related formatting and constants.",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "mid_level_elegance",
+      "identifier": "groupspage-orchestration-complexity",
+      "summary": "GroupsPage manages 8 state variables and 5 callback handlers, performing orchestration that could benefit from custom hook extraction",
+      "related_files": [
+        "frontend/src/pages/GroupsPage.jsx"
+      ],
+      "evidence": [
+        "GroupsPage.jsx lines 9-17: 8 useState calls for groups, accounts, historyData, snapshot, configs, activeConfigId, selectedGroupIds, loading, error",
+        "Lines 85-132: 5 useCallback handlers for toggle, select, save, delete, rename configs \u2014 each with their own async fetch-and-setState logic",
+        "Lines 56-75: conflictMap computation is a derived-state useMemo unrelated to rendering",
+        "The component is 191 lines, making it the longest file in the codebase alongside being the most stateful"
+      ],
+      "suggestion": "Extract the config management state and handlers into a useGroupConfigs() custom hook (managing configs, activeConfigId, save/delete/rename handlers). This would reduce GroupsPage to orchestration of three hooks: data loading, config management, and selection state.",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "low_level_elegance",
+      "identifier": "fmtdollar-duplicate-in-budgettable",
+      "summary": "BudgetTable defines its own fmtDollar function that largely duplicates fmtFull from chartUtils, differing only in parenthetical notation for negatives",
+      "related_files": [
+        "frontend/src/components/BudgetTable.jsx",
+        "frontend/src/components/chartUtils.jsx"
+      ],
+      "evidence": [
+        "BudgetTable.jsx lines 5-9: defines fmtDollar(n) that formats currency with parentheses for negatives",
+        "chartUtils.jsx lines 14-21: fmtFull(n) uses Intl.NumberFormat for currency formatting",
+        "Both handle null with '\u2014', both format USD, the only semantic difference is negative formatting (parens vs minus sign)"
+      ],
+      "suggestion": "Either add a fmtAccounting variant to chartUtils.jsx that uses sign: 'accounting' in Intl.NumberFormat options, or have fmtDollar call fmtFull internally and wrap negatives in parens. This avoids maintaining two independent currency formatters.",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "cross_module_architecture",
+      "identifier": "groupspage-bypasses-api-boundary",
+      "summary": "GroupsPage imports fetchJSON/postJSON primitives instead of domain wrappers, creating a backdoor around the api.js module boundary",
+      "related_files": [
+        "frontend/src/pages/GroupsPage.jsx",
+        "frontend/src/api.js"
+      ],
+      "evidence": [
+        "GroupsPage.jsx line 7: imports fetchJSON and postJSON directly from api.js",
+        "GroupsPage.jsx uses raw URL strings '/api/groups/configs' in 4 places \u2014 this endpoint has no api.js wrapper",
+        "All other page components (BudgetPage, SyncPage, SetupPage, App) exclusively import named domain functions from api.js",
+        "This means a URL change to the configs endpoint requires modifying GroupsPage.jsx instead of just api.js"
+      ],
+      "suggestion": "Add fetchGroupsConfigs() and saveGroupsConfigs() to api.js and update GroupsPage to use them. This closes the gap in the api module boundary.",
+      "confidence": "high"
+    },
+    {
+      "dimension": "initialization_coupling",
+      "identifier": "syncentities-module-level-objects",
+      "summary": "syncEntities.js creates module-level constant objects; this is fine for constants but worth noting as the only non-trivial module-scope initialization",
+      "related_files": [
+        "frontend/src/constants/syncEntities.js"
+      ],
+      "evidence": [
+        "syncEntities.js creates 5 exported constant objects at module scope \u2014 all pure data with no I/O or side effects",
+        "No circular dependencies, no import-order sensitivity detected"
+      ],
+      "suggestion": "No action needed. The module-scope initialization is appropriate for pure constants. Score reflects the clean absence of initialization coupling issues across the codebase.",
+      "confidence": "low"
+    },
+    {
+      "dimension": "convention_outlier",
+      "identifier": "mixed-import-extension-patterns",
+      "summary": "Import statements inconsistently include or omit .jsx/.js file extensions, and some imports omit extensions entirely (relying on Vite resolution)",
+      "related_files": [
+        "frontend/src/pages/GroupsPage.jsx",
+        "frontend/src/components/GroupsSnapshot.jsx",
+        "frontend/src/components/GroupsTimeChart.jsx"
+      ],
+      "evidence": [
+        "GroupsPage.jsx line 3: 'import GroupsTimeChart from '../components/GroupsTimeChart'' \u2014 no extension",
+        "GroupsPage.jsx line 4: 'import GroupsSnapshot from '../components/GroupsSnapshot'' \u2014 no extension",
+        "GroupsPage.jsx line 5: 'import GroupManager from '../components/GroupManager'' \u2014 no extension",
+        "GroupsPage.jsx line 7: 'import { fetchJSON, postJSON } from '../api.js'' \u2014 has .js extension",
+        "GroupsSnapshot.jsx line 14: 'import { useResponsive } from '../hooks/useResponsive'' \u2014 no extension",
+        "Meanwhile App.jsx, BudgetPage.jsx, SyncPage.jsx consistently include extensions on all imports"
+      ],
+      "suggestion": "Standardize on always including the file extension in imports, matching the majority convention in the codebase. This is also more robust for ESM module resolution.",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "convention_outlier",
+      "identifier": "inconsistent-css-var-vs-raw-hex",
+      "summary": "Some components use CSS variables for colors while inline styles in the same file use raw hex values, despite comments acknowledging the pattern",
+      "related_files": [
+        "frontend/src/components/StatsCards.jsx",
+        "frontend/src/components/SyncHistory.jsx"
+      ],
+      "evidence": [
+        "StatsCards.jsx lines 9,12,22: uses raw hex '#34d399' and '#f87171' for arrow colors inline, while CSS module files use CSS variables for the same semantic colors",
+        "chartUtils.jsx lines 107-110: exports COLOR_POSITIVE='#34d399' and COLOR_NEGATIVE='#f87171' as named constants \u2014 StatsCards should import these instead of duplicating the literals",
+        "SyncHistory.jsx line 58: uses SYNC_STATUS_ICON color (CSS vars) correctly \u2014 good pattern"
+      ],
+      "suggestion": "Import COLOR_POSITIVE and COLOR_NEGATIVE from chartUtils in StatsCards.jsx rather than hardcoding the same hex values. This ensures color consistency if the palette is ever updated.",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "dependency_health",
+      "identifier": "prop-types-runtime-overhead",
+      "summary": "prop-types is a production dependency but only provides development-time warnings; in production builds it becomes dead weight unless stripped",
+      "related_files": [
+        "frontend/package.json"
+      ],
+      "evidence": [
+        "package.json line 14: 'prop-types': '^15.8.1' listed under dependencies (not devDependencies)",
+        "PropTypes checks are stripped in production React builds, but the prop-types library itself is still bundled unless tree-shaken"
+      ],
+      "suggestion": "This is a minor concern since Vite's production build will tree-shake unused code. If bundle size becomes a concern, consider moving to TypeScript instead. No immediate action needed.",
+      "confidence": "low"
+    },
+    {
+      "dimension": "test_strategy",
+      "identifier": "no-tests-for-several-components",
+      "summary": "RangeSelector (shared reusable component) and AutoSyncSettings have adequate test coverage, but BudgetTable's tests only check rendering \u2014 no tests verify the fmtDollar formatter or the SummaryTable computation logic",
+      "related_files": [
+        "frontend/src/components/BudgetTable.jsx",
+        "frontend/src/components/BudgetTable.test.jsx"
+      ],
+      "evidence": [
+        "BudgetTable.jsx lines 5-9: fmtDollar function has distinct formatting logic (parenthetical negatives, Math.abs) that is untested in isolation",
+        "BudgetTable.jsx lines 58-124: SummaryTable performs non-trivial income/expense/net calculations across months \u2014 no unit test verifies the actual computed numbers, only that rows render",
+        "The existing BudgetTable tests are rendering-only: they verify text presence but never assert computed dollar amounts"
+      ],
+      "suggestion": "Add unit tests for fmtDollar (especially negative formatting and null handling) and add a test that verifies SummaryTable's computed net values against expected numbers from the mock data.",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "test_strategy",
+      "identifier": "groupspage-config-handlers-untested",
+      "summary": "GroupsPage's config persistence handlers (save, delete, rename, select) use fire-and-forget patterns with console.warn on failure \u2014 these failure paths are not tested",
+      "related_files": [
+        "frontend/src/pages/GroupsPage.jsx",
+        "frontend/src/pages/GroupsPage.test.jsx"
+      ],
+      "evidence": [
+        "GroupsPage.jsx lines 94-132: handleSelectConfig, handleSaveConfig, handleDeleteConfig, handleRenameConfig all have catch blocks that console.warn but no error state \u2014 untested",
+        "GroupsPage.test.jsx: no test simulates a failing POST to /api/groups/configs",
+        "By contrast, GroupManager.test.jsx does test delete failure (line 129-138)"
+      ],
+      "suggestion": "Add tests that mock /api/groups/configs to fail and verify the console.warn is called (or, better, add user-visible error handling and test that).",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "api_surface_coherence",
+      "identifier": "groupssnapshot-wide-prop-interface",
+      "summary": "GroupsSnapshot accepts 11 props, most of which are pass-throughs for its child GroupSnapshotControls \u2014 the component's API surface is wider than its actual responsibility",
+      "related_files": [
+        "frontend/src/components/GroupsSnapshot.jsx"
+      ],
+      "evidence": [
+        "GroupsSnapshot.jsx lines 57-69: accepts snapshot, groups, selectedGroupIds, configs, activeConfigId, conflictMap, onGroupToggle, onSelectConfig, onSaveConfig, onDeleteConfig, onRenameConfig",
+        "Of these 11 props, only 'snapshot' is used by GroupsSnapshot's own rendering logic (chart + table). The other 10 are forwarded to GroupSnapshotControls"
+      ],
+      "suggestion": "Either flatten the component hierarchy so GroupsPage renders GroupSnapshotControls directly, or bundle the control-related props into a single 'controlProps' object to make the pass-through explicit and reduce the apparent surface area.",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "authorization_consistency",
+      "identifier": "localhost-only-auth-model-documented",
+      "summary": "The app uses a configured flag rather than session auth, relying on localhost-only access \u2014 this is documented but the security boundary is implicit",
+      "related_files": [
+        "frontend/src/App.jsx"
+      ],
+      "evidence": [
+        "App.jsx lines 31-34: Comment explicitly documents the localhost-only security model and notes that token/session auth should be added if ever exposed beyond localhost",
+        "The setup check at lines 36-39 determines access based solely on /api/setup/status configured flag"
+      ],
+      "suggestion": "The existing documentation comment is good. No action needed unless the deployment model changes. Score reflects the deliberate, documented design choice.",
+      "confidence": "low"
+    },
+    {
+      "dimension": "incomplete_migration",
+      "identifier": "groupspage-not-migrated-to-api-module",
+      "summary": "GroupsPage still uses raw fetchJSON/postJSON while all other pages have been migrated to named API function exports \u2014 this is an incomplete migration of the api.js module pattern",
+      "related_files": [
+        "frontend/src/pages/GroupsPage.jsx",
+        "frontend/src/api.js"
+      ],
+      "evidence": [
+        "api.js defines named exports for groups: fetchGroups, fetchGroupsHistory, fetchGroupsSnapshot (lines 31-33)",
+        "GroupsPage.jsx line 22: uses fetchJSON('/api/accounts/summary') instead of fetchAccountsSummary()",
+        "GroupsPage.jsx lines 30-33: uses fetchJSON('/api/groups') instead of fetchGroups(), etc.",
+        "GroupsPage.jsx lines 98, 105, 116, 125: uses postJSON('/api/groups/configs', ...) \u2014 no wrapper exists in api.js for this endpoint",
+        "BudgetPage.jsx, SyncPage.jsx, App.jsx all consistently use the named API exports"
+      ],
+      "suggestion": "Complete the migration: (1) add fetchGroupsConfigs() and saveGroupsConfigs() to api.js, (2) update GroupsPage to import and use all named API functions instead of fetchJSON/postJSON.",
+      "confidence": "high"
+    },
+    {
+      "dimension": "package_organization",
+      "identifier": "chartutils-in-components-directory",
+      "summary": "chartUtils.jsx lives in components/ but is a utility module, not a component \u2014 its placement is inconsistent with the directory's purpose",
+      "related_files": [
+        "frontend/src/components/chartUtils.jsx",
+        "frontend/src/constants/syncEntities.js"
+      ],
+      "evidence": [
+        "components/ directory contains 15 .jsx component files and 1 utility file (chartUtils.jsx)",
+        "constants/ directory already exists and holds syncEntities.js \u2014 chartUtils' constants and formatters would fit there, or in a new utils/ directory",
+        "chartUtils.jsx is imported by 8 different files including components and pages \u2014 it is a cross-cutting utility"
+      ],
+      "suggestion": "Move chartUtils.jsx to a utils/ directory (or split into constants/chartConstants.js and utils/formatters.js). This better reflects its role as a shared utility rather than a component.",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "design_coherence",
+      "identifier": "groupspage-multiple-responsibilities",
+      "summary": "GroupsPage combines data fetching, config management, conflict computation, and selection state into a single 191-line component with 8 state variables",
+      "related_files": [
+        "frontend/src/pages/GroupsPage.jsx"
+      ],
+      "evidence": [
+        "GroupsPage.jsx: 8 useState hooks, 1 useMemo for conflictMap, 1 useMemo for filteredSnapshot, 5 useCallback handlers",
+        "Three distinct responsibilities: (1) data loading (groups, accounts, history, snapshot), (2) config CRUD (save, delete, rename, select), (3) selection state management (selectedGroupIds, conflictMap, filteredSnapshot)",
+        "Compare with SyncPage.jsx (72 lines, 5 state variables) and BudgetPage.jsx (85 lines, 4 state variables)"
+      ],
+      "suggestion": "Extract config management into a useGroupConfigs() hook and consider extracting conflict/selection logic into useGroupSelection(). This would reduce GroupsPage to ~60 lines of composition, matching the complexity of sibling pages.",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "design_coherence",
+      "identifier": "accountsection-wide-parameter-list",
+      "summary": "AccountSection in AccountsBreakdown takes 9 parameters passed individually, where a config/dimensions object would reduce the surface",
+      "related_files": [
+        "frontend/src/components/AccountsBreakdown.jsx"
+      ],
+      "evidence": [
+        "AccountsBreakdown.jsx line 80: 'function AccountSection({ label, total, totalColor, pieData, groups, colors, pieHeight, pieInnerRadius, pieOuterRadius })' \u2014 9 destructured props",
+        "Three of these (pieHeight, pieInnerRadius, pieOuterRadius) are always passed together and always derived from isMobile \u2014 they are a cohesive group"
+      ],
+      "suggestion": "Bundle the three pie dimension props into a single 'pieDimensions' object: { height, innerRadius, outerRadius }. This reduces the parameter count and makes the coupling between the three values explicit.",
+      "confidence": "low"
+    }
+  ],
+  "provenance": {
+    "kind": "blind_review_batch_import",
+    "blind": true,
+    "runner": "claude",
+    "run_stamp": "ext_20260302_152322_583deeb0",
+    "created_at": "2026-03-02T15:30:00+00:00",
+    "packet_path": "/Users/kellyl./Documents/Cowork Projects/Personal Finance/monarch-dashboard/.claude/worktrees/refactor/.desloppify/review_packet_blind.json",
+    "packet_sha256": "f815d94486970e2c4d01af5518fbe1f8a2a3ffb452be6471e73308ec38b6a813",
+    "external_session_id": "ext_20260302_152322_583deeb0"
+  }
+}

@@ -59,6 +59,12 @@ JSX conditionals render separate text nodes; use a custom `el.textContent` funct
 **Fix:** `cat.group_type === 'income'`
 **Rule:** Category classification field is always `group_type`, not `category_type`. Tests against fixture data will catch this instantly since fixtures also use `group_type`.
 
+### desloppify False Positives for JSX Imports
+**Where:** `desloppify scan` on `frontend/` directory.
+**Symptom:** ~237 findings across `unused`, `orphaned`, and `test_coverage` detectors flagging JSX components as unused/untested.
+**Root cause:** desloppify's import resolver doesn't track JSX imports (e.g. `<GroupsTimeChart />` isn't seen as a reference to `GroupsTimeChart.jsx`).
+**Fix:** Resolve as false positives with `desloppify resolve false_positive "pattern" --attest "I have actually verified ... not gaming"`. These reopen on every rescan and must be re-resolved.
+
 ### Generic Conflict Messages Create Investigation Overhead
 **Where:** `GroupSnapshotControls.jsx` chip `title` attribute.
 **Symptom:** Tooltip said "Shares an account with a selected group" — user couldn't tell which group conflicted with which, making group definition problems impossible to self-diagnose.

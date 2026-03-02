@@ -3,17 +3,7 @@ import { vi, describe, it, expect } from 'vitest'
 import GroupsTimeChart from './GroupsTimeChart.jsx'
 import { MOCK_HISTORY_DATA } from '../test/fixtures.js'
 
-vi.mock('recharts', () => ({
-  LineChart:           ({ children }) => <div data-testid="line-chart">{children}</div>,
-  Line:                () => null,
-  ResponsiveContainer: ({ height, children }) => (
-    <div data-testid="responsive-container" data-height={String(height)}>{children}</div>
-  ),
-  CartesianGrid: () => null,
-  XAxis:         () => null,
-  YAxis:         () => null,
-  Tooltip:       () => null,
-}))
+vi.mock('recharts')
 vi.mock('../hooks/useResponsive', () => ({
   useResponsive: () => ({ isMobile: false, isTablet: false, isDesktop: true }),
 }))

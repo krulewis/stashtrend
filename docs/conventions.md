@@ -6,6 +6,9 @@
 - **Upsert pattern:** `ON CONFLICT(key) DO UPDATE SET value = excluded.value`
 
 ## Frontend
+- **Named API exports:** All API calls go through named exports in `api.js` (e.g. `fetchGroups()`, `saveGroupsConfigs()`). Pages must never use raw `fetchJSON`/`postJSON` with URL strings — those are internal helpers.
+- **Shared formatters in chartUtils.jsx:** Dollar/date formatters (`fmtDollar`, `fmtCompact`, `fmtFull`, `fmtBudgetMonth`, etc.) live in `chartUtils.jsx`. Don't duplicate formatting logic in component files.
+- **PropTypes:** All components receiving props should have PropTypes validation.
 - **Inline styles:** kept only for data-driven values (group colors, status badges, active/selected states, recharts tooltips)
 - **Recharts tooltips:** always `const tooltipStyles = {...}` at module level — recharts renders outside React tree, CSS Modules can't reach them
 

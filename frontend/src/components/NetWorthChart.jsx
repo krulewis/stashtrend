@@ -1,15 +1,16 @@
 import { useState } from 'react'
+import PropTypes from 'prop-types'
 import { AreaChart, Area, ResponsiveContainer, Legend } from 'recharts'
 import styles from './NetWorthChart.module.css'
 import { useResponsive } from '../hooks/useResponsive.js'
 import RangeSelector from './RangeSelector.jsx'
-import { fmtFull, filterByRange, downsample, GRID_STROKE, COMMON_RANGES, sharedChartElements, COLOR_ACCENT, COLOR_POSITIVE, COLOR_NEGATIVE } from './chartUtils.jsx'
+import { fmtFull, filterByRange, downsample, GRID_STROKE, COMMON_RANGES, sharedChartElements, TOOLTIP_STYLE, COLOR_ACCENT, COLOR_POSITIVE, COLOR_NEGATIVE } from './chartUtils.jsx'
 
 const RANGES = [{ label: '1M', months: 1 }, ...COMMON_RANGES]
 
-// Tooltip is rendered by recharts inside a portal — keep inline styles
+// Tooltip rendered by recharts — keep inline
 const tooltipStyles = {
-  wrap: { background: '#1e2130', border: `1px solid ${GRID_STROKE}`, borderRadius: 8, padding: '10px 14px', fontSize: 13 },
+  wrap: TOOLTIP_STYLE,
   date: { color: '#94a3b8', marginBottom: 6, fontSize: 12 },
   row:  { display: 'flex', justifyContent: 'space-between', gap: 16, marginBottom: 2 },
 }
@@ -118,4 +119,13 @@ export default function NetWorthChart({ history }) {
       )}
     </div>
   )
+}
+
+NetWorthChart.propTypes = {
+  history: PropTypes.arrayOf(PropTypes.shape({
+    date: PropTypes.string.isRequired,
+    net_worth: PropTypes.number,
+    assets: PropTypes.number,
+    liabilities: PropTypes.number,
+  })),
 }

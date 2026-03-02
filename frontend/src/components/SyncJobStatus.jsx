@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 import styles from './SyncJobStatus.module.css'
 import { fmtDatetimeSecs, durationElapsed, durationFinal } from './chartUtils.jsx'
 import { SYNC_ENTITY_ORDER, SYNC_ENTITY_LABELS, SYNC_STATUS_ICON } from '../constants/syncEntities.js'
@@ -130,4 +131,16 @@ export default function SyncJobStatus({ job, isRunning }) {
 
     </div>
   )
+}
+
+SyncJobStatus.propTypes = {
+  job: PropTypes.shape({
+    started_at: PropTypes.string,
+    finished_at: PropTypes.string,
+    status: PropTypes.string,
+    entities: PropTypes.arrayOf(PropTypes.string),
+    results: PropTypes.object,
+    error: PropTypes.string,
+  }),
+  isRunning: PropTypes.bool,
 }

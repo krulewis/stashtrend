@@ -2,6 +2,7 @@
  * SyncHistory — table of the last 10 sync runs.
  * Clicking a row makes it the "active" job shown in SyncJobStatus.
  */
+import PropTypes from 'prop-types'
 import styles from './SyncHistory.module.css'
 import { fmtDatetime, durationFinal } from './chartUtils.jsx'
 import { SYNC_ENTITY_SHORT, SYNC_STATUS_ICON } from '../constants/syncEntities.js'
@@ -89,4 +90,18 @@ export default function SyncHistory({ history, activeJobId, onSelectJob }) {
       </div>
     </div>
   )
+}
+
+SyncHistory.propTypes = {
+  history: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    started_at: PropTypes.string,
+    finished_at: PropTypes.string,
+    status: PropTypes.string,
+    full_refresh: PropTypes.bool,
+    entities: PropTypes.arrayOf(PropTypes.string),
+    results: PropTypes.object,
+  })),
+  activeJobId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onSelectJob: PropTypes.func.isRequired,
 }

@@ -1,12 +1,7 @@
 import { useState } from 'react'
+import PropTypes from 'prop-types'
 import styles from './BudgetTable.module.css'
-import { fmtBudgetMonth } from './chartUtils.jsx'
-
-function fmtDollar(n) {
-  if (n == null) return '—'
-  const abs = `$${Math.round(Math.abs(n)).toLocaleString()}`
-  return n < 0 ? `(${abs})` : abs
-}
+import { fmtBudgetMonth, fmtDollar } from './chartUtils.jsx'
 
 function CellValue({ budgeted, actual, variance, isIncome }) {
   if (budgeted == null) return <span className={styles.empty}>—</span>
@@ -204,4 +199,15 @@ export default function BudgetTable({ months, categories }) {
       </div>
     </div>
   )
+}
+
+BudgetTable.propTypes = {
+  months: PropTypes.arrayOf(PropTypes.string),
+  categories: PropTypes.arrayOf(PropTypes.shape({
+    category_id: PropTypes.number,
+    category_name: PropTypes.string,
+    group_type: PropTypes.string,
+    group_name: PropTypes.string,
+    months: PropTypes.object,
+  })),
 }

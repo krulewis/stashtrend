@@ -7,11 +7,12 @@ export async function fetchJSON(url) {
 }
 
 async function mutateJSON(url, method, data) {
-  const res = await fetch(url, {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  })
+  const opts = { method }
+  if (data !== undefined) {
+    opts.headers = { 'Content-Type': 'application/json' }
+    opts.body = JSON.stringify(data)
+  }
+  const res = await fetch(url, opts)
   const json = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
   return json
@@ -32,12 +33,9 @@ export const fetchGroupsHistory = () => fetchJSON('/api/groups/history')
 export const fetchGroupsSnapshot = () => fetchJSON('/api/groups/snapshot')
 export const createGroup = (data) => mutateJSON('/api/groups', 'POST', data)
 export const updateGroup = (id, data) => mutateJSON(`/api/groups/${id}`, 'PUT', data)
-export const deleteGroup = async (id) => {
-  const res = await fetch(`/api/groups/${id}`, { method: 'DELETE' })
-  const json = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(json.error || `Delete failed (${res.status})`)
-  return json
-}
+export const deleteGroup = (id) => mutateJSON(`/api/groups/${id}`, 'DELETE', undefined)
+export const fetchGroupsConfigs = () => fetchJSON('/api/groups/configs')
+export const saveGroupsConfigs = (data) => mutateJSON('/api/groups/configs', 'POST', data)
 
 // ── Budget ─────────────────────────────────────────────────────────────────
 export const fetchBudgetHistory = (months) => fetchJSON(`/api/budgets/history?months=${months}`)
@@ -58,4 +56,5 @@ export const fetchSettings = () => fetchJSON('/api/settings')
 export const saveSettings = (data) => mutateJSON('/api/settings', 'POST', data)
 
 // ── Setup ──────────────────────────────────────────────────────────────────
+export const fetchSetupStatus = () => fetchJSON('/api/setup/status')
 export const setupToken = (token) => mutateJSON('/api/setup/token', 'POST', { token })

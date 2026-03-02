@@ -7,7 +7,7 @@ import GroupsPage from './pages/GroupsPage.jsx'
 import BudgetPage from './pages/BudgetPage.jsx'
 import SyncPage from './pages/SyncPage.jsx'
 import SetupPage from './pages/SetupPage.jsx'
-import { fetchNetworthStats, fetchNetworthHistory, fetchAccountsSummary } from './api.js'
+import { fetchNetworthStats, fetchNetworthHistory, fetchAccountsSummary, fetchSetupStatus } from './api.js'
 import { version } from '../package.json'
 
 const TABS = [
@@ -33,8 +33,7 @@ export default function App() {
   // because all data stays on the user's own machine. If ever exposed beyond
   // localhost, add token or session authentication before the setup check.
   useEffect(() => {
-    fetch('/api/setup/status')
-      .then((r) => r.json())
+    fetchSetupStatus()
       .then((d) => setConfigured(d.configured))
       .catch(() => setConfigured(false))
   }, [])

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import PropTypes from 'prop-types'
 import styles from './GroupSnapshotControls.module.css'
 
 /**
@@ -9,7 +10,7 @@ import styles from './GroupSnapshotControls.module.css'
  */
 export default function GroupSnapshotControls({
   groups,
-  selectedGroupIds,   // Set<id> | null  (null = all groups shown)
+  selectedGroupIds,   // Set<id> — empty set means no groups shown
   configs,
   activeConfigId,
   conflictMap,
@@ -158,4 +159,21 @@ export default function GroupSnapshotControls({
       </div>
     </div>
   )
+}
+
+GroupSnapshotControls.propTypes = {
+  groups: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    name: PropTypes.string.isRequired,
+    color: PropTypes.string.isRequired,
+  })).isRequired,
+  selectedGroupIds: PropTypes.instanceOf(Set).isRequired,
+  configs: PropTypes.array.isRequired,
+  activeConfigId: PropTypes.number,
+  conflictMap: PropTypes.object.isRequired,
+  onGroupToggle: PropTypes.func.isRequired,
+  onSelectConfig: PropTypes.func.isRequired,
+  onSaveConfig: PropTypes.func.isRequired,
+  onDeleteConfig: PropTypes.func.isRequired,
+  onRenameConfig: PropTypes.func.isRequired,
 }

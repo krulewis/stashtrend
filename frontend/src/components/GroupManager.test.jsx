@@ -39,7 +39,7 @@ describe('GroupManager', () => {
     it('shows account count for each group', () => {
       render(<GroupManager groups={MOCK_GROUPS} accounts={MOCK_ACCOUNTS} onGroupsChanged={onGroupsChanged} />)
       expect(screen.getByText('2 accounts')).toBeInTheDocument()
-      expect(screen.getByText('1 accounts')).toBeInTheDocument()
+      expect(screen.getByText('1 account')).toBeInTheDocument()
     })
 
     it('opens edit form when edit button is clicked', () => {

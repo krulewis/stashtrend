@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 import {
   BarChart,
   Bar,
@@ -10,13 +11,13 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import styles from './GroupsSnapshot.module.css'
-import { useResponsive } from '../hooks/useResponsive'
+import { useResponsive } from '../hooks/useResponsive.js'
 import GroupSnapshotControls from './GroupSnapshotControls.jsx'
-import { fmtCompact, fmtFull, GRID_STROKE } from './chartUtils.jsx'
+import { fmtCompact, fmtFull, GRID_STROKE, TOOLTIP_STYLE } from './chartUtils.jsx'
 
 // Tooltip rendered by recharts — keep inline
 const tooltipStyles = {
-  wrap:  { background: '#1e2130', border: '1px solid #2d3348', borderRadius: 8, padding: '10px 14px', fontSize: 13 },
+  wrap:  TOOLTIP_STYLE,
   name:  { color: '#f1f5f9', fontWeight: 600 },
   total: { fontSize: 16, fontWeight: 700, color: '#f1f5f9', marginBottom: 2 },
   meta:  { fontSize: 12, color: '#94a3b8' },
@@ -179,4 +180,24 @@ export default function GroupsSnapshot({
       )}
     </div>
   )
+}
+
+GroupsSnapshot.propTypes = {
+  snapshot: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    name: PropTypes.string.isRequired,
+    total: PropTypes.number.isRequired,
+    color: PropTypes.string.isRequired,
+    account_count: PropTypes.number.isRequired,
+  })),
+  groups: PropTypes.array,
+  selectedGroupIds: PropTypes.instanceOf(Set),
+  configs: PropTypes.array,
+  activeConfigId: PropTypes.number,
+  conflictMap: PropTypes.object,
+  onGroupToggle: PropTypes.func,
+  onSelectConfig: PropTypes.func,
+  onSaveConfig: PropTypes.func,
+  onDeleteConfig: PropTypes.func,
+  onRenameConfig: PropTypes.func,
 }

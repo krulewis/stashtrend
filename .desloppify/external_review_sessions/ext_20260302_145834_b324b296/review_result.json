@@ -1,0 +1,351 @@
+{
+  "session": {
+    "id": "ext_20260302_145834_b324b296",
+    "token": "c98350f35ccaf0918b2554b34d7f6a50"
+  },
+  "assessments": {
+    "naming_quality": 88.3,
+    "logic_clarity": 91.5,
+    "type_safety": 72.4,
+    "contract_coherence": 84.7,
+    "error_consistency": 73.2,
+    "abstraction_fitness": 85.6,
+    "ai_generated_debt": 81.3,
+    "high_level_elegance": 86.4,
+    "mid_level_elegance": 84.1,
+    "low_level_elegance": 83.7,
+    "cross_module_architecture": 82.5,
+    "initialization_coupling": 91.8,
+    "convention_outlier": 84.3,
+    "dependency_health": 92.6,
+    "test_strategy": 82.7,
+    "api_surface_coherence": 88.0,
+    "authorization_consistency": 89.5,
+    "incomplete_migration": 96.2,
+    "package_organization": 74.8,
+    "design_coherence": 78.3
+  },
+  "findings": [
+    {
+      "dimension": "abstraction_fitness",
+      "identifier": "chartutils_mixed_concerns",
+      "summary": "chartUtils.jsx bundles unrelated concerns: number formatting, date formatting, chart config elements, and downsampling logic",
+      "related_files": ["frontend/src/components/chartUtils.jsx"],
+      "evidence": ["chartUtils.jsx (155 LOC) contains: currency formatters (fmtCompact, fmtFull), date formatters (formatDateLabel, fmtBudgetMonth, fmtDatetime), data transformers (filterByRange, downsample), duration calculators (durationFinal, durationElapsed), and shared chart JSX elements (sharedChartElements). These serve different purposes but are bundled together."],
+      "suggestion": "Consider splitting into formatters.js (currency+date), dataTransforms.js (filterByRange, downsample), and chartConfig.jsx (sharedChartElements). However, at 155 LOC, the current bundling is pragmatic and the split is optional.",
+      "confidence": "low"
+    },
+    {
+      "dimension": "api_surface_coherence",
+      "identifier": "deletegroup_diverges_from_mutate_pattern",
+      "summary": "deleteGroup uses raw fetch+DELETE while all other mutation functions use the shared mutateJSON helper",
+      "related_files": ["frontend/src/api.js"],
+      "evidence": ["api.js lines 35-40: deleteGroup implements its own fetch(url, { method: 'DELETE' }) with custom error parsing, while createGroup, updateGroup, and all other mutation functions use mutateJSON(). This one-off implementation duplicates error handling logic."],
+      "suggestion": "Add DELETE method support to mutateJSON or create a deleteJSON helper, then refactor deleteGroup to use it. This maintains a single error-handling path for all HTTP methods.",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "dependency_health",
+      "identifier": "caret_ranges_all_deps",
+      "summary": "All dependencies use ^ ranges which is standard but allows minor version drift between environments",
+      "related_files": ["frontend/package.json"],
+      "evidence": ["package.json uses caret (^) ranges for all dependencies. The package-lock.json pins exact versions, but any environment without the lock file could resolve different versions."],
+      "suggestion": "This is a minor observation — the current approach is standard for React projects. No action needed unless reproducibility issues arise.",
+      "confidence": "low"
+    },
+    {
+      "dimension": "high_level_elegance",
+      "identifier": "ai_panel_budget_page_placement",
+      "summary": "AIAnalysisPanel is embedded in the budget page but is a cross-cutting feature that could apply to any data view",
+      "related_files": ["frontend/src/pages/BudgetPage.jsx", "frontend/src/components/AIAnalysisPanel.jsx"],
+      "evidence": ["BudgetPage renders AIAnalysisPanel at the bottom of the page. The AI analysis feature analyzes all financial data, not just budget data, making its placement under the budget tab somewhat arbitrary."],
+      "suggestion": "Consider making AIAnalysisPanel accessible from any tab (e.g. as a floating panel or in the app header) rather than nesting it under BudgetPage. However, this is a product decision and the current placement works.",
+      "confidence": "low"
+    },
+    {
+      "dimension": "incomplete_migration",
+      "identifier": "no_active_migrations",
+      "summary": "No incomplete migrations detected — the codebase has no TODO/FIXME migration markers or deprecated API usage",
+      "related_files": ["frontend/src/App.jsx"],
+      "evidence": ["Scanned all production files for migration-related patterns (TODO, FIXME, deprecated, @deprecated, migration comments). Found none. The auth documentation in App.jsx mentions a potential future migration to token/session auth if exposed beyond localhost, but this is a design note, not an incomplete migration."],
+      "suggestion": "No action needed. The minor deduction is for the absence of a concrete plan for the documented auth migration path.",
+      "confidence": "low"
+    },
+    {
+      "dimension": "initialization_coupling",
+      "identifier": "no_lazy_loading",
+      "summary": "App.jsx imports all page components eagerly — no code splitting or lazy loading",
+      "related_files": ["frontend/src/App.jsx"],
+      "evidence": ["App.jsx lines 3-8 import all 4 page components (StatsCards, GroupsPage, BudgetPage, SyncPage, SetupPage) eagerly at module level. For a localhost-only dashboard this has no user-facing impact but it means the entire app is loaded upfront."],
+      "suggestion": "For a localhost dashboard, eager loading is appropriate. React.lazy() would add complexity for negligible benefit. No action needed.",
+      "confidence": "low"
+    },
+    {
+      "dimension": "logic_clarity",
+      "identifier": "syncpage_ref_lifecycle_indirection",
+      "summary": "SyncPage uses loadHistoryRef to break circular useCallback dependency — correct but adds cognitive overhead",
+      "related_files": ["frontend/src/pages/SyncPage.jsx"],
+      "evidence": ["SyncPage.jsx uses pollRef and loadHistoryRef refs to break a loadHistory↔startPolling circular useCallback dependency. The 4-step lifecycle (loadHistory -> startPolling -> poll completes -> loadHistoryRef.current()) requires understanding that startPolling calls loadHistory indirectly through a ref kept in sync by a separate useEffect."],
+      "suggestion": "Consider useReducer to manage sync page state (displayedJob, history, isRunning) in a single reducer, which would eliminate the circular dependency. The polling logic could dispatch actions rather than calling state setters through refs.",
+      "confidence": "low"
+    },
+    {
+      "dimension": "error_consistency",
+      "identifier": "mixed_error_strategies_across_components",
+      "summary": "Components use three different error strategies (try-catch, return null, throw) without a coherent policy",
+      "related_files": [
+        "frontend/src/components/AIAnalysisPanel.jsx",
+        "frontend/src/components/AccountsBreakdown.jsx",
+        "frontend/src/components/BudgetChart.jsx",
+        "frontend/src/components/GroupManager.jsx",
+        "frontend/src/api.js"
+      ],
+      "evidence": [
+        "api.js consistently throws on HTTP errors, which is good. But components handle those errors inconsistently: AIAnalysisPanel, GroupManager, SyncControl use try-catch; AccountsBreakdown, BudgetChart, GroupsSnapshot, StatsCards return null/loading for missing data; BudgetTable returns null silently. There is no documented convention for when to use which strategy, and sibling components at the same layer (e.g. AccountsBreakdown vs AIAnalysisPanel) diverge.",
+        "Pages also diverge: GroupsPage shows a full-page error block on fetch failure, BudgetPage shows an inline error box, SyncPage shows a top-level error banner. These are different UX patterns for the same failure mode."
+      ],
+      "suggestion": "Establish an error display convention per component layer: pages should use a consistent error-state pattern (either full-page or inline), and leaf components should consistently handle null/undefined data the same way (either loading skeleton or return null). Document this in conventions.md. The current mixed approaches are not wrong individually but the inconsistency makes the codebase harder to reason about.",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "type_safety",
+      "identifier": "no_prop_validation_anywhere",
+      "summary": "Zero PropTypes or TypeScript across all 15 production components — runtime type errors are undetectable",
+      "related_files": [
+        "frontend/src/components/GroupsSnapshot.jsx",
+        "frontend/src/components/GroupSnapshotControls.jsx",
+        "frontend/src/components/SyncControl.jsx",
+        "frontend/src/components/AccountsBreakdown.jsx",
+        "frontend/src/pages/GroupsPage.jsx"
+      ],
+      "evidence": [
+        "GroupsSnapshot accepts 11 props (snapshot, groups, selectedGroupIds, configs, activeConfigId, conflictMap, onGroupToggle, onSelectConfig, onSaveConfig, onDeleteConfig, onRenameConfig) with no type validation. GroupSnapshotControls accepts 9 props. AccountSection accepts 9 props. None of these have PropTypes, TypeScript, or JSDoc @param annotations.",
+        "selectedGroupIds is documented in a comment as 'Set<id> | null' in GroupSnapshotControls (line 12) but the actual runtime contract from GroupsPage always passes a Set (never null). This silent divergence between doc and code would be caught by types.",
+        "SyncJobStatus.jsx line 110 calls row.recordCount.toLocaleString() which will throw if recordCount is undefined rather than null — there is a null check on line 108 but no undefined guard."
+      ],
+      "suggestion": "Add PropTypes to the top-level components with wide prop interfaces (GroupsSnapshot, GroupSnapshotControls, SyncControl, AccountSection, GroupForm). Alternatively, migrate to TypeScript. The most impactful starting point is components with >5 props where a caller could easily pass the wrong shape.",
+      "confidence": "high"
+    },
+    {
+      "dimension": "package_organization",
+      "identifier": "flat_components_directory_30_files",
+      "summary": "30 files in frontend/src/components/ with mixed concerns: sync, budget, groups, charts, and shared utils",
+      "related_files": [
+        "frontend/src/components/SyncControl.jsx",
+        "frontend/src/components/SyncJobStatus.jsx",
+        "frontend/src/components/SyncHistory.jsx",
+        "frontend/src/components/GroupManager.jsx",
+        "frontend/src/components/GroupsSnapshot.jsx",
+        "frontend/src/components/GroupSnapshotControls.jsx",
+        "frontend/src/components/BudgetChart.jsx",
+        "frontend/src/components/BudgetTable.jsx",
+        "frontend/src/components/chartUtils.jsx"
+      ],
+      "evidence": [
+        "The components directory contains 30 files spanning 4 distinct domains: sync (SyncControl, SyncJobStatus, SyncHistory + tests), groups (GroupManager, GroupsSnapshot, GroupSnapshotControls, GroupsTimeChart + tests), budget (BudgetChart, BudgetTable + tests), and net-worth/accounts (NetWorthChart, AccountsBreakdown, StatsCards + tests). Plus shared utilities (chartUtils, RangeSelector).",
+        "Each page (SyncPage, GroupsPage, BudgetPage) imports exclusively from its own domain subset plus chartUtils. There is zero cross-domain import between sync and budget components, for instance.",
+        "This is flagged by the blind packet's existing findings: 'flat_dirs: Flat directory: 30 files — consider grouping by domain'"
+      ],
+      "suggestion": "Split components/ into domain subdirectories: components/sync/ (SyncControl, SyncJobStatus, SyncHistory), components/groups/ (GroupManager, GroupsSnapshot, GroupSnapshotControls, GroupsTimeChart), components/budget/ (BudgetChart, BudgetTable), components/networth/ (NetWorthChart, AccountsBreakdown, StatsCards). Keep chartUtils.jsx and RangeSelector.jsx in a components/shared/ directory. This aligns file placement with the actual import graph.",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "design_coherence",
+      "identifier": "groupspage_orchestration_complexity",
+      "summary": "GroupsPage.jsx manages 8 state variables, 6 callbacks, and passes 11 props through to GroupsSnapshot — high coordination burden",
+      "related_files": [
+        "frontend/src/pages/GroupsPage.jsx",
+        "frontend/src/components/GroupsSnapshot.jsx",
+        "frontend/src/components/GroupSnapshotControls.jsx"
+      ],
+      "evidence": [
+        "GroupsPage (191 LOC, complexity score 322 per blind packet) manages: groups, accounts, historyData, snapshot, configs, activeConfigId, selectedGroupIds, loading, error — 9 useState calls plus 1 useMemo (conflictMap) and 1 useMemo (filteredSnapshot). It defines 5 useCallback handlers (handleGroupToggle, handleSelectConfig, handleSaveConfig, handleDeleteConfig, handleRenameConfig) that are all passed through GroupsSnapshot to GroupSnapshotControls.",
+        "GroupsSnapshot receives 11 props and passes 9 of them straight through to GroupSnapshotControls. GroupsSnapshot itself only uses snapshot, groups (for showControls check), and the responsive hook. The remaining 9 props are pure passthrough.",
+        "This prop-drilling pattern means any change to the config management API requires touching 3 files in sequence: GroupsPage -> GroupsSnapshot -> GroupSnapshotControls."
+      ],
+      "suggestion": "Extract the snapshot config state management (configs, activeConfigId, selectedGroupIds, conflictMap, and the 5 handlers) into a custom hook like useSnapshotConfigs({ groups }). GroupsPage would call the hook and spread the returned object to GroupsSnapshot. This would reduce GroupsPage from 9 state variables to 4 (groups, accounts, historyData, loading/error) and make the config management logic independently testable.",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "design_coherence",
+      "identifier": "syncpage_ref_indirection_complexity",
+      "summary": "SyncPage uses a ref-based indirection pattern (loadHistoryRef) to break circular callback dependencies — adds cognitive overhead",
+      "related_files": [
+        "frontend/src/pages/SyncPage.jsx"
+      ],
+      "evidence": [
+        "SyncPage.jsx lines 22-23 define pollRef and loadHistoryRef. The comment on line 3-5 explains the ref pattern: 'Uses a ref (loadHistoryRef) to break the loadHistory↔startPolling circular useCallback dependency'. The startPolling callback reads loadHistoryRef.current (line 47), and a separate useEffect keeps the ref in sync (line 75).",
+        "This is a valid pattern but adds indirection: a reader must understand that startPolling calls loadHistory indirectly through a ref, and that the ref is kept in sync via a separate effect. The 4-step lifecycle (loadHistory -> startPolling -> poll completes -> loadHistoryRef.current()) is non-obvious."
+      ],
+      "suggestion": "Consider using useReducer to manage the sync page state (displayedJob, history, isRunning, errors) in a single reducer, which would eliminate the circular callback dependency entirely. The polling logic could dispatch actions rather than calling state setters and callbacks through refs.",
+      "confidence": "low"
+    },
+    {
+      "dimension": "naming_quality",
+      "identifier": "generic_do_prefix_in_naming_vocabulary",
+      "summary": "Naming vocabulary includes 'do' and 'run' prefixes which reveal nothing about what the function does",
+      "related_files": [
+        "frontend/src/components/AIAnalysisPanel.jsx"
+      ],
+      "evidence": [
+        "The blind packet's naming vocabulary shows 'do': 1 and 'run': 1 as function prefixes. In AIAnalysisPanel.jsx, the function runAnalysis() (line 25) is paired with runAiAnalysis() from the API layer. While 'run' is slightly generic, in context it maps to a specific API call and the name is adequate. The 'do' prefix appears to be in the naming vocabulary statistics but reviewing the actual code, the usage is borderline acceptable.",
+        "Issues preventing higher score: handleSaveAndAnalyze (line 39) combines two actions in one name — it both saves config and runs analysis. This dual-purpose naming obscures the function's contract."
+      ],
+      "suggestion": "Rename handleSaveAndAnalyze to handleConfigSubmit or saveConfigAndRunAnalysis to make both actions explicit. The current name partially obscures that it saves AI configuration as a side effect.",
+      "confidence": "low"
+    },
+    {
+      "dimension": "ai_generated_debt",
+      "identifier": "recharts_mock_high_comment_ratio",
+      "summary": "recharts mock file has 0.35 comment ratio vs 0.047 codebase average — over-documented for a test utility",
+      "related_files": [
+        "frontend/__mocks__/recharts.jsx"
+      ],
+      "evidence": [
+        "frontend/__mocks__/recharts.jsx has a comment ratio of 0.35 (7x the codebase average of 0.047). The file is 34 LOC with a multi-line docblock explaining what the mock does, usage instructions, and inline comments. For a straightforward mock file that replaces chart components with divs, the documentation is disproportionate.",
+        "The usage comment 'Usage in a test file: vi.mock('recharts') // picks up this file automatically' restates standard Vitest behavior that any Vitest user would know."
+      ],
+      "suggestion": "Trim the recharts mock to a single-line header comment like '/** Lightweight recharts stubs for jsdom tests. */' and remove the usage instructions. The code is self-explanatory.",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "contract_coherence",
+      "identifier": "selectedGroupIds_null_vs_set_mismatch",
+      "summary": "GroupSnapshotControls documents selectedGroupIds as 'Set<id> | null' but callers always pass a Set",
+      "related_files": [
+        "frontend/src/components/GroupSnapshotControls.jsx",
+        "frontend/src/pages/GroupsPage.jsx"
+      ],
+      "evidence": [
+        "GroupSnapshotControls.jsx line 12 has a comment: 'selectedGroupIds,   // Set<id> | null  (null = all groups shown)'. However, GroupsPage.jsx (the only caller) initializes selectedGroupIds as new Set() (line 15) and never sets it to null. The 'null = all groups shown' semantic documented in the comment is never used.",
+        "If a future caller passed null based on the documented contract, the code would crash at line 27: 'selectedGroupIds.has(groupId)' — Set.prototype.has would be called on null."
+      ],
+      "suggestion": "Update the comment in GroupSnapshotControls.jsx line 12 to reflect the actual contract: 'selectedGroupIds, // Set<id> — empty set means no groups shown'. Remove the null option from the documented type since the code does not handle it.",
+      "confidence": "high"
+    },
+    {
+      "dimension": "test_strategy",
+      "identifier": "api_module_untested",
+      "summary": "api.js (61 LOC, 15 exported functions) has zero unit tests — all testing is indirect through component tests",
+      "related_files": [
+        "frontend/src/api.js"
+      ],
+      "evidence": [
+        "api.js exports fetchJSON, postJSON, and 13 domain-specific API functions. None are directly tested. All testing occurs indirectly through component tests that mock global.fetch. This means the error handling in fetchJSON (line 5: throwing on non-ok responses), mutateJSON (line 15: json().catch(() => ({}))), and deleteGroup (custom DELETE with error parsing) are not directly validated.",
+        "The deleteGroup function (lines 35-40) has a unique implementation pattern (not using mutateJSON) with its own error parsing logic. This divergence from the pattern is untested.",
+        "The blind packet flags this: 'orphaned: Orphaned file (61 LOC): zero importers' and 'test_coverage: Untested module (61 LOC, 0 importers)'"
+      ],
+      "suggestion": "Add a dedicated api.test.js that tests: (1) fetchJSON throws on non-ok responses with correct error message, (2) mutateJSON parses error response bodies, (3) deleteGroup's unique error handling path, (4) postJSON correctly delegates to mutateJSON. These are the critical error paths that component-level mocks bypass entirely.",
+      "confidence": "high"
+    },
+    {
+      "dimension": "test_strategy",
+      "identifier": "chartutils_untested",
+      "summary": "chartUtils.jsx (155 LOC) contains 12 exported functions including date formatting and downsampling with zero direct tests",
+      "related_files": [
+        "frontend/src/components/chartUtils.jsx"
+      ],
+      "evidence": [
+        "chartUtils.jsx exports: fmtCompact, fmtFull, formatDateLabel, fmtBudgetMonth, fmtDatetime, fmtDatetimeSecs, filterByRange, downsample, durationFinal, durationElapsed, sharedChartElements, and several constants. None have direct unit tests.",
+        "filterByRange (line 58-64) uses date comparison by string ordering (d.date >= cutoffStr), which works for ISO dates but is a subtle correctness dependency that should be validated. downsample (line 66-70) has boundary conditions (maxPoints, step calculation) that are untested.",
+        "durationElapsed (line 87-91) uses Date.now() making it time-dependent, and durationFinal has edge cases around null inputs that are only indirectly tested through SyncJobStatus rendering."
+      ],
+      "suggestion": "Create chartUtils.test.jsx with direct tests for: filterByRange boundary conditions, downsample with exact maxPoints, fmtCompact/fmtFull with edge cases (null, 0, negative), durationFinal/durationElapsed with null inputs. These are pure functions that are trivial to unit test.",
+      "confidence": "high"
+    },
+    {
+      "dimension": "cross_module_architecture",
+      "identifier": "app_uses_raw_fetch_while_api_module_exists",
+      "summary": "App.jsx calls raw fetch() for /api/setup/status while api.js provides fetchJSON for all other endpoints",
+      "related_files": [
+        "frontend/src/App.jsx",
+        "frontend/src/api.js"
+      ],
+      "evidence": [
+        "App.jsx line 36-39 uses raw fetch('/api/setup/status').then(r => r.json()).then(d => setConfigured(d.configured)). Meanwhile, api.js exists as the 'Single source of truth for HTTP helpers and endpoints' (line 1 docstring) and provides fetchJSON() which wraps fetch with error handling. All other components use api.js imports.",
+        "The setup status endpoint is the only API call in the codebase that bypasses api.js. The raw fetch also lacks the HTTP error check that fetchJSON provides (line 5: 'if (!res.ok) throw')."
+      ],
+      "suggestion": "Add a fetchSetupStatus export to api.js and use it in App.jsx. This maintains api.js as the single source of truth for API calls and gets the HTTP error handling for free. The catch(() => setConfigured(false)) pattern in App.jsx would still work as the error handler.",
+      "confidence": "high"
+    },
+    {
+      "dimension": "low_level_elegance",
+      "identifier": "groupmanager_account_count_pluralization_bug",
+      "summary": "GroupManager displays '1 accounts' (incorrect pluralization) for single-account groups",
+      "related_files": [
+        "frontend/src/components/GroupManager.jsx",
+        "frontend/src/components/GroupManager.test.jsx"
+      ],
+      "evidence": [
+        "GroupManager.jsx line 213: '{g.account_ids.length} accounts' — this always says 'accounts' even when count is 1. The test at GroupManager.test.jsx line 42 explicitly asserts: expect(screen.getByText('1 accounts')).toBeInTheDocument(), confirming the bug is baked into the test.",
+        "Other components handle this correctly: GroupsSnapshot.jsx line 167 uses '{g.account_count} acct{g.account_count !== 1 ? \"s\" : \"\"}' and SyncJobStatus.jsx uses similar pluralization."
+      ],
+      "suggestion": "Change GroupManager.jsx line 213 to: '{g.account_ids.length} account{g.account_ids.length !== 1 ? \"s\" : \"\"}' and update the test assertion to expect '1 account' (singular). This matches the pluralization pattern used in GroupsSnapshot and SyncJobStatus.",
+      "confidence": "high"
+    },
+    {
+      "dimension": "convention_outlier",
+      "identifier": "inconsistent_recharts_mock_strategies",
+      "summary": "Three different recharts mocking strategies across test files: auto-mock, inline mock, and shared __mocks__ file",
+      "related_files": [
+        "frontend/__mocks__/recharts.jsx",
+        "frontend/src/components/BudgetChart.test.jsx",
+        "frontend/src/components/GroupsTimeChart.test.jsx",
+        "frontend/src/components/AccountsBreakdown.test.jsx",
+        "frontend/src/components/GroupsSnapshot.test.jsx"
+      ],
+      "evidence": [
+        "Strategy 1 — auto-mock via __mocks__: AccountsBreakdown.test.jsx, GroupsSnapshot.test.jsx, and GroupsPage.test.jsx use vi.mock('recharts') which picks up the shared __mocks__/recharts.jsx file.",
+        "Strategy 2 — inline full mock: BudgetChart.test.jsx (lines 6-17) and GroupsTimeChart.test.jsx (lines 6-16) define their own inline vi.mock('recharts', () => ({...})) with custom implementations that differ from the shared mock (e.g. BudgetChart.test renders Bar with data-testid={`bar-${dataKey}`} which the shared mock does not).",
+        "Strategy 3 — the shared __mocks__/recharts.jsx exists as the canonical mock but is not used by all chart-related tests.",
+        "The inline mocks in BudgetChart.test.jsx and GroupsTimeChart.test.jsx override the shared mock to add test-specific data-testid attributes. This creates maintenance burden: if recharts exports change, both the shared mock and inline mocks need updating."
+      ],
+      "suggestion": "Extend the shared __mocks__/recharts.jsx to include the data-testid attributes that the inline mocks add (e.g. Bar: ({ dataKey, children }) => <div data-testid={`bar-${dataKey}`}>{children}</div>). Then remove the inline mocks from BudgetChart.test.jsx and GroupsTimeChart.test.jsx, using the auto-mock exclusively. This reduces the surface area when recharts API changes.",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "design_coherence",
+      "identifier": "accountsection_9_props_wide_interface",
+      "summary": "AccountSection component takes 9 props, 3 of which (pieHeight, pieInnerRadius, pieOuterRadius) are always passed together",
+      "related_files": [
+        "frontend/src/components/AccountsBreakdown.jsx"
+      ],
+      "evidence": [
+        "AccountSection (line 79) accepts: label, total, totalColor, pieData, groups, colors, pieHeight, pieInnerRadius, pieOuterRadius — 9 props. The last three (pieHeight, pieInnerRadius, pieOuterRadius) are always computed together in the parent (lines 142-144) and passed identically to both calls (lines 150-160 and 164-174).",
+        "The blind packet identifies 5 wide_param_bag functions in the codebase, with AccountsBreakdown.jsx having config_bag_mentions: 5."
+      ],
+      "suggestion": "Group the three pie dimension props into a single pieDimensions object: { height, innerRadius, outerRadius }. This reduces AccountSection from 9 to 7 props and makes the data-driven vs layout-driven props clearly distinct. The parent would pass pieDimensions={{ height: pieHeight, innerRadius: pieInnerRadius, outerRadius: pieOuterRadius }}.",
+      "confidence": "low"
+    },
+    {
+      "dimension": "mid_level_elegance",
+      "identifier": "groupssnapshot_pure_prop_passthrough",
+      "summary": "GroupsSnapshot passes 9 of its 11 props directly through to GroupSnapshotControls without using them — acting as a pure passthrough layer",
+      "related_files": [
+        "frontend/src/components/GroupsSnapshot.jsx",
+        "frontend/src/components/GroupSnapshotControls.jsx",
+        "frontend/src/pages/GroupsPage.jsx"
+      ],
+      "evidence": [
+        "GroupsSnapshot receives 11 props from GroupsPage. It only uses snapshot and groups directly (for filtering and the showControls check). The remaining 9 props (selectedGroupIds, configs, activeConfigId, conflictMap, onGroupToggle, onSelectConfig, onSaveConfig, onDeleteConfig, onRenameConfig) are passed straight through to GroupSnapshotControls.",
+        "This means any change to the config management interface requires editing 3 files: GroupsPage (state owner), GroupsSnapshot (passthrough), and GroupSnapshotControls (consumer). The passthrough layer adds no value and increases coupling."
+      ],
+      "suggestion": "Either have GroupsPage render GroupSnapshotControls directly alongside GroupsSnapshot, or use a custom hook for the config state that GroupSnapshotControls can consume directly.",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "authorization_consistency",
+      "identifier": "app_setup_check_security_comment_but_no_guard",
+      "summary": "Security comment in App.jsx documents that auth should be added if exposed beyond localhost, but no runtime guard enforces this",
+      "related_files": [
+        "frontend/src/App.jsx"
+      ],
+      "evidence": [
+        "App.jsx lines 31-34: 'NOTE: This app is designed for local-only use (localhost). It relies on the /api/setup/status configured flag rather than session-based authentication, because all data stays on the user's own machine. If ever exposed beyond localhost, add token or session authentication before the setup check.'",
+        "The comment is helpful documentation but there is no runtime check (e.g. window.location.hostname !== 'localhost') that would warn or prevent operation if accidentally exposed. The API token is stored in the backend and could be accessed if the app is exposed."
+      ],
+      "suggestion": "This is documented as intentional for a localhost-only app, so the current approach is reasonable. Issues preventing a higher score: consider adding a runtime check or CSP header on the backend to enforce localhost-only access, which would make the security posture defense-in-depth rather than documentation-only.",
+      "confidence": "low"
+    }
+  ]
+}

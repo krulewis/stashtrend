@@ -3,18 +3,7 @@ import { vi, describe, it, expect } from 'vitest'
 import BudgetChart from './BudgetChart.jsx'
 import { MOCK_BUDGET_HISTORY } from '../test/fixtures.js'
 
-vi.mock('recharts', () => ({
-  BarChart: ({ children }) => <div data-testid="bar-chart">{children}</div>,
-  Bar: ({ dataKey }) => <div data-testid={`bar-${dataKey}`} />,
-  XAxis: () => null,
-  YAxis: () => null,
-  CartesianGrid: () => null,
-  Tooltip: () => null,
-  Legend: () => null,
-  ResponsiveContainer: ({ children }) => (
-    <div data-testid="responsive-container">{children}</div>
-  ),
-}))
+vi.mock('recharts')
 
 vi.mock('../hooks/useResponsive', () => ({
   useResponsive: () => ({ isMobile: false, isTablet: false, isDesktop: true }),

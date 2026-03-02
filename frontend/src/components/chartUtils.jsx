@@ -20,6 +20,12 @@ export const fmtFull = (n) =>
         maximumFractionDigits: 0,
       }).format(n)
 
+export function fmtDollar(n) {
+  if (n == null) return '—'
+  const abs = `$${Math.round(Math.abs(n)).toLocaleString()}`
+  return n < 0 ? `(${abs})` : abs
+}
+
 export const formatDateLabel = (d) => {
   const dt = new Date(d + 'T00:00:00')
   return dt.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
@@ -55,6 +61,7 @@ export function fmtDatetimeSecs(iso) {
   } catch { return iso }
 }
 
+/** Filter data points to the last N months. Relies on d.date being YYYY-MM-DD (ISO lexicographic order). */
 export function filterByRange(data, months) {
   if (!months || !data.length) return data
   const cutoff = new Date()
@@ -97,8 +104,8 @@ export function durationElapsed(startedAt, finishedAt) {
 export const TOOLTIP_STYLE = {
   background: '#1e2130',
   border: '1px solid #2d3348',
-  borderRadius: 6,
-  padding: '8px 12px',
+  borderRadius: 8,
+  padding: '10px 14px',
   color: '#f1f5f9',
   fontSize: 13,
 }

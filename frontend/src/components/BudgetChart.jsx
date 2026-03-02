@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
@@ -66,4 +67,10 @@ export default function BudgetChart({ months, totalsByMonth, incomeTotalsByMonth
       </ResponsiveContainer>
     </div>
   )
+}
+
+BudgetChart.propTypes = {
+  months: PropTypes.arrayOf(PropTypes.string),
+  totalsByMonth: PropTypes.object,
+  incomeTotalsByMonth: PropTypes.object,
 }

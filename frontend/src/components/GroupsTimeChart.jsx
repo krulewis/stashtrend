@@ -7,7 +7,7 @@ import { fmtFull, filterByRange, downsample, GRID_STROKE, COMMON_RANGES, sharedC
 
 // Tooltip rendered by recharts — keep inline
 const tooltipStyles = {
-  wrap: { ...TOOLTIP_STYLE, borderRadius: 8, padding: '10px 14px', minWidth: 200 },
+  wrap: { ...TOOLTIP_STYLE, minWidth: 200 },
   date: { color: '#94a3b8', marginBottom: 8, fontSize: 12, fontWeight: 600 },
   row:  { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginBottom: 4 },
 }

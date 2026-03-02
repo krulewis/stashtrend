@@ -1,14 +1,15 @@
+import PropTypes from 'prop-types'
 import styles from './StatsCards.module.css'
-import { fmtFull } from './chartUtils.jsx'
+import { fmtFull, COLOR_POSITIVE, COLOR_NEGATIVE } from './chartUtils.jsx'
 
 const fmtPct = (n) => (n == null ? '—' : `${n > 0 ? '+' : ''}${n.toFixed(1)}%`)
 
 const Arrow = ({ value }) => {
   if (value == null) return null
   return value >= 0 ? (
-    <span style={{ color: '#34d399' }}>▲</span>
+    <span style={{ color: COLOR_POSITIVE }}>▲</span>
   ) : (
-    <span style={{ color: '#f87171' }}>▼</span>
+    <span style={{ color: COLOR_NEGATIVE }}>▼</span>
   )
 }
 
@@ -19,7 +20,7 @@ const Card = ({ label, value, change, pct, sublabel }) => (
     {change != null && (
       <div className={styles.cardChange}>
         <Arrow value={change} />
-        <span style={{ color: change >= 0 ? '#34d399' : '#f87171', marginLeft: 4 }}>
+        <span style={{ color: change >= 0 ? COLOR_POSITIVE : COLOR_NEGATIVE, marginLeft: 4 }}>
           {fmtFull(change)} ({fmtPct(pct)})
         </span>
         <span className={styles.cardSublabel}> vs {sublabel}</span>
@@ -62,4 +63,12 @@ export default function StatsCards({ stats }) {
       />
     </div>
   )
+}
+
+StatsCards.propTypes = {
+  stats: PropTypes.shape({
+    current: PropTypes.shape({ net_worth: PropTypes.number }),
+    mom: PropTypes.shape({ change: PropTypes.number, pct_change: PropTypes.number }),
+    yoy: PropTypes.shape({ change: PropTypes.number, pct_change: PropTypes.number }),
+  }),
 }

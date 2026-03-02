@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 import styles from './RangeSelector.module.css'
 
 /**
@@ -18,4 +19,14 @@ export default function RangeSelector({ ranges, activeRange, onSelect, className
       ))}
     </div>
   )
+}
+
+RangeSelector.propTypes = {
+  ranges: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string.isRequired,
+    months: PropTypes.number,
+  })).isRequired,
+  activeRange: PropTypes.string.isRequired,
+  onSelect: PropTypes.func.isRequired,
+  className: PropTypes.string,
 }

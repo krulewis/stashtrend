@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import PropTypes from 'prop-types'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import styles from './AccountsBreakdown.module.css'
 import { useResponsive } from '../hooks/useResponsive.js'
@@ -175,4 +176,13 @@ export default function AccountsBreakdown({ accounts }) {
       </div>
     </div>
   )
+}
+
+AccountsBreakdown.propTypes = {
+  accounts: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    name: PropTypes.string.isRequired,
+    type: PropTypes.string,
+    current_balance: PropTypes.number.isRequired,
+  })),
 }

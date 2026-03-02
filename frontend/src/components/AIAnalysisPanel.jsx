@@ -36,7 +36,7 @@ export default function AIAnalysisPanel() {
     }
   }
 
-  async function handleSaveAndAnalyze(e) {
+  async function handleConfigSubmit(e) {
     e.preventDefault()
     setError('')
     try {
@@ -118,7 +118,7 @@ export default function AIAnalysisPanel() {
 
           {/* ── Idle: unconfigured ── */}
           {status === 'idle' && config && !config.configured && (
-            <form className={styles.configForm} onSubmit={handleSaveAndAnalyze}>
+            <form className={styles.configForm} onSubmit={handleConfigSubmit}>
               <div className={styles.formRow}>
                 <label htmlFor="ai-provider" className={styles.label}>Provider</label>
                 <select

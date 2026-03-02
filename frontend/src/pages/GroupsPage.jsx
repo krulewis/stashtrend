@@ -1,9 +1,16 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import styles from './GroupsPage.module.css'
-import GroupsTimeChart from '../components/GroupsTimeChart'
-import GroupsSnapshot from '../components/GroupsSnapshot'
-import GroupManager from '../components/GroupManager'
-import { fetchJSON, postJSON } from '../api.js'
+import GroupsTimeChart from '../components/GroupsTimeChart.jsx'
+import GroupsSnapshot from '../components/GroupsSnapshot.jsx'
+import GroupManager from '../components/GroupManager.jsx'
+import {
+  fetchAccountsSummary,
+  fetchGroups,
+  fetchGroupsHistory,
+  fetchGroupsSnapshot,
+  fetchGroupsConfigs,
+  saveGroupsConfigs,
+} from '../api.js'
 
 export default function GroupsPage() {
   const [groups,          setGroups]          = useState([])
@@ -18,7 +25,7 @@ export default function GroupsPage() {
 
   // Load accounts once (doesn't change when groups change)
   useEffect(() => {
-    fetchJSON('/api/accounts/summary')
+    fetchAccountsSummary()
       .then(setAccounts)
       .catch((err) => setError(err.message))
   }, [])
@@ -27,10 +34,10 @@ export default function GroupsPage() {
   const loadGroupData = useCallback(() => {
     setLoading(true)
     Promise.all([
-      fetchJSON('/api/groups'),
-      fetchJSON('/api/groups/history'),
-      fetchJSON('/api/groups/snapshot'),
-      fetchJSON('/api/groups/configs'),
+      fetchGroups(),
+      fetchGroupsHistory(),
+      fetchGroupsSnapshot(),
+      fetchGroupsConfigs(),
     ])
       .then(([g, h, snap, cfgData]) => {
         setGroups(g)
@@ -95,17 +102,17 @@ export default function GroupsPage() {
     setSelectedGroupIds(new Set(config.group_ids))
     setActiveConfigId(config.id)
     // Persist the last-active config (fire and forget — best effort)
-    postJSON('/api/groups/configs', { configs, active_config_id: config.id }).catch(() => {})
+    saveGroupsConfigs({ configs, active_config_id: config.id }).catch((err) => console.warn('Failed to persist active config:', err))
   }, [configs])
 
   const handleSaveConfig = useCallback(async (name) => {
     const selectedIds = [...selectedGroupIds]
     const updated     = [...configs, { name, group_ids: selectedIds }]
     try {
-      const data = await postJSON('/api/groups/configs', { configs: updated, active_config_id: activeConfigId })
+      const data = await saveGroupsConfigs({ configs: updated, active_config_id: activeConfigId })
       setConfigs(data.configs)
-    } catch {
-      // Non-critical — selection still works, just not persisted
+    } catch (err) {
+      console.warn('Failed to save config:', err)
     }
   }, [configs, selectedGroupIds, activeConfigId])
 
@@ -113,21 +120,21 @@ export default function GroupsPage() {
     const updated     = configs.filter((c) => c.id !== configId)
     const newActiveId = activeConfigId === configId ? null : activeConfigId
     try {
-      const data = await postJSON('/api/groups/configs', { configs: updated, active_config_id: newActiveId })
+      const data = await saveGroupsConfigs({ configs: updated, active_config_id: newActiveId })
       setConfigs(data.configs)
       setActiveConfigId(newActiveId)
-    } catch {
-      // Non-critical
+    } catch (err) {
+      console.warn('Failed to delete config:', err)
     }
   }, [configs, activeConfigId])
 
   const handleRenameConfig = useCallback(async (configId, newName) => {
     const updated = configs.map((c) => c.id === configId ? { ...c, name: newName } : c)
     try {
-      const data = await postJSON('/api/groups/configs', { configs: updated, active_config_id: activeConfigId })
+      const data = await saveGroupsConfigs({ configs: updated, active_config_id: activeConfigId })
       setConfigs(data.configs)
-    } catch {
-      // Non-critical
+    } catch (err) {
+      console.warn('Failed to rename config:', err)
     }
   }, [configs, activeConfigId])
 

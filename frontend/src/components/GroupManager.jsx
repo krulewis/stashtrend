@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import PropTypes from 'prop-types'
 import styles from './GroupManager.module.css'
 import { fmtFull } from './chartUtils.jsx'
 import { createGroup, updateGroup, deleteGroup } from '../api.js'
@@ -210,7 +211,7 @@ function GroupList({ groups, editingGroupId, showingNewForm, onNew, onEdit, onDe
               <div className={styles.groupDot} style={{ background: g.color }} />
               <div>
                 <div className={styles.groupName}>{g.name}</div>
-                <div className={styles.groupMeta}>{g.account_ids.length} accounts</div>
+                <div className={styles.groupMeta}>{g.account_ids.length} account{g.account_ids.length !== 1 ? 's' : ''}</div>
               </div>
             </div>
             <div className={styles.groupCardActions}>
@@ -301,4 +302,21 @@ export default function GroupManager({ groups, accounts, onGroupsChanged }) {
       )}
     </div>
   )
+}
+
+GroupManager.propTypes = {
+  groups: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    name: PropTypes.string.isRequired,
+    color: PropTypes.string,
+    account_ids: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number])).isRequired,
+  })).isRequired,
+  accounts: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    name: PropTypes.string.isRequired,
+    type: PropTypes.string,
+    institution: PropTypes.string,
+    current_balance: PropTypes.number,
+  })).isRequired,
+  onGroupsChanged: PropTypes.func.isRequired,
 }
