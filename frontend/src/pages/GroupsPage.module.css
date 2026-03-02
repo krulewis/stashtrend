@@ -10,19 +10,11 @@
   .root { gap: 24px; }
 }
 
-/* Charts row: stacked on mobile, 3fr 2fr on tablet+ */
+/* Charts row: always single-column, stacked */
 .chartsRow {
   display: grid;
   grid-template-columns: 1fr;
   gap: 16px;
-}
-
-@media (min-width: 768px) {
-  .chartsRow {
-    grid-template-columns: 3fr 2fr;
-    gap: 20px;
-    align-items: start;
-  }
 }
 
 .timeChartCol {}

@@ -4,7 +4,7 @@
 - **Name:** Stashtrend — self-hosted personal finance dashboard for Monarch Money
 - **Stack:** Flask + React/Vite frontend + pipeline
 - **Status:** Phases 1–7 complete. Docker Compose works end-to-end.
-- **Tests:** 165 backend (pytest) + 177 frontend (vitest) = 342 total, all passing
+- **Tests:** 165 backend (pytest) + 210 frontend (vitest) = 375 total, all passing
 
 ## Map — Where to Find Things
 | Topic | File |

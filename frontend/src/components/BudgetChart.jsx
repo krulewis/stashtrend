@@ -4,7 +4,7 @@ import {
 } from 'recharts'
 import { useResponsive } from '../hooks/useResponsive.js'
 import styles from './BudgetChart.module.css'
-import { GRID_STROKE, COLOR_ACCENT, COLOR_POSITIVE, fmtFull, fmtCompact, fmtBudgetMonth, TOOLTIP_STYLE } from './chartUtils.jsx'
+import { GRID_STROKE, COLOR_ACCENT, COLOR_POSITIVE, COLOR_AMBER, fmtFull, fmtCompact, fmtBudgetMonth, TOOLTIP_STYLE } from './chartUtils.jsx'
 
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
@@ -18,18 +18,24 @@ function CustomTooltip({ active, payload, label }) {
   )
 }
 
-export default function BudgetChart({ months, totalsByMonth }) {
+export default function BudgetChart({ months, totalsByMonth, incomeTotalsByMonth }) {
   const { isMobile } = useResponsive()
 
   if (!months || !totalsByMonth) {
     return <div className={styles.loading}>Loading chart…</div>
   }
 
-  const data = months.map(m => ({
-    month:  m,
-    Budget: totalsByMonth[m]?.budgeted ?? 0,
-    Actual: totalsByMonth[m]?.actual   ?? 0,
-  }))
+  const data = months.map(m => {
+    const entry = {
+      month:  m,
+      Budget: totalsByMonth[m]?.budgeted ?? 0,
+      Actual: totalsByMonth[m]?.actual   ?? 0,
+    }
+    if (incomeTotalsByMonth) {
+      entry.Income = incomeTotalsByMonth[m] ?? 0
+    }
+    return entry
+  })
 
   const chartHeight = isMobile ? 220 : 300
 
@@ -53,6 +59,9 @@ export default function BudgetChart({ months, totalsByMonth }) {
           <Legend wrapperStyle={{ color: '#94a3b8', fontSize: 13 }} />
           <Bar dataKey="Budget" fill={COLOR_ACCENT}   radius={[3, 3, 0, 0]} />
           <Bar dataKey="Actual" fill={COLOR_POSITIVE} radius={[3, 3, 0, 0]} />
+          {incomeTotalsByMonth && (
+            <Bar dataKey="Income" fill={COLOR_AMBER} radius={[3, 3, 0, 0]} />
+          )}
         </BarChart>
       </ResponsiveContainer>
     </div>

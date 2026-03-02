@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import BudgetChart from '../components/BudgetChart.jsx'
 import BudgetTable from '../components/BudgetTable.jsx'
 import AIAnalysisPanel from '../components/AIAnalysisPanel.jsx'
@@ -21,6 +21,19 @@ export default function BudgetPage() {
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
   }, [months])
+
+  const incomeTotalsByMonth = useMemo(() => {
+    if (!budgetData?.categories) return null
+    const incomeCategories = budgetData.categories.filter(cat => cat.group_type === 'income')
+    if (incomeCategories.length === 0) return null
+    const totals = {}
+    for (const cat of incomeCategories) {
+      for (const [month, values] of Object.entries(cat.months ?? {})) {
+        totals[month] = (totals[month] ?? 0) + (values.actual ?? 0)
+      }
+    }
+    return totals
+  }, [budgetData])
 
   return (
     <div className={styles.page}>
@@ -57,6 +70,7 @@ export default function BudgetPage() {
           <BudgetChart
             months={budgetData.months}
             totalsByMonth={budgetData.totals_by_month}
+            incomeTotalsByMonth={incomeTotalsByMonth}
           />
           <BudgetTable
             months={budgetData.months}

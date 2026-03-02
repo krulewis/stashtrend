@@ -56,6 +56,13 @@ Design mistakes introduced during AI-generated implementation. Captured so the p
 **Root cause:** After full code analysis (backend API, SQL queries, frontend computation), the conflict detection logic was confirmed correct. The actual cause was data — the user's groups shared an account in `account_group_members` that they didn't realize was duplicated.
 **Rule:** Before modifying conflict/validation logic in response to a "false positive" report, verify the logic is actually wrong by inspecting the underlying data. The fix was a UX improvement (named tooltip), not a logic change.
 
+### group_type vs category_type — Use group_type
+**Where:** `BudgetPage.jsx` — filtering categories to sum income actuals.
+**Symptom:** `incomeTotalsByMonth` was `null`; Income bar never rendered; tests caught it immediately.
+**Root cause:** Filtered on `cat.category_type === 'income'` — field doesn't exist. The API returns `cat.group_type` (`'income'`, `'expense'`, `'transfer'`).
+**Fix:** `cat.group_type === 'income'`
+**Rule:** Category classification field is always `group_type`, not `category_type`. Tests against fixture data will catch this instantly since fixtures also use `group_type`.
+
 ### Generic Conflict Messages Create Investigation Overhead
 **Where:** `GroupSnapshotControls.jsx` chip `title` attribute.
 **Symptom:** Tooltip said "Shares an account with a selected group" — user couldn't tell which group conflicted with which, making group definition problems impossible to self-diagnose.

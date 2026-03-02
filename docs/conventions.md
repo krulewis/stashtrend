@@ -10,6 +10,7 @@
 - **Recharts tooltips:** always `const tooltipStyles = {...}` at module level — recharts renders outside React tree, CSS Modules can't reach them
 
 ## Budget & Transfers
+- **Category classification field:** always `group_type` (`'income'`, `'expense'`, `'transfer'`). The field `category_type` does not exist.
 - **Transfer filtering:** Monarch transfers have `group_type = 'transfer'` in `categories` table. Budget queries must always include:
   ```sql
   AND (c.group_type IS NULL OR c.group_type <> 'transfer')
@@ -20,6 +21,7 @@
 ## Testing
 - **Backend test runner:** `./run_tests.sh` from `backend/` (auto-creates venv, installs deps, runs pytest)
 - **Frontend test runner:** `./run_tests.sh` from `frontend/` (checks node_modules freshness, runs vitest)
+- **Recharts height testing:** to assert a numeric prop (e.g. `height`) on a mocked recharts component, the mock must be an explicit factory that renders it as an HTML attribute — e.g. `ResponsiveContainer: ({ height, children }) => <div data-height={String(height)}>{children}</div>`. An auto-mock (`vi.mock('recharts')` with no factory) returns `undefined` for all props and makes height untestable.
 
 ## Distribution & Docker
 - **Self-hosted:** Docker Compose — each user runs locally, no data leaves their machine

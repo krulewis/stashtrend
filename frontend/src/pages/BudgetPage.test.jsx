@@ -4,9 +4,12 @@ import BudgetPage from './BudgetPage.jsx'
 import { MOCK_BUDGET_HISTORY, MOCK_AI_CONFIG_UNCONFIGURED, mockFetch } from '../test/fixtures.js'
 
 vi.mock('../components/BudgetChart.jsx', () => ({
-  default: ({ months, totalsByMonth }) => (
+  default: ({ months, totalsByMonth, incomeTotalsByMonth }) => (
     <div data-testid="budget-chart">
       {months && <span>chart-months:{months.length}</span>}
+      {incomeTotalsByMonth && (
+        <span data-testid="income-totals">{JSON.stringify(incomeTotalsByMonth)}</span>
+      )}
     </div>
   ),
 }))
@@ -76,5 +79,28 @@ describe('BudgetPage', () => {
     await waitFor(() => {
       expect(screen.getByText(/Error/i)).toBeInTheDocument()
     })
+  })
+
+  // ── Income aggregation ─────────────────────────────────────────────────────
+
+  it('passes incomeTotalsByMonth to BudgetChart when income categories exist', async () => {
+    render(<BudgetPage />)
+    await screen.findByTestId('budget-chart')
+    expect(screen.getByTestId('income-totals')).toBeInTheDocument()
+  })
+
+  it('aggregates actual income values per month from income-type categories', async () => {
+    render(<BudgetPage />)
+    await screen.findByTestId('budget-chart')
+    const parsed = JSON.parse(screen.getByTestId('income-totals').textContent)
+    // MOCK_BUDGET_HISTORY has one income category (Paycheck) with actuals 6000 and 6200
+    expect(parsed['2025-11-01']).toBe(6000)
+    expect(parsed['2025-12-01']).toBe(6200)
+  })
+
+  it('does not pass incomeTotalsByMonth to BudgetChart while loading', () => {
+    global.fetch = vi.fn(() => new Promise(() => {}))
+    render(<BudgetPage />)
+    expect(screen.queryByTestId('income-totals')).not.toBeInTheDocument()
   })
 })

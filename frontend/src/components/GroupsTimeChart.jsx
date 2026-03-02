@@ -34,7 +34,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 export default function GroupsTimeChart({ historyData }) {
   const [range, setRange] = useState('1Y')
   const [selectedGroups, setSelectedGroups] = useState(new Set())
-  const { isMobile } = useResponsive()
+  const { isMobile, isDesktop } = useResponsive()
 
   const { series, groups_meta: groupsMeta } = historyData ?? {}
   const groupNames = Object.keys(groupsMeta ?? {})
@@ -53,7 +53,7 @@ export default function GroupsTimeChart({ historyData }) {
   const data = useMemo(() => downsample(filtered), [filtered])
 
   // Chart props not settable via CSS
-  const chartHeight = isMobile ? 220 : 300
+  const chartHeight = isMobile ? 220 : isDesktop ? 380 : 300
   const yAxisWidth  = isMobile ? 52  : 72
 
   if (!historyData) {

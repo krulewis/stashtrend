@@ -3,7 +3,17 @@ import { vi, describe, it, expect } from 'vitest'
 import GroupsTimeChart from './GroupsTimeChart.jsx'
 import { MOCK_HISTORY_DATA } from '../test/fixtures.js'
 
-vi.mock('recharts')
+vi.mock('recharts', () => ({
+  LineChart:           ({ children }) => <div data-testid="line-chart">{children}</div>,
+  Line:                () => null,
+  ResponsiveContainer: ({ height, children }) => (
+    <div data-testid="responsive-container" data-height={String(height)}>{children}</div>
+  ),
+  CartesianGrid: () => null,
+  XAxis:         () => null,
+  YAxis:         () => null,
+  Tooltip:       () => null,
+}))
 vi.mock('../hooks/useResponsive', () => ({
   useResponsive: () => ({ isMobile: false, isTablet: false, isDesktop: true }),
 }))
@@ -59,5 +69,16 @@ describe('GroupsTimeChart', () => {
   it('renders chart title', () => {
     render(<GroupsTimeChart historyData={MOCK_HISTORY_DATA} />)
     expect(screen.getByText('Group Balances Over Time')).toBeInTheDocument()
+  })
+
+  // ── Chart height (desktop = 380px when isDesktop: true) ───────────────────
+
+  it('applies 380px chart height on desktop', () => {
+    // useResponsive mock returns { isMobile: false, isDesktop: true }
+    // Before the feature: chartHeight = isMobile ? 220 : 300  → 300
+    // After the feature:  chartHeight = isMobile ? 220 : isDesktop ? 380 : 300  → 380
+    render(<GroupsTimeChart historyData={MOCK_HISTORY_DATA} />)
+    fireEvent.click(screen.getByText('Liquid Cash'))
+    expect(screen.getByTestId('responsive-container')).toHaveAttribute('data-height', '380')
   })
 })

@@ -92,7 +92,7 @@ export default function GroupsSnapshot({
   const total = data.reduce((sum, d) => sum + (d.total || 0), 0)
 
   // Chart props not settable via CSS
-  const chartHeight = isMobile ? 220 : 280
+  const chartHeight = isMobile ? 220 : 340
   const yAxisWidth  = isMobile ? 52  : 72
 
   return (
