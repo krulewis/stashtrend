@@ -7,6 +7,7 @@ overridden via the MONARCH_DATA_DIR environment variable (used by Docker).
 """
 
 import asyncio
+import contextlib
 import json
 import os
 import sqlite3
@@ -138,8 +139,19 @@ CREATE TABLE IF NOT EXISTS budget_builder_plans (
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
+
+
+@contextlib.contextmanager
+def get_db_connection():
+    """Context manager that auto-closes the DB connection on exit."""
+    conn = get_db()
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 
 def init_dashboard_schema():
@@ -337,6 +349,7 @@ def _run_sync_worker(job_id: int, entities: list, full_refresh: bool):
     # Each thread needs its own DB connection and event loop
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys = ON")
 
     results = {}

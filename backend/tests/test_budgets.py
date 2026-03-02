@@ -1,40 +1,15 @@
 import sys
-import sqlite3
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from app import DASHBOARD_DDL, app
-
-# Minimal pipeline DDL needed for budget tests
-PIPELINE_DDL = """
-CREATE TABLE IF NOT EXISTS categories (
-    id          TEXT PRIMARY KEY,
-    name        TEXT NOT NULL,
-    group_id    TEXT,
-    group_name  TEXT,
-    group_type  TEXT
-);
-CREATE TABLE IF NOT EXISTS budgets (
-    category_id     TEXT NOT NULL,
-    month           TEXT NOT NULL,
-    budgeted_amount REAL,
-    actual_amount   REAL,
-    variance        REAL,
-    PRIMARY KEY (category_id, month),
-    FOREIGN KEY (category_id) REFERENCES categories(id)
-);
-"""
+from app import app
+from tests.test_helpers import make_test_db
 
 
 def make_db():
-    conn = sqlite3.connect(":memory:")
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    conn.executescript(PIPELINE_DDL)
-    conn.executescript(DASHBOARD_DDL)
-    return conn
+    return make_test_db()
 
 
 def seed_budgets(conn):

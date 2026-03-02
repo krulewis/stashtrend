@@ -2,9 +2,8 @@
 
 ## Backend
 
-### conn.close() Omission Pattern
-`GET /api/budgets/history`, `GET+POST /api/ai/config`, and all `/api/budget-builder/*` endpoints intentionally omit `conn.close()`.
-Tests for these endpoints share a single in-memory connection across multiple requests (within one `patch` block or across sibling `with patch(...)` blocks). Calling `conn.close()` after the first request kills the shared connection and breaks subsequent calls. The connection is GC'd normally.
+### conn.close() Omission Pattern (Partially resolved)
+`get_db_connection()` context manager added to auto-close connections. Endpoints that use `get_db()` directly (budget-related, AI, budget-builder) still intentionally omit `conn.close()` because tests share a single in-memory connection across multiple `patch` blocks. Migration to `get_db_connection()` is incremental — endpoints need `get_db()` when tests mock the return value. The context manager is for new code and non-test-mocked endpoints.
 
 ### Fresh Install 500 (Fixed)
 `init_dashboard_schema()` now calls `pipeline_schema.init_db()` first.

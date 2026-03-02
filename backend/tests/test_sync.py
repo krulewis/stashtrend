@@ -16,70 +16,16 @@ Monarch API calls required.
 
 import json
 import sqlite3
+import sys
 import unittest
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Optional
 
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# ---------------------------------------------------------------------------
-# DDL fragments mirrored from app.py — kept here so tests are self-contained
-# and will catch any drift between the DDL and the helper functions.
-# ---------------------------------------------------------------------------
-
-PIPELINE_TABLES_DDL = """
-CREATE TABLE IF NOT EXISTS accounts (
-    id              TEXT PRIMARY KEY,
-    name            TEXT,
-    type            TEXT,
-    current_balance REAL
-);
-
-CREATE TABLE IF NOT EXISTS account_history (
-    account_id TEXT,
-    date       TEXT,
-    balance    REAL,
-    PRIMARY KEY (account_id, date)
-);
-
-CREATE TABLE IF NOT EXISTS transactions (
-    id   TEXT PRIMARY KEY,
-    date TEXT,
-    amount REAL
-);
-
-CREATE TABLE IF NOT EXISTS categories (
-    id   TEXT PRIMARY KEY,
-    name TEXT
-);
-
-CREATE TABLE IF NOT EXISTS budgets (
-    category_id TEXT,
-    month       TEXT,
-    PRIMARY KEY (category_id, month)
-);
-
-CREATE TABLE IF NOT EXISTS sync_log (
-    entity          TEXT PRIMARY KEY,
-    last_synced_at  TEXT,
-    last_sync_count INTEGER,
-    total_records   INTEGER
-);
-"""
-
-SYNC_JOBS_DDL = """
-CREATE TABLE IF NOT EXISTS sync_jobs (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    started_at   TEXT    NOT NULL,
-    finished_at  TEXT,
-    status       TEXT    NOT NULL DEFAULT 'running',
-    entities     TEXT    NOT NULL,
-    full_refresh INTEGER NOT NULL DEFAULT 0,
-    results      TEXT,
-    error        TEXT
-);
-"""
-
-FULL_DDL = PIPELINE_TABLES_DDL + SYNC_JOBS_DDL
+from tests.test_helpers import make_test_db
+from app import DASHBOARD_DDL
 
 # ---------------------------------------------------------------------------
 # Pure helper functions (mirror of what will live in app.py)
@@ -240,11 +186,7 @@ def build_results(entity: str, count: int, delta: int, status: str, error: str =
 
 def _make_db() -> sqlite3.Connection:
     """Create a fresh in-memory DB with full schema."""
-    conn = sqlite3.connect(":memory:")
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    conn.executescript(FULL_DDL)
-    return conn
+    return make_test_db()
 
 
 class TestSyncJobsSchema(unittest.TestCase):
@@ -265,7 +207,7 @@ class TestSyncJobsSchema(unittest.TestCase):
     def test_schema_is_idempotent(self):
         """Re-running the DDL must not raise."""
         try:
-            self.conn.executescript(SYNC_JOBS_DDL)
+            self.conn.executescript(DASHBOARD_DDL)
         except Exception as e:
             self.fail(f"Re-running DDL raised: {e}")
 
@@ -444,7 +386,7 @@ class TestBeforeAfterDeltas(unittest.TestCase):
     def _insert_accounts(self, n: int, start_id: int = 1):
         for i in range(n):
             self.conn.execute(
-                "INSERT OR REPLACE INTO accounts (id, name) VALUES (?, ?)",
+                "INSERT OR REPLACE INTO accounts (id, name, synced_at) VALUES (?, ?, '2024-01-01')",
                 (str(start_id + i), f"Account {start_id + i}"),
             )
         self.conn.commit()
@@ -452,7 +394,7 @@ class TestBeforeAfterDeltas(unittest.TestCase):
     def _insert_transactions(self, n: int, start_id: int = 1):
         for i in range(n):
             self.conn.execute(
-                "INSERT OR REPLACE INTO transactions (id, date, amount) VALUES (?, ?, ?)",
+                "INSERT OR REPLACE INTO transactions (id, date, amount, synced_at) VALUES (?, ?, ?, '2024-01-01')",
                 (str(start_id + i), "2026-01-01", 10.0),
             )
         self.conn.commit()

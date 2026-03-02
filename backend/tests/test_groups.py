@@ -15,7 +15,6 @@ Coverage:
 import json
 import sqlite3
 import sys
-import tempfile
 import unittest
 from collections import defaultdict
 from pathlib import Path
@@ -23,62 +22,13 @@ from pathlib import Path
 # ── Make app importable from tests/ without installing it ─────────────────────
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# ── Replicate the DDL and pure logic from app.py so tests don't need Flask ────
-PIPELINE_DDL = """
-CREATE TABLE IF NOT EXISTS accounts (
-    id                   TEXT PRIMARY KEY,
-    name                 TEXT NOT NULL,
-    type                 TEXT,
-    subtype              TEXT,
-    current_balance      REAL,
-    display_balance      REAL,
-    institution          TEXT,
-    is_hidden            INTEGER DEFAULT 0,
-    is_asset             INTEGER DEFAULT 1,
-    include_in_net_worth INTEGER DEFAULT 1,
-    last_updated         TEXT,
-    synced_at            TEXT NOT NULL DEFAULT '2024-01-01'
-);
-
-CREATE TABLE IF NOT EXISTS account_history (
-    account_id TEXT NOT NULL,
-    date       TEXT NOT NULL,
-    balance    REAL,
-    PRIMARY KEY (account_id, date),
-    FOREIGN KEY (account_id) REFERENCES accounts(id)
-);
-"""
-
-DASHBOARD_DDL = """
-CREATE TABLE IF NOT EXISTS account_groups (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    name       TEXT NOT NULL UNIQUE,
-    color      TEXT NOT NULL DEFAULT '#6366f1',
-    created_at TEXT NOT NULL DEFAULT (date('now'))
-);
-
-CREATE TABLE IF NOT EXISTS account_group_members (
-    group_id   INTEGER NOT NULL,
-    account_id TEXT    NOT NULL,
-    PRIMARY KEY (group_id, account_id),
-    FOREIGN KEY (group_id)   REFERENCES account_groups(id) ON DELETE CASCADE,
-    FOREIGN KEY (account_id) REFERENCES accounts(id)
-);
-
-CREATE TABLE IF NOT EXISTS settings (
-    key   TEXT PRIMARY KEY,
-    value TEXT NOT NULL
-);
-"""
+from tests.test_helpers import make_test_db
+from app import DASHBOARD_DDL
 
 
 def make_db():
     """Create an in-memory SQLite DB with both pipeline + dashboard schemas."""
-    conn = sqlite3.connect(":memory:")
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    conn.executescript(PIPELINE_DDL)
-    conn.executescript(DASHBOARD_DDL)
+    conn = make_test_db()
     return conn
 
 

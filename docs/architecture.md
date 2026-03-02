@@ -4,7 +4,7 @@
 - **Backend:** `backend/app.py` — all Flask endpoints, port 5050
 - **Frontend:** `frontend/` — React + Vite + Recharts, port 5173 (dev) / 80 (prod via nginx)
 - **Pipeline:** `pipeline/monarch_pipeline/` — Monarch Money API client, schema, storage
-- **DB:** SQLite at `~/.monarch_pipeline/monarch.db` (local) or `/data/monarch.db` (Docker volume)
+- **DB:** SQLite at `~/.monarch_pipeline/monarch.db` (local) or `/data/monarch.db` (Docker volume), WAL mode enabled
 
 ## Features Implemented
 - **Budget vs Actuals:** COMPLETE — all backend endpoints ✅ · `BudgetChart`, `BudgetTable`, `AIAnalysisPanel`, `BudgetPage` ✅ · wired into `App.jsx` as "💰 Budgets" tab ✅
