@@ -26,6 +26,7 @@ const defaultProps = {
   onSelectConfig:  vi.fn(),
   onSaveConfig:    vi.fn(),
   onDeleteConfig:  vi.fn(),
+  onRenameConfig:  vi.fn(),
 }
 
 describe('GroupSnapshotControls', () => {
@@ -186,12 +187,13 @@ describe('GroupSnapshotControls', () => {
   describe('config pills', () => {
     it('renders a pill for each saved config', () => {
       render(<GroupSnapshotControls {...defaultProps} configs={MOCK_CONFIGS} />)
-      expect(screen.getByRole('button', { name: /Net Worth View/ })).toBeInTheDocument()
+      expect(screen.getByTestId('config-pill')).toBeInTheDocument()
+      expect(screen.getByTestId('config-pill')).toHaveTextContent('Net Worth View')
     })
 
     it('calls onSelectConfig with the config object when a pill is clicked', () => {
       render(<GroupSnapshotControls {...defaultProps} configs={MOCK_CONFIGS} />)
-      fireEvent.click(screen.getByRole('button', { name: /Net Worth View/ }))
+      fireEvent.click(screen.getByTestId('config-pill'))
       expect(defaultProps.onSelectConfig).toHaveBeenCalledWith(MOCK_CONFIGS[0])
     })
 
@@ -203,12 +205,80 @@ describe('GroupSnapshotControls', () => {
           activeConfigId={1}
         />
       )
-      expect(screen.getByRole('button', { name: /Net Worth View/ })).toHaveAttribute('aria-pressed', 'true')
+      expect(screen.getByTestId('config-pill')).toHaveAttribute('aria-pressed', 'true')
     })
 
     it('renders no config pills when configs list is empty', () => {
       render(<GroupSnapshotControls {...defaultProps} configs={[]} />)
       expect(screen.queryByTestId('config-pill')).not.toBeInTheDocument()
+    })
+  })
+
+  // ── Delete config ────────────────────────────────────────────────────────
+
+  describe('delete config', () => {
+    it('renders a delete button for each config pill', () => {
+      render(<GroupSnapshotControls {...defaultProps} configs={MOCK_CONFIGS} />)
+      expect(screen.getByRole('button', { name: /delete net worth view/i })).toBeInTheDocument()
+    })
+
+    it('calls onDeleteConfig with the config id when delete is clicked', () => {
+      render(<GroupSnapshotControls {...defaultProps} configs={MOCK_CONFIGS} />)
+      fireEvent.click(screen.getByRole('button', { name: /delete net worth view/i }))
+      expect(defaultProps.onDeleteConfig).toHaveBeenCalledWith(1)
+    })
+
+    it('does not call onSelectConfig when delete is clicked', () => {
+      render(<GroupSnapshotControls {...defaultProps} configs={MOCK_CONFIGS} />)
+      fireEvent.click(screen.getByRole('button', { name: /delete net worth view/i }))
+      expect(defaultProps.onSelectConfig).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── Rename config ─────────────────────────────────────────────────────────
+
+  describe('rename config', () => {
+    it('renders a rename button for each config pill', () => {
+      render(<GroupSnapshotControls {...defaultProps} configs={MOCK_CONFIGS} />)
+      expect(screen.getByRole('button', { name: /rename net worth view/i })).toBeInTheDocument()
+    })
+
+    it('shows a rename input pre-filled with the current name when rename is clicked', () => {
+      render(<GroupSnapshotControls {...defaultProps} configs={MOCK_CONFIGS} />)
+      fireEvent.click(screen.getByRole('button', { name: /rename net worth view/i }))
+      expect(screen.getByDisplayValue('Net Worth View')).toBeInTheDocument()
+    })
+
+    it('calls onRenameConfig with the config id and new name on submit', () => {
+      render(<GroupSnapshotControls {...defaultProps} configs={MOCK_CONFIGS} />)
+      fireEvent.click(screen.getByRole('button', { name: /rename net worth view/i }))
+      const input = screen.getByDisplayValue('Net Worth View')
+      fireEvent.change(input, { target: { value: 'Updated Name' } })
+      fireEvent.submit(input.closest('form'))
+      expect(defaultProps.onRenameConfig).toHaveBeenCalledWith(1, 'Updated Name')
+    })
+
+    it('does not call onRenameConfig when name is empty', () => {
+      render(<GroupSnapshotControls {...defaultProps} configs={MOCK_CONFIGS} />)
+      fireEvent.click(screen.getByRole('button', { name: /rename net worth view/i }))
+      const input = screen.getByDisplayValue('Net Worth View')
+      fireEvent.change(input, { target: { value: '' } })
+      fireEvent.submit(input.closest('form'))
+      expect(defaultProps.onRenameConfig).not.toHaveBeenCalled()
+    })
+
+    it('closes the rename form and restores the pill on cancel', () => {
+      render(<GroupSnapshotControls {...defaultProps} configs={MOCK_CONFIGS} />)
+      fireEvent.click(screen.getByRole('button', { name: /rename net worth view/i }))
+      fireEvent.click(screen.getByRole('button', { name: /cancel/i }))
+      expect(screen.getByTestId('config-pill')).toBeInTheDocument()
+      expect(screen.queryByDisplayValue('Net Worth View')).not.toBeInTheDocument()
+    })
+
+    it('does not call onSelectConfig when rename is clicked', () => {
+      render(<GroupSnapshotControls {...defaultProps} configs={MOCK_CONFIGS} />)
+      fireEvent.click(screen.getByRole('button', { name: /rename net worth view/i }))
+      expect(defaultProps.onSelectConfig).not.toHaveBeenCalled()
     })
   })
 

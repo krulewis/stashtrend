@@ -19,22 +19,18 @@ See `docs/architecture.md` → DDL Init Order.
 ### getByText Ambiguity
 Use `getByRole('button', { name: /.../ })` when text appears in multiple elements.
 
+### aria-label Sibling Ambiguity
+When action buttons (rename, delete) are added alongside a named element, their `aria-label` values inherit the parent name — e.g. `aria-label="Rename Net Worth View"` and `aria-label="Delete Net Worth View"` both match `/Net Worth View/`. Existing tests using partial-name regexes break with "Found multiple elements". Fix: switch those tests to `getByTestId` or an exact-match regex (`/^Net Worth View$/`).
+
 ### Password Inputs
 `type="password"` inputs have no accessible role `textbox`; use `getByLabelText(...)` to query them in tests.
 
 ### Split Text Nodes
 JSX conditionals render separate text nodes; use a custom `el.textContent` function matcher instead of `getByText`.
 
-## Tools
-
-### Write Tool Requirement
-Must `Read` a file in the same message batch immediately before `Write`; a token read (`offset:1, limit:1`) satisfies the requirement.
-
 ---
 
 ## Bug Patterns
-
-Design mistakes introduced during AI-generated implementation. Captured so the pattern isn't repeated.
 
 ### null-as-All-Selected Bypasses Constraints
 **Where:** `GroupsPage.jsx` — `selectedGroupIds` initialized as `null` meaning "show all."

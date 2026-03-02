@@ -64,6 +64,7 @@ export default function GroupsSnapshot({
   onSelectConfig,
   onSaveConfig,
   onDeleteConfig,
+  onRenameConfig,
 }) {
   const { isMobile } = useResponsive()
 
@@ -115,6 +116,7 @@ export default function GroupsSnapshot({
           onSelectConfig={onSelectConfig}
           onSaveConfig={onSaveConfig}
           onDeleteConfig={onDeleteConfig}
+          onRenameConfig={onRenameConfig}
         />
       )}
 

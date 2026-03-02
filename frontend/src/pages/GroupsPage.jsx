@@ -121,6 +121,16 @@ export default function GroupsPage() {
     }
   }, [configs, activeConfigId])
 
+  const handleRenameConfig = useCallback(async (configId, newName) => {
+    const updated = configs.map((c) => c.id === configId ? { ...c, name: newName } : c)
+    try {
+      const data = await postJSON('/api/groups/configs', { configs: updated, active_config_id: activeConfigId })
+      setConfigs(data.configs)
+    } catch {
+      // Non-critical
+    }
+  }, [configs, activeConfigId])
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   if (error) {
@@ -153,6 +163,7 @@ export default function GroupsPage() {
             onSelectConfig={handleSelectConfig}
             onSaveConfig={handleSaveConfig}
             onDeleteConfig={handleDeleteConfig}
+            onRenameConfig={handleRenameConfig}
           />
         </div>
       </div>

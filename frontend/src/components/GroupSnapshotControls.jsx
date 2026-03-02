@@ -17,9 +17,12 @@ export default function GroupSnapshotControls({
   onSelectConfig,
   onSaveConfig,
   onDeleteConfig,
+  onRenameConfig,
 }) {
-  const [saving, setSaving]   = useState(false)
-  const [saveName, setSaveName] = useState('')
+  const [saving,           setSaving]           = useState(false)
+  const [saveName,         setSaveName]         = useState('')
+  const [renamingConfigId, setRenamingConfigId] = useState(null)
+  const [renameName,       setRenameName]       = useState('')
 
   const isSelected = (groupId) => selectedGroupIds.has(groupId)
 
@@ -46,6 +49,25 @@ export default function GroupSnapshotControls({
     onSaveConfig(name)
     setSaveName('')
     setSaving(false)
+  }
+
+  const startRename = (cfg) => {
+    setRenamingConfigId(cfg.id)
+    setRenameName(cfg.name)
+  }
+
+  const handleRenameSubmit = (e) => {
+    e.preventDefault()
+    const name = renameName.trim()
+    if (!name) return
+    onRenameConfig(renamingConfigId, name)
+    setRenamingConfigId(null)
+    setRenameName('')
+  }
+
+  const cancelRename = () => {
+    setRenamingConfigId(null)
+    setRenameName('')
   }
 
   return (
@@ -76,17 +98,45 @@ export default function GroupSnapshotControls({
 
       {/* Saved config pills + save button */}
       <div className={styles.configsRow}>
-        {configs.map((cfg) => (
-          <button
-            key={cfg.id}
-            data-testid="config-pill"
-            aria-pressed={String(cfg.id === activeConfigId)}
-            className={`${styles.configPill} ${cfg.id === activeConfigId ? styles.configPillActive : ''}`}
-            onClick={() => onSelectConfig(cfg)}
-          >
-            {cfg.name}
-          </button>
-        ))}
+        {configs.map((cfg) =>
+          renamingConfigId === cfg.id ? (
+            <form key={cfg.id} className={styles.saveForm} onSubmit={handleRenameSubmit}>
+              <input
+                autoFocus
+                className={styles.saveInput}
+                value={renameName}
+                onChange={(e) => setRenameName(e.target.value)}
+              />
+              <button type="submit" className={styles.saveConfirm}>Save</button>
+              <button type="button" className={styles.saveCancel} onClick={cancelRename}>Cancel</button>
+            </form>
+          ) : (
+            <div key={cfg.id} className={styles.pillGroup}>
+              <button
+                data-testid="config-pill"
+                aria-pressed={String(cfg.id === activeConfigId)}
+                className={`${styles.configPill} ${cfg.id === activeConfigId ? styles.configPillActive : ''}`}
+                onClick={() => onSelectConfig(cfg)}
+              >
+                {cfg.name}
+              </button>
+              <button
+                className={styles.pillAction}
+                aria-label={`Rename ${cfg.name}`}
+                onClick={() => startRename(cfg)}
+              >
+                ✎
+              </button>
+              <button
+                className={styles.pillAction}
+                aria-label={`Delete ${cfg.name}`}
+                onClick={() => onDeleteConfig(cfg.id)}
+              >
+                ×
+              </button>
+            </div>
+          )
+        )}
 
         {saving ? (
           <form className={styles.saveForm} onSubmit={handleSaveSubmit}>
