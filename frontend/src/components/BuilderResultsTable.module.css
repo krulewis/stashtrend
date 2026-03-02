@@ -1,0 +1,220 @@
+/* ─── BuilderResultsTable ─────────────────────────────────────────────────── */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.summary {
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th,
+.table td {
+  padding: 8px 12px;
+  text-align: right;
+  border-bottom: 1px solid var(--border-sub);
+  white-space: nowrap;
+}
+
+.table th {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.catHeader {
+  text-align: left !important;
+}
+
+.groupRow {
+  cursor: pointer;
+}
+
+.groupRow td {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.groupToggle {
+  margin-right: 6px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.catRow td:first-child {
+  text-align: left;
+  color: var(--text-primary);
+  padding-left: 24px;
+}
+
+.cellInput {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 13px;
+  padding: 3px 6px;
+  width: 80px;
+  text-align: right;
+}
+
+.cellInput:hover {
+  border-color: var(--border);
+}
+
+.cellInput:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--bg-deep);
+}
+
+.cellEdited {
+  composes: cellInput;
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.totalRow td {
+  font-weight: 700;
+  border-top: 2px solid var(--border);
+  color: var(--text-primary);
+}
+
+.netPositive { color: var(--green); }
+.netNegative { color: var(--red); }
+
+/* ── Actions ── */
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.btnPrimary {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnPrimary:hover:not(:disabled) { background: #818cf8; }
+.btnPrimary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btnSuccess {
+  background: var(--green);
+  color: #0f1117;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnSuccess:hover:not(:disabled) { background: #6ee7b7; }
+.btnSuccess:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btnGhost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btnGhost:hover { color: var(--text-primary); border-color: var(--text-faint); }
+
+/* ── Confirm Dialog ── */
+.confirmOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.confirmDialog {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+}
+
+.confirmTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.confirmBody {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* ── Apply Result ── */
+.applyResult {
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 13px;
+}
+
+.resultSuccess { color: var(--green); }
+.resultFailed { color: var(--red); }
+
+.errorList {
+  list-style: none;
+  padding: 8px 0 0;
+  font-size: 12px;
+  color: var(--red);
+}
+
+.errorList li {
+  padding: 2px 0;
+}

@@ -5,6 +5,7 @@ import NetWorthChart from './components/NetWorthChart.jsx'
 import AccountsBreakdown from './components/AccountsBreakdown.jsx'
 import GroupsPage from './pages/GroupsPage.jsx'
 import BudgetPage from './pages/BudgetPage.jsx'
+import BudgetBuilderPage from './pages/BudgetBuilderPage.jsx'
 import SyncPage from './pages/SyncPage.jsx'
 import SetupPage from './pages/SetupPage.jsx'
 import { fetchNetworthStats, fetchNetworthHistory, fetchAccountsSummary, fetchSetupStatus } from './api.js'
@@ -14,6 +15,7 @@ const TABS = [
   { id: 'networth', label: '📈  Net Worth' },
   { id: 'groups',   label: '⬡  Account Groups' },
   { id: 'budgets',  label: '💰  Budgets' },
+  { id: 'builder',  label: '🏗  Budget Builder' },
   { id: 'sync',     label: '🔄  Sync Data' },
 ]
 
@@ -125,6 +127,8 @@ export default function App() {
         {activeTab === 'groups' && <GroupsPage />}
 
         {activeTab === 'budgets' && <BudgetPage />}
+
+        {activeTab === 'builder' && <BudgetBuilderPage />}
 
         {activeTab === 'sync' && <SyncPage />}
       </main>

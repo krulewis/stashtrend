@@ -95,6 +95,43 @@ CREATE TABLE IF NOT EXISTS settings (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS budget_builder_profile (
+    id              INTEGER PRIMARY KEY CHECK (id = 1),
+    expected_income REAL,
+    num_children    INTEGER DEFAULT 0,
+    children_ages   TEXT,
+    location        TEXT,
+    housing_type    TEXT,
+    upcoming_events TEXT,
+    other_info      TEXT,
+    updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS budget_builder_regional (
+    id               INTEGER PRIMARY KEY CHECK (id = 1),
+    food_cost_trend  TEXT,
+    childcare_cost   TEXT,
+    gas_fuel_price   TEXT,
+    insurance_trend  TEXT,
+    electricity_cost TEXT,
+    other_factors    TEXT,
+    source           TEXT,
+    fetched_at       TEXT,
+    updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS budget_builder_plans (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    name            TEXT NOT NULL DEFAULT 'Untitled Plan',
+    months_ahead    INTEGER NOT NULL DEFAULT 3,
+    line_items      TEXT NOT NULL,
+    summary         TEXT,
+    ai_generated_at TEXT,
+    user_edited_at  TEXT,
+    applied_at      TEXT,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
 """
 
 
@@ -1156,6 +1193,589 @@ Be specific to the numbers. Keep the response under 400 words."""
         return jsonify({"error": f"AI call failed: {exc}"}), 500
 
     return jsonify({"analysis": analysis, "model": model, "provider": provider})
+
+
+# ===========================================================================
+# Budget Builder
+# ===========================================================================
+
+
+def _extract_json(text: str, valid_category_ids: set = None) -> dict:
+    """Parse JSON from AI response, stripping markdown fences if present.
+    Optionally validates category_ids in recommendations."""
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        # Strip ```json ... ``` fences
+        lines = cleaned.split("\n")
+        if lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        cleaned = "\n".join(lines)
+    result = json.loads(cleaned)
+
+    if valid_category_ids and "recommendations" in result:
+        original_count = len(result["recommendations"])
+        result["recommendations"] = [
+            r for r in result["recommendations"]
+            if r.get("category_id") in valid_category_ids
+        ]
+        discarded = original_count - len(result["recommendations"])
+        if discarded:
+            print(f"[budget-builder] Discarded {discarded} recommendations with invalid category IDs")
+
+    return result
+
+
+def _call_ai(prompt: str, conn, max_tokens: int = 1024):
+    """Call the configured AI provider. Returns (text, stop_reason, provider) or raises."""
+    api_key = get_setting(conn, "ai_api_key")
+    model = get_setting(conn, "ai_model")
+    provider = get_setting(conn, "ai_provider")
+    base_url = get_setting(conn, "ai_base_url", "")
+
+    if not api_key or not model or not provider:
+        return None, None, None
+
+    if provider == "anthropic":
+        import anthropic as anthropic_sdk
+        client = anthropic_sdk.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model=model,
+            max_tokens=max_tokens,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return response.content[0].text, response.stop_reason, provider
+
+    elif provider == "openai_compatible":
+        from openai import OpenAI
+        kwargs: dict = {"api_key": api_key}
+        if base_url:
+            kwargs["base_url"] = base_url
+        client = OpenAI(**kwargs)
+        response = client.chat.completions.create(
+            model=model,
+            max_tokens=max_tokens,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return response.choices[0].message.content, response.choices[0].finish_reason, provider
+
+    else:
+        raise ValueError(f"Unknown provider: {provider}")
+
+
+# ── Profile ─────────────────────────────────────────────────────────────────
+
+@app.route("/api/budget-builder/profile")
+def get_builder_profile():
+    conn = get_db()
+    row = conn.execute("SELECT * FROM budget_builder_profile WHERE id = 1").fetchone()
+    if not row:
+        return jsonify({"exists": False})
+    data = dict(row)
+    data["exists"] = True
+    data["children_ages"] = json.loads(data["children_ages"]) if data["children_ages"] else []
+    data["upcoming_events"] = json.loads(data["upcoming_events"]) if data["upcoming_events"] else []
+    return jsonify(data)
+
+
+@app.route("/api/budget-builder/profile", methods=["POST"])
+def save_builder_profile():
+    body = request.get_json() or {}
+    # Validate housing_type
+    ht = body.get("housing_type")
+    if ht and ht not in ("own", "rent"):
+        return jsonify({"error": "housing_type must be 'own' or 'rent'"}), 400
+    # Validate JSON array fields
+    children_ages = body.get("children_ages")
+    if children_ages is not None:
+        if isinstance(children_ages, list):
+            children_ages = json.dumps(children_ages)
+        else:
+            try:
+                json.loads(children_ages)
+            except (json.JSONDecodeError, TypeError):
+                return jsonify({"error": "children_ages must be a valid JSON array"}), 400
+    upcoming_events = body.get("upcoming_events")
+    if upcoming_events is not None:
+        if isinstance(upcoming_events, list):
+            upcoming_events = json.dumps(upcoming_events)
+        else:
+            try:
+                json.loads(upcoming_events)
+            except (json.JSONDecodeError, TypeError):
+                return jsonify({"error": "upcoming_events must be a valid JSON array"}), 400
+
+    conn = get_db()
+    conn.execute(
+        """INSERT INTO budget_builder_profile (id, expected_income, num_children, children_ages,
+           location, housing_type, upcoming_events, other_info)
+           VALUES (1, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+               expected_income = excluded.expected_income,
+               num_children = excluded.num_children,
+               children_ages = excluded.children_ages,
+               location = excluded.location,
+               housing_type = excluded.housing_type,
+               upcoming_events = excluded.upcoming_events,
+               other_info = excluded.other_info,
+               updated_at = datetime('now')""",
+        (
+            body.get("expected_income"),
+            body.get("num_children", 0),
+            children_ages,
+            body.get("location"),
+            ht,
+            upcoming_events,
+            body.get("other_info"),
+        ),
+    )
+    conn.commit()
+    return jsonify({"ok": True})
+
+
+# ── Regional Data ───────────────────────────────────────────────────────────
+
+@app.route("/api/budget-builder/regional")
+def get_builder_regional():
+    conn = get_db()
+    row = conn.execute("SELECT * FROM budget_builder_regional WHERE id = 1").fetchone()
+    if not row:
+        return jsonify({"exists": False})
+    data = dict(row)
+    data["exists"] = True
+    data["other_factors"] = json.loads(data["other_factors"]) if data["other_factors"] else []
+    return jsonify(data)
+
+
+@app.route("/api/budget-builder/regional", methods=["POST"])
+def save_builder_regional():
+    body = request.get_json() or {}
+    other_factors = body.get("other_factors")
+    if other_factors is not None and isinstance(other_factors, list):
+        other_factors = json.dumps(other_factors)
+
+    conn = get_db()
+    conn.execute(
+        """INSERT INTO budget_builder_regional (id, food_cost_trend, childcare_cost,
+           gas_fuel_price, insurance_trend, electricity_cost, other_factors, source)
+           VALUES (1, ?, ?, ?, ?, ?, ?, 'user_edited')
+           ON CONFLICT(id) DO UPDATE SET
+               food_cost_trend = excluded.food_cost_trend,
+               childcare_cost = excluded.childcare_cost,
+               gas_fuel_price = excluded.gas_fuel_price,
+               insurance_trend = excluded.insurance_trend,
+               electricity_cost = excluded.electricity_cost,
+               other_factors = excluded.other_factors,
+               source = 'user_edited',
+               updated_at = datetime('now')""",
+        (
+            body.get("food_cost_trend"),
+            body.get("childcare_cost"),
+            body.get("gas_fuel_price"),
+            body.get("insurance_trend"),
+            body.get("electricity_cost"),
+            other_factors,
+        ),
+    )
+    conn.commit()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/budget-builder/regional/fetch", methods=["POST"])
+def fetch_builder_regional_ai():
+    conn = get_db()
+    # Check AI config
+    api_key = get_setting(conn, "ai_api_key")
+    if not api_key:
+        return jsonify({"error": "AI not configured"}), 400
+
+    # Check profile exists with location
+    profile = conn.execute("SELECT * FROM budget_builder_profile WHERE id = 1").fetchone()
+    if not profile or not profile["location"]:
+        return jsonify({"error": "Profile with location required before fetching regional data"}), 400
+
+    location = profile["location"]
+    prompt = f"""You are a personal finance research assistant. For the location "{location}", provide current cost-of-living data.
+
+Return ONLY valid JSON (no markdown, no explanation) with exactly these keys:
+{{
+  "food_cost_trend": "average monthly grocery cost for a household and recent trend",
+  "childcare_cost": "monthly childcare cost range",
+  "gas_fuel_price": "current gas price per gallon",
+  "insurance_trend": "average monthly auto/health insurance costs",
+  "electricity_cost": "average monthly electricity cost",
+  "other_factors": []
+}}
+
+The "other_factors" array can contain objects like {{"label": "Water", "value": "$60/mo"}} for any additional notable cost factors.
+Be specific with dollar amounts and percentages. Use current 2026 data."""
+
+    try:
+        text, stop_reason, provider = _call_ai(prompt, conn, max_tokens=1024)
+        if text is None:
+            return jsonify({"error": "AI not configured"}), 400
+    except Exception as exc:
+        return jsonify({"error": f"AI call failed: {exc}"}), 500
+
+    try:
+        data = _extract_json(text)
+    except (json.JSONDecodeError, KeyError) as exc:
+        return jsonify({"error": f"Failed to parse AI response: {exc}"}), 500
+
+    other_factors = data.get("other_factors", [])
+    if isinstance(other_factors, list):
+        other_factors = json.dumps(other_factors)
+
+    now = datetime.now(timezone.utc).isoformat()
+    conn.execute(
+        """INSERT INTO budget_builder_regional (id, food_cost_trend, childcare_cost,
+           gas_fuel_price, insurance_trend, electricity_cost, other_factors, source, fetched_at)
+           VALUES (1, ?, ?, ?, ?, ?, ?, 'ai', ?)
+           ON CONFLICT(id) DO UPDATE SET
+               food_cost_trend = excluded.food_cost_trend,
+               childcare_cost = excluded.childcare_cost,
+               gas_fuel_price = excluded.gas_fuel_price,
+               insurance_trend = excluded.insurance_trend,
+               electricity_cost = excluded.electricity_cost,
+               other_factors = excluded.other_factors,
+               source = 'ai',
+               fetched_at = excluded.fetched_at,
+               updated_at = datetime('now')""",
+        (
+            data.get("food_cost_trend"),
+            data.get("childcare_cost"),
+            data.get("gas_fuel_price"),
+            data.get("insurance_trend"),
+            data.get("electricity_cost"),
+            other_factors,
+            now,
+        ),
+    )
+    conn.commit()
+
+    # Return the saved data
+    row = conn.execute("SELECT * FROM budget_builder_regional WHERE id = 1").fetchone()
+    result = dict(row)
+    result["exists"] = True
+    result["other_factors"] = json.loads(result["other_factors"]) if result["other_factors"] else []
+    return jsonify(result)
+
+
+# ── Budget Generation ───────────────────────────────────────────────────────
+
+@app.route("/api/budget-builder/generate", methods=["POST"])
+def generate_budget_plan():
+    body = request.get_json() or {}
+    months_ahead = body.get("months_ahead", 3)
+    profile_overrides = body.get("profile_overrides", {})
+
+    conn = get_db()
+
+    # Check AI config
+    api_key = get_setting(conn, "ai_api_key")
+    if not api_key:
+        return jsonify({"error": "AI not configured"}), 400
+
+    # Load profile
+    profile_row = conn.execute("SELECT * FROM budget_builder_profile WHERE id = 1").fetchone()
+    profile = dict(profile_row) if profile_row else {}
+    profile.update(profile_overrides)
+
+    # Load regional
+    regional_row = conn.execute("SELECT * FROM budget_builder_regional WHERE id = 1").fetchone()
+    regional = dict(regional_row) if regional_row else {}
+
+    # Get categories (exclude transfers)
+    categories = conn.execute(
+        "SELECT id, name, group_name, group_type FROM categories "
+        "WHERE group_type IS NULL OR group_type <> 'transfer' "
+        "ORDER BY group_name, name"
+    ).fetchall()
+    category_ids = {c["id"] for c in categories}
+
+    # Get historical budget data (6 months, exclude transfers)
+    history = conn.execute(
+        """SELECT b.category_id, b.month, b.budgeted_amount, b.actual_amount, b.variance,
+                  c.name AS category_name, c.group_name, c.group_type
+           FROM budgets b
+           LEFT JOIN categories c ON c.id = b.category_id
+           WHERE b.budgeted_amount IS NOT NULL
+             AND (c.group_type IS NULL OR c.group_type <> 'transfer')
+             AND b.month < date('now', 'start of month')
+             AND b.month >= date('now', 'start of month', '-6 months')
+           ORDER BY c.group_name, c.name, b.month ASC"""
+    ).fetchall()
+
+    # Build prompt
+    cat_list = "\n".join(f"  - ID: {c['id']}, Name: {c['name']}, Group: {c['group_name'] or 'Other'}"
+                         for c in categories)
+
+    history_lines = []
+    for h in history:
+        history_lines.append(
+            f"  {h['category_name']} ({h['category_id']}): {h['month']} — "
+            f"budgeted=${h['budgeted_amount']:.0f}, actual=${h['actual_amount']:.0f}, "
+            f"variance=${h['variance']:.0f}"
+        )
+    history_text = "\n".join(history_lines) if history_lines else "  No historical data available."
+
+    income = profile.get("expected_income", "not specified")
+    location = profile.get("location", "not specified")
+    housing = profile.get("housing_type", "not specified")
+    children = profile.get("num_children", 0)
+    children_ages = profile.get("children_ages", "[]")
+    if isinstance(children_ages, str):
+        try:
+            children_ages = json.loads(children_ages)
+        except json.JSONDecodeError:
+            children_ages = []
+    events = profile.get("upcoming_events", "[]")
+    if isinstance(events, str):
+        try:
+            events = json.loads(events)
+        except json.JSONDecodeError:
+            events = []
+
+    regional_text = ""
+    if regional:
+        regional_text = f"""
+Regional cost data for {location}:
+  Food: {regional.get('food_cost_trend', 'n/a')}
+  Childcare: {regional.get('childcare_cost', 'n/a')}
+  Gas/Fuel: {regional.get('gas_fuel_price', 'n/a')}
+  Insurance: {regional.get('insurance_trend', 'n/a')}
+  Electricity: {regional.get('electricity_cost', 'n/a')}"""
+
+    # Generate future month keys
+    from datetime import date
+    today = date.today()
+    future_months = []
+    for i in range(1, months_ahead + 1):
+        m = today.month + i
+        y = today.year
+        while m > 12:
+            m -= 12
+            y += 1
+        future_months.append(f"{y:04d}-{m:02d}-01")
+
+    prompt = f"""You are a personal finance budget planner. Generate budget recommendations for the next {months_ahead} month(s).
+
+USER PROFILE:
+  Expected monthly income: ${income}
+  Location: {location}
+  Housing: {housing}
+  Children: {children} (ages: {children_ages})
+  Upcoming events: {events}
+  Other info: {profile.get('other_info', 'none')}
+{regional_text}
+
+HISTORICAL BUDGET DATA (last 6 months):
+{history_text}
+
+AVAILABLE CATEGORIES (use ONLY these exact IDs — do NOT invent new ones):
+{cat_list}
+
+FUTURE MONTHS to budget for: {', '.join(future_months)}
+
+Return ONLY valid JSON (no markdown, no explanation) with this structure:
+{{
+  "recommendations": [
+    {{
+      "category_id": "exact_id_from_list_above",
+      "category_name": "category name",
+      "group_name": "group name",
+      "rationale": "brief explanation for this amount",
+      "months": {{"YYYY-MM-01": amount, ...}}
+    }}
+  ],
+  "summary": "2-3 sentence overview of the budget plan",
+  "total_monthly_budget": {{"YYYY-MM-01": total_amount, ...}}
+}}
+
+Rules:
+- Total expenses must not exceed the expected income of ${income}/month
+- Use category IDs EXACTLY as listed above
+- Include amounts for each future month
+- Base recommendations on historical patterns, adjusted for regional costs and trends"""
+
+    # Dynamic max_tokens
+    num_categories = len(categories)
+    max_tokens = 4096 + max(0, (num_categories - 30)) * 512 // 10
+
+    try:
+        text, stop_reason, provider = _call_ai(prompt, conn, max_tokens=max_tokens)
+        if text is None:
+            return jsonify({"error": "AI not configured"}), 400
+    except Exception as exc:
+        return jsonify({"error": f"AI call failed: {exc}"}), 500
+
+    # Truncation detection
+    if stop_reason in ("max_tokens", "length"):
+        return jsonify({
+            "error": "Response was truncated — try reducing months_ahead or the number of categories."
+        }), 400
+
+    try:
+        data = _extract_json(text, valid_category_ids=category_ids)
+    except (json.JSONDecodeError, KeyError) as exc:
+        return jsonify({"error": f"Failed to parse AI response: {exc}"}), 500
+
+    # Save as plan
+    now = datetime.now(timezone.utc).isoformat()
+    line_items = data.get("recommendations", [])
+    summary = data.get("summary", "")
+    total_monthly = data.get("total_monthly_budget", {})
+
+    cursor = conn.execute(
+        """INSERT INTO budget_builder_plans (name, months_ahead, line_items, summary, ai_generated_at)
+           VALUES (?, ?, ?, ?, ?)""",
+        (
+            f"AI Plan — {datetime.now().strftime('%b %d, %Y')}",
+            months_ahead,
+            json.dumps(line_items),
+            summary,
+            now,
+        ),
+    )
+    plan_id = cursor.lastrowid
+    conn.commit()
+
+    return jsonify({
+        "plan": {
+            "id": plan_id,
+            "name": f"AI Plan — {datetime.now().strftime('%b %d, %Y')}",
+            "months_ahead": months_ahead,
+            "line_items": line_items,
+            "summary": summary,
+            "total_monthly_budget": total_monthly,
+            "ai_generated_at": now,
+        }
+    })
+
+
+# ── Plan CRUD ───────────────────────────────────────────────────────────────
+
+@app.route("/api/budget-builder/plans")
+def list_builder_plans():
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT id, name, created_at, months_ahead, applied_at FROM budget_builder_plans ORDER BY created_at DESC"
+    ).fetchall()
+    return jsonify({"plans": [dict(r) for r in rows]})
+
+
+@app.route("/api/budget-builder/plans/<int:plan_id>")
+def get_builder_plan(plan_id):
+    conn = get_db()
+    row = conn.execute("SELECT * FROM budget_builder_plans WHERE id = ?", (plan_id,)).fetchone()
+    if not row:
+        return jsonify({"error": "Plan not found"}), 404
+    data = dict(row)
+    data["line_items"] = json.loads(data["line_items"])
+    return jsonify(data)
+
+
+@app.route("/api/budget-builder/plans/<int:plan_id>", methods=["PUT"])
+def update_builder_plan(plan_id):
+    body = request.get_json() or {}
+    conn = get_db()
+    row = conn.execute("SELECT id FROM budget_builder_plans WHERE id = ?", (plan_id,)).fetchone()
+    if not row:
+        return jsonify({"error": "Plan not found"}), 404
+
+    updates = []
+    params = []
+    if "name" in body:
+        updates.append("name = ?")
+        params.append(body["name"])
+    if "line_items" in body:
+        updates.append("line_items = ?")
+        params.append(json.dumps(body["line_items"]))
+    if updates:
+        updates.append("user_edited_at = datetime('now')")
+        params.append(plan_id)
+        conn.execute(
+            f"UPDATE budget_builder_plans SET {', '.join(updates)} WHERE id = ?",
+            params,
+        )
+        conn.commit()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/budget-builder/plans/<int:plan_id>", methods=["DELETE"])
+def delete_builder_plan(plan_id):
+    conn = get_db()
+    conn.execute("DELETE FROM budget_builder_plans WHERE id = ?", (plan_id,))
+    conn.commit()
+    return jsonify({"ok": True})
+
+
+# ── Apply to Monarch ───────────────────────────────────────────────────────
+
+@app.route("/api/budget-builder/plans/<int:plan_id>/apply", methods=["POST"])
+def apply_builder_plan(plan_id):
+    conn = get_db()
+    row = conn.execute("SELECT * FROM budget_builder_plans WHERE id = ?", (plan_id,)).fetchone()
+    if not row:
+        return jsonify({"error": "Plan not found"}), 404
+
+    line_items = json.loads(row["line_items"])
+
+    # Collect all (category_id, month, amount) pairs sorted chronologically
+    calls = []
+    for item in line_items:
+        cat_id = item["category_id"]
+        for month, amount in item.get("months", {}).items():
+            calls.append((cat_id, month, amount))
+    calls.sort(key=lambda x: x[1])  # chronological order
+
+    applied = 0
+    failed = 0
+    errors = []
+
+    async def _apply():
+        nonlocal applied, failed
+        mm = await auth.get_client(SESSION_PATH, TOKEN_PATH)
+
+        if not hasattr(mm, "set_budget_amount"):
+            raise AttributeError(
+                "set_budget_amount not available — update monarchmoney package"
+            )
+
+        for cat_id, month, amount in calls:
+            try:
+                await mm.set_budget_amount(
+                    category_id=cat_id,
+                    start_date=month,
+                    amount=amount,
+                    apply_to_future=False,
+                )
+                applied += 1
+            except Exception as exc:
+                failed += 1
+                errors.append({
+                    "category_id": cat_id,
+                    "month": month,
+                    "error": str(exc),
+                })
+
+    try:
+        asyncio.run(_apply())
+    except AttributeError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:
+        return jsonify({"error": f"Apply failed: {exc}"}), 500
+
+    # Set applied_at only if all succeeded
+    if failed == 0:
+        conn.execute(
+            "UPDATE budget_builder_plans SET applied_at = datetime('now') WHERE id = ?",
+            (plan_id,),
+        )
+        conn.commit()
+
+    return jsonify({"applied": applied, "failed": failed, "errors": errors})
 
 
 # ===========================================================================

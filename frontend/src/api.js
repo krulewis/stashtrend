@@ -58,3 +58,16 @@ export const saveSettings = (data) => mutateJSON('/api/settings', 'POST', data)
 // ── Setup ──────────────────────────────────────────────────────────────────
 export const fetchSetupStatus = () => fetchJSON('/api/setup/status')
 export const setupToken = (token) => mutateJSON('/api/setup/token', 'POST', { token })
+
+// ── Budget Builder ────────────────────────────────────────────────────────
+export const fetchBuilderProfile = () => fetchJSON('/api/budget-builder/profile')
+export const saveBuilderProfile = (data) => postJSON('/api/budget-builder/profile', data)
+export const fetchBuilderRegional = () => fetchJSON('/api/budget-builder/regional')
+export const saveBuilderRegional = (data) => postJSON('/api/budget-builder/regional', data)
+export const fetchRegionalFromAI = () => postJSON('/api/budget-builder/regional/fetch', {})
+export const generateBudgetPlan = (data) => postJSON('/api/budget-builder/generate', data)
+export const fetchBuilderPlans = () => fetchJSON('/api/budget-builder/plans')
+export const fetchBuilderPlan = (id) => fetchJSON(`/api/budget-builder/plans/${id}`)
+export const updateBuilderPlan = (id, data) => mutateJSON(`/api/budget-builder/plans/${id}`, 'PUT', data)
+export const deleteBuilderPlan = (id) => mutateJSON(`/api/budget-builder/plans/${id}`, 'DELETE', undefined)
+export const applyBuilderPlan = (id) => postJSON(`/api/budget-builder/plans/${id}/apply`, {})

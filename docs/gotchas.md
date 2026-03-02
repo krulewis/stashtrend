@@ -3,7 +3,7 @@
 ## Backend
 
 ### conn.close() Omission Pattern
-`GET /api/budgets/history` and `GET+POST /api/ai/config` intentionally omit `conn.close()`.
+`GET /api/budgets/history`, `GET+POST /api/ai/config`, and all `/api/budget-builder/*` endpoints intentionally omit `conn.close()`.
 Tests for these endpoints share a single in-memory connection across multiple requests (within one `patch` block or across sibling `with patch(...)` blocks). Calling `conn.close()` after the first request kills the shared connection and breaks subsequent calls. The connection is GC'd normally.
 
 ### Fresh Install 500 (Fixed)

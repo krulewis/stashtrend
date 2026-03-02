@@ -190,3 +190,69 @@ export const MOCK_AI_CONFIG_CONFIGURED = {
   provider: 'anthropic',
   base_url: '',
 }
+
+// ── Budget Builder ────────────────────────────────────────────────────────
+export const MOCK_BUILDER_PROFILE = {
+  exists: true,
+  expected_income: 6000,
+  num_children: 2,
+  children_ages: [4, 7],
+  location: 'Austin, TX',
+  housing_type: 'rent',
+  upcoming_events: ['Spring soccer'],
+  other_info: '',
+}
+
+export const MOCK_BUILDER_PROFILE_EMPTY = { exists: false }
+
+export const MOCK_BUILDER_REGIONAL = {
+  exists: true,
+  food_cost_trend: '$950/mo, up 3%',
+  childcare_cost: '$1,200-1,800/mo',
+  gas_fuel_price: '$2.89/gal',
+  insurance_trend: '$180/mo auto',
+  electricity_cost: '$150/mo avg',
+  other_factors: [],
+  source: 'ai',
+}
+
+export const MOCK_BUILDER_REGIONAL_EMPTY = { exists: false }
+
+export const MOCK_BUILDER_PLAN = {
+  id: 1,
+  name: 'March Plan',
+  months_ahead: 3,
+  summary: 'Budget $5,100/mo across all categories.',
+  line_items: [
+    {
+      category_id: 'cat_1',
+      category_name: 'Groceries',
+      group_name: 'Food & Drink',
+      rationale: '6-mo avg $510 + 3% inflation',
+      months: { '2026-04-01': 525, '2026-05-01': 530, '2026-06-01': 530 },
+    },
+    {
+      category_id: 'cat_2',
+      category_name: 'Restaurants',
+      group_name: 'Food & Drink',
+      rationale: 'Trending down from $215 to $185',
+      months: { '2026-04-01': 190, '2026-05-01': 190, '2026-06-01': 190 },
+    },
+  ],
+  total_monthly_budget: { '2026-04-01': 5100, '2026-05-01': 5100, '2026-06-01': 5100 },
+  ai_generated_at: '2026-03-01T12:00:00Z',
+  user_edited_at: null,
+  applied_at: null,
+}
+
+export const MOCK_BUILDER_PLANS_LIST = {
+  plans: [
+    { id: 1, name: 'March Plan', created_at: '2026-03-01', months_ahead: 3, applied_at: null },
+  ],
+}
+
+export const MOCK_APPLY_RESULT = { applied: 6, failed: 0, errors: [] }
+export const MOCK_APPLY_PARTIAL = { applied: 4, failed: 2, errors: [
+  { category_id: 'cat_1', month: '2026-05-01', error: 'Timeout' },
+  { category_id: 'cat_1', month: '2026-06-01', error: 'Timeout' },
+]}

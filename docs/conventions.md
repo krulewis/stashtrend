@@ -4,6 +4,7 @@
 - **snake_case/camelCase:** backend always snake_case; frontend destructures with alias
   - e.g. `const { groups_meta: groupsMeta } = data`
 - **Upsert pattern:** `ON CONFLICT(key) DO UPDATE SET value = excluded.value`
+- **Singleton tables:** Use `CHECK (id = 1)` for single-row config tables (e.g. `budget_builder_profile`, `budget_builder_regional`). Upsert with `INSERT ... ON CONFLICT(id) DO UPDATE SET ...`.
 
 ## Frontend
 - **Named API exports:** All API calls go through named exports in `api.js` (e.g. `fetchGroups()`, `saveGroupsConfigs()`). Pages must never use raw `fetchJSON`/`postJSON` with URL strings — those are internal helpers.
