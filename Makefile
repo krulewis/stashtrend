@@ -41,8 +41,13 @@ clean:
 	$(MAKE) -C backend clean
 	$(MAKE) -C frontend clean
 
-## Bump patch version, commit, and push to origin
+## Bump patch version, commit, and push to origin (skips if already up to date)
 push:
+	@UNPUSHED=$$(git log @{u}..HEAD --oneline 2>/dev/null); \
+	if [ -z "$$UNPUSHED" ]; then \
+		echo "  Nothing to push — already up to date with origin."; \
+		exit 0; \
+	fi
 	@cd frontend && npm version patch --no-git-tag-version --silent
 	@VERSION=$$(node -p "require('./frontend/package.json').version"); \
 	git add frontend/package.json && \
