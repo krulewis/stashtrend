@@ -46,14 +46,15 @@ push:
 	@UNPUSHED=$$(git log @{u}..HEAD --oneline 2>/dev/null); \
 	if [ -z "$$UNPUSHED" ]; then \
 		echo "  Nothing to push — already up to date with origin."; \
-		exit 0; \
+	else \
+		cd frontend && npm version patch --no-git-tag-version --silent && \
+		VERSION=$$(node -p "require('./package.json').version") && \
+		cd .. && \
+		git add frontend/package.json && \
+		git commit -m "chore: bump version to v$$VERSION" && \
+		git push && \
+		echo "  ✓ Pushed v$$VERSION"; \
 	fi
-	@cd frontend && npm version patch --no-git-tag-version --silent
-	@VERSION=$$(node -p "require('./frontend/package.json').version"); \
-	git add frontend/package.json && \
-	git commit -m "chore: bump version to v$$VERSION" && \
-	git push && \
-	echo "  ✓ Pushed v$$VERSION"
 
 ## Bump version, commit, push, and rebuild the Docker stack
 deploy: push
