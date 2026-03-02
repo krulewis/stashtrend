@@ -57,11 +57,11 @@ export default function BudgetChart({ months, totalsByMonth, incomeTotalsByMonth
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend wrapperStyle={{ color: '#94a3b8', fontSize: 13 }} />
-          <Bar dataKey="Budget" fill={COLOR_ACCENT}   radius={[3, 3, 0, 0]} />
-          <Bar dataKey="Actual" fill={COLOR_POSITIVE} radius={[3, 3, 0, 0]} />
           {incomeTotalsByMonth && (
             <Bar dataKey="Income" fill={COLOR_AMBER} radius={[3, 3, 0, 0]} />
           )}
+          <Bar dataKey="Budget" fill={COLOR_ACCENT}   radius={[3, 3, 0, 0]} />
+          <Bar dataKey="Actual" fill={COLOR_POSITIVE} radius={[3, 3, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
