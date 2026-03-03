@@ -6,11 +6,27 @@
 - **Upsert pattern:** `ON CONFLICT(key) DO UPDATE SET value = excluded.value`
 - **Singleton tables:** Use `CHECK (id = 1)` for single-row config tables (e.g. `budget_builder_profile`, `budget_builder_regional`). Upsert with `INSERT ... ON CONFLICT(id) DO UPDATE SET ...`.
 
+## Design Tokens
+
+All colors in CSS module files MUST use CSS custom properties defined in `index.css`. Never use hardcoded hex values. The token system includes:
+
+- **Backgrounds:** `--bg-root`, `--bg-card`, `--bg-deep`, `--bg-sunken`, `--bg-hover`, `--bg-inset`, `--bg-raised`, `--bg-table-alt`
+- **Borders:** `--border`, `--border-sub`, `--border-mid`, `--border-focus`, `--border-error`
+- **Text:** `--text-primary`, `--text-secondary`, `--text-muted`, `--text-faint`, `--text-bright`, `--text-subtle`
+- **Accent:** `--accent`, `--accent-hover`, `--accent-light`, `--accent-wash`, `--accent-glow`
+- **Semantic:** `--color-positive`/`--green`, `--color-negative`/`--red`, `--color-warning`/`--amber`, `--white`
+- **Surfaces:** `--bg-error`, `--bg-error-subtle`
+- **Spacing:** `--sp-1` through `--sp-12` (4px increments)
+- **Radius:** `--radius-sm` (6px), `--radius-md` (8px), `--radius-lg` (12px), `--radius-xl` (16px)
+- **Shadows:** `--shadow-sm`, `--shadow-md`, `--shadow-lg`
+- **Transitions:** `--ease-default` (150ms), `--ease-slow` (300ms)
+
 ## Frontend
 - **Named API exports:** All API calls go through named exports in `api.js` (e.g. `fetchGroups()`, `saveGroupsConfigs()`). Pages must never use raw `fetchJSON`/`postJSON` with URL strings — those are internal helpers.
 - **Shared formatters in chartUtils.jsx:** Dollar/date formatters (`fmtDollar`, `fmtCompact`, `fmtFull`, `fmtBudgetMonth`, etc.) live in `chartUtils.jsx`. Don't duplicate formatting logic in component files.
 - **PropTypes:** All components receiving props should have PropTypes validation.
-- **Inline styles:** kept only for data-driven values (group colors, status badges, active/selected states, recharts tooltips)
+- **Inline styles:** kept only for data-driven values (group colors, status badges, active/selected states, recharts tooltips, progress bar widths)
+- **Progress bars in BudgetTable:** `CellValue` renders an absolutely-positioned bar `<div>` behind the text `<span>` for expense cells with `budgeted > 0 && actual > 0`. Three color zones: green (0–84%), amber (85–100%), red (>100%). `WARNING_THRESHOLD = 0.85` constant. ARIA `role="progressbar"` with `aria-valuenow` capped at 100. Use `color-mix()` for translucent bar backgrounds.
 - **Recharts tooltips:** always `const tooltipStyles = {...}` at module level — recharts renders outside React tree, CSS Modules can't reach them
 
 ## Budget & Transfers

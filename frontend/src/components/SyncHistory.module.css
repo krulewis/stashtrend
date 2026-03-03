@@ -76,7 +76,7 @@
 }
 
 .tdActive {
-  background: #1e253533;
+  background: var(--bg-hover);
 }
 
 .tdRight {

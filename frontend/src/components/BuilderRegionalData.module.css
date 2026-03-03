@@ -53,8 +53,8 @@
 
 .badge {
   display: inline-block;
-  background: #2d3348;
-  color: #a5b4fc;
+  background: var(--border);
+  color: var(--accent-wash);
   font-size: 11px;
   font-weight: 500;
   padding: 2px 8px;
@@ -74,7 +74,7 @@
 
 .btnPrimary {
   background: var(--accent);
-  color: #fff;
+  color: var(--white);
   border: none;
   border-radius: 6px;
   padding: 8px 16px;
@@ -84,7 +84,7 @@
 }
 
 .btnPrimary:hover:not(:disabled) {
-  background: #818cf8;
+  background: var(--accent-light);
 }
 
 .btnPrimary:disabled {

@@ -125,8 +125,8 @@ export const MOCK_BUDGET_HISTORY = {
   months: ['2025-11-01', '2025-12-01'],
   // expense-only totals (used by the bar chart)
   totals_by_month: {
-    '2025-11-01': { budgeted: 700,  actual: 738 },  // 500+200, 523+215
-    '2025-12-01': { budgeted: 700,  actual: 674 },  // 500+200, 489+185
+    '2025-11-01': { budgeted: 1000, actual: 858 },  // 500+200+300, 523+215+120
+    '2025-12-01': { budgeted: 1000, actual: 954 },  // 500+200+300, 489+185+280
   },
   categories: [
     {
@@ -157,6 +157,16 @@ export const MOCK_BUDGET_HISTORY = {
       months: {
         '2025-11-01': { budgeted: 200, actual: 215, variance: -15 },
         '2025-12-01': { budgeted: 200, actual: 185, variance: 15 },
+      },
+    },
+    {
+      category_id: 'cat_3',
+      category_name: 'Entertainment',
+      group_name: 'Fun',
+      group_type: 'expense',
+      months: {
+        '2025-11-01': { budgeted: 300, actual: 120, variance: 180 },  // 40.0% — safe zone
+        '2025-12-01': { budgeted: 300, actual: 280, variance: 20 },   // 93.3% — warning zone
       },
     },
   ],

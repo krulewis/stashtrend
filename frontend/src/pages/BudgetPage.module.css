@@ -22,7 +22,7 @@
 .title {
   font-size: 18px;
   font-weight: 700;
-  color: #f1f5f9;
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -37,10 +37,10 @@
 }
 
 .rangeBtn {
-  background: #1e2130;
-  border: 1px solid #2d3348;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 6px;
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-size: 13px;
   font-weight: 500;
   padding: 5px 12px;
@@ -48,27 +48,27 @@
 }
 
 .rangeBtn:hover {
-  border-color: #6366f1;
-  color: #f1f5f9;
+  border-color: var(--accent);
+  color: var(--text-primary);
 }
 
 .rangeBtnActive {
-  background: #6366f1;
-  border-color: #6366f1;
-  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--white);
 }
 
 /* ── States ── */
 .loadingMsg {
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-size: 14px;
   padding: 24px 0;
   text-align: center;
 }
 
 .errorBox {
-  background: #1e2130;
-  border: 1px solid #f87171;
+  background: var(--bg-card);
+  border: 1px solid var(--red);
   border-radius: 10px;
   padding: 20px 24px;
 }
@@ -76,12 +76,12 @@
 .errorTitle {
   font-size: 15px;
   font-weight: 600;
-  color: #f87171;
+  color: var(--red);
   margin-bottom: 6px;
 }
 
 .errorDetail {
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-family: monospace;
 }

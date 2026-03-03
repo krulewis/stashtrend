@@ -71,7 +71,7 @@
 .entityLabel {
   font-size: 14px;
   font-weight: 500;
-  color: #e2e8f0;
+  color: var(--text-bright);
 }
 
 .entityDesc {

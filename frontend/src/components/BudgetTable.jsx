@@ -3,15 +3,45 @@ import PropTypes from 'prop-types'
 import styles from './BudgetTable.module.css'
 import { fmtBudgetMonth, fmtDollar } from './chartUtils.jsx'
 
+const WARNING_THRESHOLD = 0.85
+
 function CellValue({ budgeted, actual, variance, isIncome }) {
   if (budgeted == null) return <span className={styles.empty}>—</span>
   const isOver  = !isIncome && variance != null && variance < 0
   const isUnder = !isIncome && variance != null && variance > 0
   const cls = isOver ? styles.over : isUnder ? styles.under : styles.neutral
+
+  let barZoneCls = null
+  let barPct = 0
+  let rawPctRounded = 0
+  if (!isIncome && budgeted > 0 && actual > 0) {
+    const rawPct = actual / budgeted
+    barPct = Math.min(rawPct, 1.0)
+    rawPctRounded = Math.round(rawPct * 100)
+    if (rawPct > 1.0)                    barZoneCls = styles.barOver
+    else if (rawPct >= WARNING_THRESHOLD) barZoneCls = styles.barWarn
+    else                                  barZoneCls = styles.barSafe
+  }
+
+  const ariaValueNow = Math.min(rawPctRounded, 100)
+
   return (
-    <span className={cls}>
-      {fmtDollar(actual)} / {fmtDollar(budgeted)}
-    </span>
+    <>
+      {barZoneCls !== null && (
+        <div
+          className={`${styles.bar} ${barZoneCls}`}
+          style={{ width: `${Math.round(barPct * 100)}%` }}
+          role="progressbar"
+          aria-valuenow={ariaValueNow}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={`${rawPctRounded}% of budget spent`}
+        />
+      )}
+      <span className={cls}>
+        {fmtDollar(actual)} / {fmtDollar(budgeted)}
+      </span>
+    </>
   )
 }
 

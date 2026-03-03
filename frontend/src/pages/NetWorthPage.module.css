@@ -1,0 +1,108 @@
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--sp-5);
+  gap: var(--sp-4);
+}
+
+.pageTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .pageTitle { font-size: 20px; }
+}
+
+.pageActions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.updatedAt {
+  display: none;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+@media (min-width: 768px) {
+  .updatedAt { display: block; }
+}
+
+.refreshBtn {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+  min-height: 38px;
+  white-space: nowrap;
+}
+
+.refreshBtn:hover {
+  color: var(--text-primary);
+}
+
+.loading {
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: var(--sp-8) 0;
+  text-align: center;
+}
+
+/* ── Error state ───────────────────────────────────────────── */
+.errorBox {
+  background: var(--bg-card);
+  border: 1px solid var(--red);
+  border-radius: 12px;
+  padding: 24px 20px;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .errorBox { padding: 32px; }
+}
+
+.errorTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--red);
+  margin-bottom: 12px;
+}
+
+.errorMsg {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.errorCode {
+  background: var(--bg-root);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 12px;
+  color: var(--accent-wash);
+  text-align: left;
+  display: block;
+  overflow-x: auto;
+  margin-bottom: 16px;
+  font-family: monospace;
+  white-space: pre;
+}
+
+@media (min-width: 768px) {
+  .errorCode { font-size: 13px; display: inline-block; }
+}
+
+.errorDetail {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-family: monospace;
+}

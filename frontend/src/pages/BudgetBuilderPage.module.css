@@ -86,7 +86,7 @@
 
 .btnPrimary {
   background: var(--accent);
-  color: #fff;
+  color: var(--white);
   border: none;
   border-radius: 6px;
   padding: 8px 16px;
@@ -95,7 +95,7 @@
   cursor: pointer;
 }
 
-.btnPrimary:hover:not(:disabled) { background: #818cf8; }
+.btnPrimary:hover:not(:disabled) { background: var(--accent-light); }
 .btnPrimary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .spinner {
