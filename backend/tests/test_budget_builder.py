@@ -152,6 +152,8 @@ class TestBuilderRegional(unittest.TestCase):
 class TestBuilderRegionalAIFetch(unittest.TestCase):
     def setUp(self):
         self.client = app.test_client()
+        import app as app_module
+        app_module._ai_cooldowns.clear()
 
     def _configured_db(self, location="Austin, TX"):
         db = make_db()
@@ -175,7 +177,8 @@ class TestBuilderRegionalAIFetch(unittest.TestCase):
         set_setting(db, "ai_model", "m")
         set_setting(db, "ai_provider", "anthropic")
         set_setting(db, "ai_base_url", "")
-        with patch("app.get_db", return_value=db):
+        with patch("app.get_db", return_value=db), \
+             patch("app.auth.load_ai_key", return_value=None):
             resp = self.client.post("/api/budget-builder/regional/fetch")
         self.assertEqual(resp.status_code, 400)
         self.assertIn("profile", resp.get_json()["error"].lower())
@@ -187,7 +190,8 @@ class TestBuilderRegionalAIFetch(unittest.TestCase):
             "VALUES (1, 6000, 'Austin, TX', 'rent')"
         )
         db.commit()
-        with patch("app.get_db", return_value=db):
+        with patch("app.get_db", return_value=db), \
+             patch("app.auth.load_ai_key", return_value=None):
             resp = self.client.post("/api/budget-builder/regional/fetch")
         self.assertEqual(resp.status_code, 400)
         self.assertIn("configured", resp.get_json()["error"].lower())
@@ -203,13 +207,15 @@ class TestBuilderRegionalAIFetch(unittest.TestCase):
         })
         mock_msg = MagicMock()
         mock_msg.content = [MagicMock(text=ai_response)]
+        mock_msg.stop_reason = "end_turn"
         mock_client = MagicMock()
         mock_client.messages.create.return_value = mock_msg
 
         db = self._configured_db("Austin, TX")
-        with patch("app.get_db", return_value=db):
-            with patch("anthropic.Anthropic", return_value=mock_client):
-                resp = self.client.post("/api/budget-builder/regional/fetch")
+        with patch("app.get_db", return_value=db), \
+             patch("app.auth.load_ai_key", return_value=None), \
+             patch("anthropic.Anthropic", return_value=mock_client):
+            resp = self.client.post("/api/budget-builder/regional/fetch")
 
         self.assertEqual(resp.status_code, 200)
         data = resp.get_json()
@@ -223,15 +229,17 @@ class TestBuilderRegionalAIFetch(unittest.TestCase):
             captured["messages"] = kwargs.get("messages", [])
             mock_msg = MagicMock()
             mock_msg.content = [MagicMock(text='{"food_cost_trend":"x","childcare_cost":"x","gas_fuel_price":"x","insurance_trend":"x","electricity_cost":"x","other_factors":[]}')]
+            mock_msg.stop_reason = "end_turn"
             return mock_msg
 
         mock_client = MagicMock()
         mock_client.messages.create.side_effect = capture_call
 
         db = self._configured_db("Portland, OR")
-        with patch("app.get_db", return_value=db):
-            with patch("anthropic.Anthropic", return_value=mock_client):
-                self.client.post("/api/budget-builder/regional/fetch")
+        with patch("app.get_db", return_value=db), \
+             patch("app.auth.load_ai_key", return_value=None), \
+             patch("anthropic.Anthropic", return_value=mock_client):
+            self.client.post("/api/budget-builder/regional/fetch")
 
         prompt = captured["messages"][0]["content"]
         self.assertIn("Portland, OR", prompt)
@@ -242,6 +250,8 @@ class TestBuilderRegionalAIFetch(unittest.TestCase):
 class TestBuilderGenerate(unittest.TestCase):
     def setUp(self):
         self.client = app.test_client()
+        import app as app_module
+        app_module._ai_cooldowns.clear()
 
     def _seeded_db(self):
         db = make_db()
@@ -273,7 +283,8 @@ class TestBuilderGenerate(unittest.TestCase):
 
     def test_generate_requires_ai_config(self):
         db = make_db()
-        with patch("app.get_db", return_value=db):
+        with patch("app.get_db", return_value=db), \
+             patch("app.auth.load_ai_key", return_value=None):
             resp = self.client.post("/api/budget-builder/generate", json={"months_ahead": 3})
         self.assertEqual(resp.status_code, 400)
 
@@ -295,9 +306,10 @@ class TestBuilderGenerate(unittest.TestCase):
         mock_client.messages.create.return_value = mock_msg
 
         db = self._seeded_db()
-        with patch("app.get_db", return_value=db):
-            with patch("anthropic.Anthropic", return_value=mock_client):
-                resp = self.client.post("/api/budget-builder/generate", json={"months_ahead": 2})
+        with patch("app.get_db", return_value=db), \
+             patch("app.auth.load_ai_key", return_value=None), \
+             patch("anthropic.Anthropic", return_value=mock_client):
+            resp = self.client.post("/api/budget-builder/generate", json={"months_ahead": 2})
 
         self.assertEqual(resp.status_code, 200)
         data = resp.get_json()
@@ -323,9 +335,10 @@ class TestBuilderGenerate(unittest.TestCase):
         mock_client.messages.create.return_value = mock_msg
 
         db = self._seeded_db()
-        with patch("app.get_db", return_value=db):
-            with patch("anthropic.Anthropic", return_value=mock_client):
-                resp = self.client.post("/api/budget-builder/generate", json={"months_ahead": 1})
+        with patch("app.get_db", return_value=db), \
+             patch("app.auth.load_ai_key", return_value=None), \
+             patch("anthropic.Anthropic", return_value=mock_client):
+            resp = self.client.post("/api/budget-builder/generate", json={"months_ahead": 1})
 
         data = resp.get_json()
         ids = [item["category_id"] for item in data["plan"]["line_items"]]
@@ -346,9 +359,10 @@ class TestBuilderGenerate(unittest.TestCase):
         mock_client.messages.create.side_effect = capture_call
 
         db = self._seeded_db()
-        with patch("app.get_db", return_value=db):
-            with patch("anthropic.Anthropic", return_value=mock_client):
-                self.client.post("/api/budget-builder/generate", json={"months_ahead": 1})
+        with patch("app.get_db", return_value=db), \
+             patch("app.auth.load_ai_key", return_value=None), \
+             patch("anthropic.Anthropic", return_value=mock_client):
+            self.client.post("/api/budget-builder/generate", json={"months_ahead": 1})
 
         prompt = captured["messages"][0]["content"]
         self.assertIn("cat_1", prompt)
@@ -362,9 +376,10 @@ class TestBuilderGenerate(unittest.TestCase):
         mock_client.messages.create.return_value = mock_msg
 
         db = self._seeded_db()
-        with patch("app.get_db", return_value=db):
-            with patch("anthropic.Anthropic", return_value=mock_client):
-                resp = self.client.post("/api/budget-builder/generate", json={"months_ahead": 1})
+        with patch("app.get_db", return_value=db), \
+             patch("app.auth.load_ai_key", return_value=None), \
+             patch("anthropic.Anthropic", return_value=mock_client):
+            resp = self.client.post("/api/budget-builder/generate", json={"months_ahead": 1})
 
         self.assertEqual(resp.status_code, 400)
         self.assertIn("truncated", resp.get_json()["error"].lower())
@@ -383,9 +398,10 @@ class TestBuilderGenerate(unittest.TestCase):
         mock_client.messages.create.side_effect = capture_call
 
         db = self._seeded_db()
-        with patch("app.get_db", return_value=db):
-            with patch("anthropic.Anthropic", return_value=mock_client):
-                self.client.post("/api/budget-builder/generate", json={
+        with patch("app.get_db", return_value=db), \
+             patch("app.auth.load_ai_key", return_value=None), \
+             patch("anthropic.Anthropic", return_value=mock_client):
+            self.client.post("/api/budget-builder/generate", json={
                     "months_ahead": 1,
                     "profile_overrides": {"expected_income": 8000},
                 })

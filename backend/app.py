@@ -10,12 +10,16 @@ import asyncio
 import contextlib
 import json
 import os
+import re
 import sqlite3
 import threading
+import time
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
+
+import keyring.errors
 
 try:
     from apscheduler.schedulers.background import BackgroundScheduler
@@ -35,10 +39,29 @@ from monarch_pipeline import auth, fetchers, schema as pipeline_schema, storage
 from monarch_pipeline.config import DB_PATH, TOKEN_PATH, SESSION_PATH, ensure_data_dir
 
 app = Flask(__name__)
-CORS(app)  # Allow React dev server (localhost:5173) to call this API
+CORS(app, origins=[
+    "http://localhost",
+    "http://localhost:80",
+    "http://localhost:5173",
+    "http://127.0.0.1",
+    "http://127.0.0.1:80",
+    "http://127.0.0.1:5173",
+    "http://[::1]",
+    "http://[::1]:80",
+    "http://[::1]:5173",
+])
 
 scheduler = BackgroundScheduler(daemon=True)
 SYNC_JOB_ID = "auto_sync"
+
+
+@app.errorhandler(Exception)
+def handle_unexpected_error(exc):
+    from werkzeug.exceptions import HTTPException
+    if isinstance(exc, HTTPException):
+        return exc
+    app.logger.exception("Unhandled exception")
+    return jsonify({"error": "Internal server error"}), 500
 
 
 # ---------------------------------------------------------------------------
@@ -434,7 +457,8 @@ def _run_sync_worker(job_id: int, entities: list, full_refresh: bool):
 
                 except Exception as exc:
                     entity_status = "failed"
-                    entity_error  = str(exc)
+                    app.logger.exception("Sync error for %s", entity)
+                    entity_error  = "Sync error. Check server logs."
                     any_failed    = True
 
                 after = snapshot_counts(conn, [entity])
@@ -453,7 +477,8 @@ def _run_sync_worker(job_id: int, entities: list, full_refresh: bool):
             pipeline_conn.close()
 
         except Exception as exc:
-            top_level_error = str(exc)
+            app.logger.exception("Top-level sync error")
+            top_level_error = "Sync error. Check server logs."
             any_failed = True
 
     asyncio.run(_sync())
@@ -999,7 +1024,8 @@ def setup_token():
         asyncio.run(auth.login_with_token(token, TOKEN_PATH))
         return jsonify({"ok": True})
     except Exception as e:
-        return jsonify({"error": f"Token validation failed: {e}"}), 400
+        app.logger.exception("Token validation failed")
+        return jsonify({"error": "Token validation failed. Check that your token is current."}), 400
 
 
 # ===========================================================================
@@ -1058,11 +1084,44 @@ def update_settings():
 # AI Config
 # ===========================================================================
 
+_ai_cooldowns = {}  # type: dict[str, float]
+_AI_COOLDOWN_SECONDS = 2.0
+
+
+_ai_cooldowns_lock = threading.Lock()
+
+
+def _check_ai_rate_limit(endpoint: str):
+    now = time.monotonic()
+    with _ai_cooldowns_lock:
+        last = _ai_cooldowns.get(endpoint, 0.0)
+        if last > 0 and (now - last) < _AI_COOLDOWN_SECONDS:
+            return jsonify({"error": "Please wait before retrying."}), 429
+        _ai_cooldowns[endpoint] = now
+    return None
+
+
+def _sanitize_prompt_field(value, max_length=500):
+    """Strip control chars (keep \\n, \\t) and truncate."""
+    if not isinstance(value, str):
+        return str(value)[:max_length]
+    cleaned = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', value)
+    return cleaned[:max_length]
+
+
+def _get_ai_key(conn) -> Optional[str]:
+    """Load AI API key: keychain first, then settings table fallback."""
+    key = auth.load_ai_key()
+    if key:
+        return key
+    return get_setting(conn, "ai_api_key")
+
+
 @app.route("/api/ai/config", methods=["GET"])
 def get_ai_config():
     """Return AI configuration status. Never returns the raw API key."""
     conn = get_db()
-    api_key  = get_setting(conn, "ai_api_key")
+    api_key  = _get_ai_key(conn)
     model    = get_setting(conn, "ai_model")
     provider = get_setting(conn, "ai_provider")
     base_url = get_setting(conn, "ai_base_url", "")
@@ -1088,7 +1147,10 @@ def save_ai_config():
         return jsonify({"error": "provider must be 'anthropic' or 'openai_compatible'"}), 400
 
     conn = get_db()
-    set_setting(conn, "ai_api_key",  data["api_key"])
+    try:
+        auth.save_ai_key(data["api_key"])
+    except keyring.errors.KeyringError:
+        set_setting(conn, "ai_api_key", data["api_key"])
     set_setting(conn, "ai_model",    data["model"])
     set_setting(conn, "ai_provider", provider)
     set_setting(conn, "ai_base_url", data.get("base_url", ""))
@@ -1098,15 +1160,10 @@ def save_ai_config():
 @app.route("/api/ai/analyze", methods=["POST"])
 def ai_analyze():
     """Fetch budget history, build prompt, call AI, return analysis text."""
+    blocked = _check_ai_rate_limit("ai_analyze")
+    if blocked:
+        return blocked
     conn = get_db()
-    api_key  = get_setting(conn, "ai_api_key")
-    model    = get_setting(conn, "ai_model")
-    provider = get_setting(conn, "ai_provider")
-    base_url = get_setting(conn, "ai_base_url", "")
-
-    if not (api_key and model and provider):
-        conn.close()
-        return jsonify({"error": "AI not configured. Save config via /api/ai/config first."}), 400
 
     rows = conn.execute(
         """
@@ -1120,9 +1177,9 @@ def ai_analyze():
         ORDER BY b.category_id, b.month ASC
         """
     ).fetchall()
-    conn.close()
 
     if not rows:
+        conn.close()
         return jsonify({"error": "No budget data found. Sync budget data first."}), 400
 
     # Build tabular prompt data
@@ -1176,34 +1233,15 @@ Please analyze this data and:
 Be specific to the numbers. Keep the response under 400 words."""
 
     try:
-        if provider == "anthropic":
-            import anthropic as anthropic_sdk
-            client = anthropic_sdk.Anthropic(api_key=api_key)
-            response = client.messages.create(
-                model=model,
-                max_tokens=1024,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            analysis = response.content[0].text
-
-        elif provider == "openai_compatible":
-            from openai import OpenAI
-            kwargs: dict = {"api_key": api_key}
-            if base_url:
-                kwargs["base_url"] = base_url
-            client = OpenAI(**kwargs)
-            response = client.chat.completions.create(
-                model=model,
-                max_tokens=1024,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            analysis = response.choices[0].message.content
-
-        else:
-            return jsonify({"error": f"Unknown provider: {provider}"}), 400
-
-    except Exception as exc:
-        return jsonify({"error": f"AI call failed: {exc}"}), 500
+        analysis, _stop, provider = _call_ai(prompt, conn, max_tokens=1024)
+        if analysis is None:
+            return jsonify({"error": "AI not configured. Save config via /api/ai/config first."}), 400
+        model = get_setting(conn, "ai_model")
+    except Exception:
+        app.logger.exception("AI analysis call failed")
+        return jsonify({"error": "AI analysis failed. Check server logs."}), 500
+    finally:
+        conn.close()
 
     return jsonify({"analysis": analysis, "model": model, "provider": provider})
 
@@ -1242,7 +1280,7 @@ def _extract_json(text: str, valid_category_ids: set = None) -> dict:
 
 def _call_ai(prompt: str, conn, max_tokens: int = 1024):
     """Call the configured AI provider. Returns (text, stop_reason, provider) or raises."""
-    api_key = get_setting(conn, "ai_api_key")
+    api_key = _get_ai_key(conn)
     model = get_setting(conn, "ai_model")
     provider = get_setting(conn, "ai_provider")
     base_url = get_setting(conn, "ai_base_url", "")
@@ -1295,6 +1333,11 @@ def get_builder_profile():
 @app.route("/api/budget-builder/profile", methods=["POST"])
 def save_builder_profile():
     body = request.get_json() or {}
+    # Validate field lengths
+    if body.get("location") and len(body["location"]) > 200:
+        return jsonify({"error": "location must be 200 characters or fewer"}), 400
+    if body.get("other_info") and len(body["other_info"]) > 1000:
+        return jsonify({"error": "other_info must be 1000 characters or fewer"}), 400
     # Validate housing_type
     ht = body.get("housing_type")
     if ht and ht not in ("own", "rent"):
@@ -1397,9 +1440,12 @@ def save_builder_regional():
 
 @app.route("/api/budget-builder/regional/fetch", methods=["POST"])
 def fetch_builder_regional_ai():
+    blocked = _check_ai_rate_limit("fetch_builder_regional_ai")
+    if blocked:
+        return blocked
     conn = get_db()
     # Check AI config
-    api_key = get_setting(conn, "ai_api_key")
+    api_key = _get_ai_key(conn)
     if not api_key:
         return jsonify({"error": "AI not configured"}), 400
 
@@ -1408,7 +1454,7 @@ def fetch_builder_regional_ai():
     if not profile or not profile["location"]:
         return jsonify({"error": "Profile with location required before fetching regional data"}), 400
 
-    location = profile["location"]
+    location = _sanitize_prompt_field(profile["location"], 200)
     prompt = f"""You are a personal finance research assistant. For the location "{location}", provide current cost-of-living data.
 
 Return ONLY valid JSON (no markdown, no explanation) with exactly these keys:
@@ -1428,13 +1474,15 @@ Be specific with dollar amounts and percentages. Use current 2026 data."""
         text, stop_reason, provider = _call_ai(prompt, conn, max_tokens=1024)
         if text is None:
             return jsonify({"error": "AI not configured"}), 400
-    except Exception as exc:
-        return jsonify({"error": f"AI call failed: {exc}"}), 500
+    except Exception:
+        app.logger.exception("Regional data AI call failed")
+        return jsonify({"error": "Regional data fetch failed. Check server logs."}), 500
 
     try:
         data = _extract_json(text)
-    except (json.JSONDecodeError, KeyError) as exc:
-        return jsonify({"error": f"Failed to parse AI response: {exc}"}), 500
+    except (json.JSONDecodeError, KeyError):
+        app.logger.exception("Failed to parse regional AI response")
+        return jsonify({"error": "Failed to parse AI response. Try again."}), 500
 
     other_factors = data.get("other_factors", [])
     if isinstance(other_factors, list):
@@ -1479,6 +1527,9 @@ Be specific with dollar amounts and percentages. Use current 2026 data."""
 
 @app.route("/api/budget-builder/generate", methods=["POST"])
 def generate_budget_plan():
+    blocked = _check_ai_rate_limit("generate_budget_plan")
+    if blocked:
+        return blocked
     body = request.get_json() or {}
     months_ahead = body.get("months_ahead", 3)
     profile_overrides = body.get("profile_overrides", {})
@@ -1486,7 +1537,7 @@ def generate_budget_plan():
     conn = get_db()
 
     # Check AI config
-    api_key = get_setting(conn, "ai_api_key")
+    api_key = _get_ai_key(conn)
     if not api_key:
         return jsonify({"error": "AI not configured"}), 400
 
@@ -1533,22 +1584,25 @@ def generate_budget_plan():
         )
     history_text = "\n".join(history_lines) if history_lines else "  No historical data available."
 
-    income = profile.get("expected_income", "not specified")
-    location = profile.get("location", "not specified")
-    housing = profile.get("housing_type", "not specified")
+    income = _sanitize_prompt_field(str(profile.get("expected_income", "not specified")), 50)
+    location = _sanitize_prompt_field(str(profile.get("location", "not specified")), 200)
+    housing = _sanitize_prompt_field(str(profile.get("housing_type", "not specified")), 50)
     children = profile.get("num_children", 0)
-    children_ages = profile.get("children_ages", "[]")
+    children_ages = profile.get("children_ages") or "[]"
     if isinstance(children_ages, str):
         try:
             children_ages = json.loads(children_ages)
         except json.JSONDecodeError:
             children_ages = []
-    events = profile.get("upcoming_events", "[]")
+    children_ages = [_sanitize_prompt_field(str(a), 50) for a in (children_ages or [])[:20]]
+    events = profile.get("upcoming_events") or "[]"
     if isinstance(events, str):
         try:
             events = json.loads(events)
         except json.JSONDecodeError:
             events = []
+    events = [_sanitize_prompt_field(str(e), 200) for e in (events or [])[:20]]
+    other_info = _sanitize_prompt_field(str(profile.get("other_info", "none")), 1000)
 
     regional_text = ""
     if regional:
@@ -1580,7 +1634,7 @@ USER PROFILE:
   Housing: {housing}
   Children: {children} (ages: {children_ages})
   Upcoming events: {events}
-  Other info: {profile.get('other_info', 'none')}
+  Other info: {other_info}
 {regional_text}
 
 HISTORICAL BUDGET DATA (last 6 months):
@@ -1620,8 +1674,9 @@ Rules:
         text, stop_reason, provider = _call_ai(prompt, conn, max_tokens=max_tokens)
         if text is None:
             return jsonify({"error": "AI not configured"}), 400
-    except Exception as exc:
-        return jsonify({"error": f"AI call failed: {exc}"}), 500
+    except Exception:
+        app.logger.exception("Budget generation AI call failed")
+        return jsonify({"error": "Budget generation failed. Check server logs."}), 500
 
     # Truncation detection
     if stop_reason in ("max_tokens", "length"):
@@ -1631,8 +1686,9 @@ Rules:
 
     try:
         data = _extract_json(text, valid_category_ids=category_ids)
-    except (json.JSONDecodeError, KeyError) as exc:
-        return jsonify({"error": f"Failed to parse AI response: {exc}"}), 500
+    except (json.JSONDecodeError, KeyError):
+        app.logger.exception("Failed to parse budget generation AI response")
+        return jsonify({"error": "Failed to parse AI response. Try again."}), 500
 
     # Save as plan
     now = datetime.now(timezone.utc).isoformat()
@@ -1765,20 +1821,22 @@ def apply_builder_plan(plan_id):
                     apply_to_future=False,
                 )
                 applied += 1
-            except Exception as exc:
+            except Exception:
+                app.logger.exception("Failed to apply budget for %s/%s", cat_id, month)
                 failed += 1
                 errors.append({
                     "category_id": cat_id,
                     "month": month,
-                    "error": str(exc),
+                    "error": "Failed to apply budget amount",
                 })
 
     try:
         asyncio.run(_apply())
     except AttributeError as exc:
         return jsonify({"error": str(exc)}), 400
-    except Exception as exc:
-        return jsonify({"error": f"Apply failed: {exc}"}), 500
+    except Exception:
+        app.logger.exception("Budget apply failed")
+        return jsonify({"error": "Budget apply failed. Check server logs."}), 500
 
     # Set applied_at only if all succeeded
     if failed == 0:
@@ -1815,4 +1873,4 @@ def _startup() -> None:
 if __name__ == "__main__":
     _startup()
     print(f"Starting Monarch Dashboard API — reading from {DB_PATH}")
-    app.run(host="0.0.0.0", port=5050, debug=True)
+    app.run(host="0.0.0.0", port=5050, debug=os.environ.get("FLASK_DEBUG", "").lower() in ("1", "true"))

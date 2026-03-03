@@ -61,6 +61,26 @@ JSX conditionals render separate text nodes; use a custom `el.textContent` funct
 **Fix:** `cat.group_type === 'income'`
 **Rule:** Category classification field is always `group_type`, not `category_type`. Tests against fixture data will catch this instantly since fixtures also use `group_type`.
 
+### Global Error Handler Must Exclude HTTPException
+**Where:** `@app.errorhandler(Exception)` in `app.py`
+**Symptom:** Flask's built-in 400 Bad Request (e.g., malformed JSON body) gets swallowed and returns generic 500 instead.
+**Root cause:** `@app.errorhandler(Exception)` catches ALL exceptions including `werkzeug.exceptions.HTTPException`. Flask uses HTTP exceptions for normal flow (400, 404, 405, etc.).
+**Fix:** Re-raise `HTTPException` subclasses: `if isinstance(exc, HTTPException): return exc`
+**Rule:** Global error handlers must always pass through `HTTPException` to preserve Flask's default HTTP status code behavior.
+
+### AI Key in Docker — Never Delete from Settings Table
+**Where:** `save_ai_config()` in `app.py`
+**Symptom:** If you delete the AI key from the settings table after saving to keychain, Docker users (no keyring backend) lose their AI config permanently.
+**Root cause:** Docker containers have no keyring backend. The SQLite settings table is the only storage available.
+**Fix:** `save_ai_config()` tries keychain first, falls back to settings table on any error. Never deletes existing key from settings table.
+**Rule:** Always keep the settings table fallback for Docker compatibility.
+
+### profile_overrides Bypass — Sanitize at Prompt Time
+**Where:** `generate_budget_plan()` accepts `profile_overrides` in request body.
+**Symptom:** Malicious input could bypass `save_builder_profile` validation by passing directly via `profile_overrides`.
+**Fix:** Apply `_sanitize_prompt_field()` at prompt construction time, not at save time. Both saved profile fields and overrides get sanitized.
+**Rule:** Input sanitization for AI prompts must happen at the point of prompt construction, not at the point of data storage.
+
 ### desloppify False Positives for JSX Imports
 **Where:** `desloppify scan` on `frontend/` directory.
 **Symptom:** ~237 findings across `unused`, `orphaned`, and `test_coverage` detectors flagging JSX components as unused/untested.

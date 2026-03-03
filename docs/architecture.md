@@ -43,3 +43,13 @@ from monarchmoney import MonarchMoney
 - `"openai_compatible"` → `openai` SDK (`chat.completions.create`) with optional `base_url`
 - Key never returned by `GET /api/ai/config`
 - Settings keys: `ai_provider`, `ai_api_key`, `ai_model`, `ai_base_url` — stored in `settings` table via `get_setting`/`set_setting`
+- AI API key: keychain-first via `auth.save_ai_key()`/`auth.load_ai_key()`, falls back to settings table (Docker has no keyring)
+- All AI reads go through `_get_ai_key(conn)` helper; `ai_analyze()` refactored to use `_call_ai()` (no more inline provider branching)
+
+## Security
+- **Debug mode:** off by default; enabled via `FLASK_DEBUG=1` env var (set in `docker-compose.dev.yml`)
+- **CORS:** restricted to localhost/127.0.0.1/[::1] origins (ports 80, 5173)
+- **Nginx headers:** X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy, CSP
+- **Error sanitization:** all `except` blocks return generic messages + `app.logger.exception()`; global `@app.errorhandler(Exception)` as defense-in-depth
+- **Rate limiting:** per-endpoint 2s cooldown on AI endpoints (`_ai_cooldowns` dict + `_check_ai_rate_limit()`)
+- **Prompt injection:** `_sanitize_prompt_field()` strips control chars and truncates; applied at prompt construction time (not save time). `save_builder_profile` validates `location` ≤200 chars, `other_info` ≤1000 chars

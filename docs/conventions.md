@@ -31,6 +31,13 @@
 - **Integration tests:** Create `*.integration.test.jsx` files that render real child components (no mocks) to verify parent→child data flow. Only mock recharts and `useResponsive`. Use `getAllByText` when names appear in multiple children.
 - **Fake timer coupling:** Use `vi.advanceTimersToNextTimer()` instead of `vi.advanceTimersByTime(N)` to avoid coupling tests to implementation-detail interval values.
 
+## Security
+- **Error messages:** Never expose `str(exc)` to clients. Use generic messages + `app.logger.exception()`. The global `@app.errorhandler(Exception)` catches anything that slips through.
+- **AI rate limiting:** Per-endpoint cooldowns via `_check_ai_rate_limit(endpoint)` with `_ai_cooldowns_lock` (`threading.Lock`) — add at the top of any new AI endpoint.
+- **Prompt sanitization:** Always use `_sanitize_prompt_field(value, max_length)` on user-supplied fields at prompt construction time, NOT at save time (profile_overrides can bypass save validation).
+- **AI key storage:** Use `_get_ai_key(conn)` to read (keychain → DB fallback). Never delete key from settings table — Docker has no keyring. Catch `keyring.errors.KeyringError` (base class), not just `NoKeyringError` — covers locked keychains too.
+- **CORS:** Explicit localhost-only origins list. Add new origins only if needed (e.g., new dev port).
+
 ## Distribution & Docker
 - **Self-hosted:** Docker Compose — each user runs locally, no data leaves their machine
 - **Dockerfile.backend:** Filters `-e ../pipeline` from requirements.txt via grep — path doesn't resolve in Docker; pipeline installed as non-editable `pip install ./pipeline`

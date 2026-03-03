@@ -9,6 +9,7 @@ services:
     environment:
       - MONARCH_DATA_DIR=/data
       - MONARCH_TOKEN=${MONARCH_TOKEN:-}
+      - FLASK_DEBUG=1
     volumes:
       - monarch_data:/data
       - ./backend:/app/backend      # live code mount — edits reflect immediately
