@@ -63,6 +63,17 @@ The Budgets tab includes an optional AI analysis feature. Expand the **✦ Analy
 
 After the initial setup, click **Run Analysis** to re-run at any time, or **Reconfigure** to change your provider or model. Your API key is stored in the local database and never sent anywhere except your chosen AI provider.
 
+### Budget Builder
+AI-powered budget recommendation engine that builds a personalized budget based on your financial profile and regional cost of living.
+
+1. **Profile** — enter your income, location, household size, and financial goals
+2. **Regional data** — AI fetches local cost-of-living benchmarks for your area
+3. **Generate** — AI creates a recommended budget across all your Monarch categories
+4. **Review & edit** — adjust any line item in the results table
+5. **Apply** — push the final budget back to Monarch Money
+
+Requires an AI provider configured in the Budgets tab (see AI Analysis setup above).
+
 ### Sync Data
 Manually trigger a sync of any combination of entities (accounts, transactions, budgets, etc.), or configure auto-sync on a schedule.
 
@@ -95,23 +106,32 @@ stashtrend/
 │   ├── app.py        All endpoints
 │   ├── wsgi.py       Gunicorn entry point
 │   └── tests/
-│       ├── test_budgets.py  12 tests: budget history, income/expense split
-│       ├── test_ai.py       12 tests: AI config, analyze endpoint
-│       ├── test_groups.py   38 tests: group CRUD, history pivot, snapshot
-│       ├── test_sync.py     35 tests: sync jobs, worker logic, concurrency
-│       └── test_settings.py 51 tests: settings API, setup endpoints, scheduler
+│       ├── test_helpers.py        Shared DDL fixtures (canonical schema imports)
+│       ├── test_budgets.py        12 tests: budget history, income/expense split
+│       ├── test_ai.py             12 tests: AI config, analyze endpoint
+│       ├── test_budget_builder.py 27 tests: profile, regional, generate, plans, apply
+│       ├── test_groups.py         55 tests: group CRUD, history, snapshot, configs
+│       ├── test_sync.py           35 tests: sync jobs, worker logic, concurrency
+│       ├── test_settings.py       36 tests: settings API, scheduler
+│       ├── test_setup.py          15 tests: setup status, token validation
+│       └── test_db_improvements.py 10 tests: WAL mode, context manager
 ├── frontend/         React + Vite
 │   └── src/
-│       ├── App.jsx              Root — tab shell + setup gate
+│       ├── App.jsx                Root — tab shell + setup gate
 │       ├── pages/
-│       │   ├── SetupPage.jsx    First-run token wizard
-│       │   ├── GroupsPage.jsx   Account group management
-│       │   ├── BudgetPage.jsx   Budget vs Actuals (range picker + chart + table + AI)
-│       │   └── SyncPage.jsx     Sync controls + history + auto-sync settings
-│       └── components/          StatsCards, NetWorthChart, AccountsBreakdown,
-│                                BudgetChart, BudgetTable, AIAnalysisPanel,
-│                                GroupManager, GroupsTimeChart, GroupsSnapshot,
-│                                SyncControl, SyncJobStatus, SyncHistory
+│       │   ├── SetupPage.jsx      First-run token wizard
+│       │   ├── GroupsPage.jsx     Account group management
+│       │   ├── BudgetPage.jsx     Budget vs Actuals (range picker + chart + table + AI)
+│       │   ├── BudgetBuilderPage.jsx  AI budget builder (3-step workflow)
+│       │   └── SyncPage.jsx       Sync controls + history + auto-sync settings
+│       └── components/            StatsCards, NetWorthChart, AccountsBreakdown,
+│                                  BudgetChart, BudgetTable, AIAnalysisPanel,
+│                                  BuilderProfileForm, BuilderRegionalData,
+│                                  BuilderResultsTable, GroupManager,
+│                                  GroupsTimeChart, GroupsSnapshot,
+│                                  GroupSnapshotControls, AutoSyncSettings,
+│                                  RangeSelector, SyncControl, SyncJobStatus,
+│                                  SyncHistory
 ├── pipeline/         Monarch Money API client (local package)
 ├── nginx/            nginx reverse-proxy config (production)
 ├── Dockerfile.backend
@@ -140,7 +160,7 @@ Runs `docker compose -f docker-compose.yml -f docker-compose.dev.yml up`. Code c
 ### Running tests
 
 ```bash
-make test      # backend pytest + frontend vitest (~299 tests)
+make test      # backend pytest + frontend vitest (~480 tests)
 ```
 
 Or individually:
@@ -165,6 +185,8 @@ A git pre-commit hook runs the full test suite before every commit. Install it w
 | POST | `/api/groups` | Create an account group |
 | PUT | `/api/groups/:id` | Update an account group |
 | DELETE | `/api/groups/:id` | Delete an account group |
+| GET | `/api/groups/configs` | Saved group snapshot configurations |
+| POST | `/api/groups/configs` | Save group snapshot configuration |
 | GET | `/api/groups/history` | Time-series balance per group |
 | GET | `/api/groups/snapshot` | Current balance per group |
 | GET | `/api/budgets/history` | Budget vs actual per category, `?months=3\|6\|12` |
@@ -177,3 +199,14 @@ A git pre-commit hook runs the full test suite before every commit. Install it w
 | GET | `/api/sync/status/:id` | Poll a running sync job |
 | GET | `/api/settings` | Read app settings (`sync_interval_hours`) |
 | POST | `/api/settings` | Update app settings |
+| GET | `/api/budget-builder/profile` | Get budget builder profile |
+| POST | `/api/budget-builder/profile` | Save budget builder profile |
+| GET | `/api/budget-builder/regional` | Get saved regional cost data |
+| POST | `/api/budget-builder/regional` | Save regional cost data |
+| POST | `/api/budget-builder/regional/fetch` | AI-fetch regional cost of living |
+| POST | `/api/budget-builder/generate` | AI-generate budget recommendation |
+| GET | `/api/budget-builder/plans` | List saved budget plans |
+| GET | `/api/budget-builder/plans/:id` | Get a specific plan |
+| PUT | `/api/budget-builder/plans/:id` | Update a plan |
+| DELETE | `/api/budget-builder/plans/:id` | Delete a plan |
+| POST | `/api/budget-builder/plans/:id/apply` | Apply plan to Monarch Money |
