@@ -3,7 +3,7 @@
 ## Backend
 
 ### conn.close() Omission Pattern (Partially resolved)
-`get_db_connection()` context manager added to auto-close connections. Endpoints that use `get_db()` directly (budget-related, AI, budget-builder) still intentionally omit `conn.close()` because tests share a single in-memory connection across multiple `patch` blocks. Migration to `get_db_connection()` is incremental — endpoints need `get_db()` when tests mock the return value. The context manager is for new code and non-test-mocked endpoints.
+`get_db_connection()` context manager added to auto-close connections. Endpoints that use `get_db()` directly (budget-related, AI, budget-builder) still intentionally omit `conn.close()` because tests share a single in-memory connection across multiple `patch` blocks. Migration to `get_db_connection()` is incremental — endpoints need `get_db()` when tests mock the return value. The context manager is for new code and non-test-mocked endpoints. Exception: `ai_analyze()` uses `try/finally: conn.close()` because it was refactored to use `_call_ai()` and the connection must stay open through the AI call but close on all exit paths.
 
 ### Fresh Install 500 (Fixed)
 `init_dashboard_schema()` now calls `pipeline_schema.init_db()` first.
@@ -72,8 +72,15 @@ JSX conditionals render separate text nodes; use a custom `el.textContent` funct
 **Where:** `save_ai_config()` in `app.py`
 **Symptom:** If you delete the AI key from the settings table after saving to keychain, Docker users (no keyring backend) lose their AI config permanently.
 **Root cause:** Docker containers have no keyring backend. The SQLite settings table is the only storage available.
-**Fix:** `save_ai_config()` tries keychain first, falls back to settings table on any error. Never deletes existing key from settings table.
+**Fix:** `save_ai_config()` tries keychain first, falls back to settings table on `KeyringError`. Never deletes existing key from settings table.
 **Rule:** Always keep the settings table fallback for Docker compatibility.
+
+### Catch KeyringError Base Class, Not Just NoKeyringError
+**Where:** `auth.load_ai_key()` and `save_ai_config()` in `app.py`
+**Symptom:** On systems with locked keychains, `keyring.errors.KeyringLocked` (not `NoKeyringError`) is raised, crashing the request.
+**Root cause:** Different keyring backends raise different error subclasses. Only catching `NoKeyringError` misses locked/unavailable keychains.
+**Fix:** Catch `keyring.errors.KeyringError` (base class) in both `load_ai_key()` and the `save_ai_config()` fallback.
+**Rule:** Always catch the base `KeyringError`, not specific subclasses, for keyring fallback logic.
 
 ### profile_overrides Bypass — Sanitize at Prompt Time
 **Where:** `generate_budget_plan()` accepts `profile_overrides` in request body.

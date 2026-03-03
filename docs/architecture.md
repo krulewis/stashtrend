@@ -51,5 +51,5 @@ from monarchmoney import MonarchMoney
 - **CORS:** restricted to localhost/127.0.0.1/[::1] origins (ports 80, 5173)
 - **Nginx headers:** X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy, CSP
 - **Error sanitization:** all `except` blocks return generic messages + `app.logger.exception()`; global `@app.errorhandler(Exception)` as defense-in-depth
-- **Rate limiting:** per-endpoint 2s cooldown on AI endpoints (`_ai_cooldowns` dict + `_check_ai_rate_limit()`)
+- **Rate limiting:** per-endpoint 2s cooldown on AI endpoints (`_ai_cooldowns` dict + `_check_ai_rate_limit()` + `_ai_cooldowns_lock` threading.Lock for thread safety)
 - **Prompt injection:** `_sanitize_prompt_field()` strips control chars and truncates; applied at prompt construction time (not save time). `save_builder_profile` validates `location` ≤200 chars, `other_info` ≤1000 chars
