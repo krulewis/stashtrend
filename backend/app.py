@@ -19,6 +19,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
+import keyring.errors
+
 try:
     from apscheduler.schedulers.background import BackgroundScheduler
 except ImportError:  # pragma: no cover
@@ -1086,12 +1088,16 @@ _ai_cooldowns = {}  # type: dict[str, float]
 _AI_COOLDOWN_SECONDS = 2.0
 
 
+_ai_cooldowns_lock = threading.Lock()
+
+
 def _check_ai_rate_limit(endpoint: str):
     now = time.monotonic()
-    last = _ai_cooldowns.get(endpoint, 0.0)
-    if last > 0 and (now - last) < _AI_COOLDOWN_SECONDS:
-        return jsonify({"error": "Please wait before retrying."}), 429
-    _ai_cooldowns[endpoint] = now
+    with _ai_cooldowns_lock:
+        last = _ai_cooldowns.get(endpoint, 0.0)
+        if last > 0 and (now - last) < _AI_COOLDOWN_SECONDS:
+            return jsonify({"error": "Please wait before retrying."}), 429
+        _ai_cooldowns[endpoint] = now
     return None
 
 
@@ -1143,7 +1149,7 @@ def save_ai_config():
     conn = get_db()
     try:
         auth.save_ai_key(data["api_key"])
-    except Exception:
+    except keyring.errors.KeyringError:
         set_setting(conn, "ai_api_key", data["api_key"])
     set_setting(conn, "ai_model",    data["model"])
     set_setting(conn, "ai_provider", provider)
@@ -1230,11 +1236,13 @@ Be specific to the numbers. Keep the response under 400 words."""
         analysis, _stop, provider = _call_ai(prompt, conn, max_tokens=1024)
         if analysis is None:
             return jsonify({"error": "AI not configured. Save config via /api/ai/config first."}), 400
+        model = get_setting(conn, "ai_model")
     except Exception:
         app.logger.exception("AI analysis call failed")
         return jsonify({"error": "AI analysis failed. Check server logs."}), 500
+    finally:
+        conn.close()
 
-    model = get_setting(conn, "ai_model")
     return jsonify({"analysis": analysis, "model": model, "provider": provider})
 
 

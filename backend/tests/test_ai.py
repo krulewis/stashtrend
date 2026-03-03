@@ -3,6 +3,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
+import keyring.errors
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from app import app
 from tests.test_helpers import make_test_db
@@ -39,7 +41,7 @@ class TestAIConfig(unittest.TestCase):
     def test_save_config_then_get_shows_configured(self):
         db = make_db()
         with patch("app.get_db", return_value=db), \
-             patch("app.auth.save_ai_key", side_effect=Exception("no keyring")):
+             patch("app.auth.save_ai_key", side_effect=keyring.errors.NoKeyringError("no keyring")):
             self.client.post("/api/ai/config", json={
                 "api_key": "key", "model": "claude-opus-4-5",
                 "provider": "anthropic",
@@ -55,7 +57,7 @@ class TestAIConfig(unittest.TestCase):
     def test_get_config_never_returns_api_key(self):
         db = make_db()
         with patch("app.get_db", return_value=db), \
-             patch("app.auth.save_ai_key", side_effect=Exception("no keyring")):
+             patch("app.auth.save_ai_key", side_effect=keyring.errors.NoKeyringError("no keyring")):
             self.client.post("/api/ai/config", json={
                 "api_key": "super-secret", "model": "gpt-4o",
                 "provider": "openai_compatible",
@@ -86,7 +88,7 @@ class TestAIConfig(unittest.TestCase):
     def test_openai_compatible_saves_base_url(self):
         db = make_db()
         with patch("app.get_db", return_value=db), \
-             patch("app.auth.save_ai_key", side_effect=Exception("no keyring")):
+             patch("app.auth.save_ai_key", side_effect=keyring.errors.NoKeyringError("no keyring")):
             self.client.post("/api/ai/config", json={
                 "api_key": "key", "model": "llama3",
                 "provider": "openai_compatible",

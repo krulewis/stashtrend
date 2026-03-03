@@ -12,6 +12,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
+import keyring.errors
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from app import app
 from tests.test_helpers import make_test_db
@@ -84,7 +86,7 @@ class TestAIKeyKeychain(unittest.TestCase):
         """When keychain raises, key should be saved to settings table."""
         db = make_db()
         with patch("app.get_db", return_value=db), \
-             patch("app.auth.save_ai_key", side_effect=Exception("no keyring")):
+             patch("app.auth.save_ai_key", side_effect=keyring.errors.NoKeyringError("no keyring")):
             resp = self.client.post("/api/ai/config", json={
                 "api_key": "fallback-key",
                 "model": "claude-opus-4-5",

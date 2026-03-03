@@ -117,8 +117,8 @@ def load_ai_key() -> str | None:
         if key:
             logger.debug("AI API key loaded from system keychain.")
         return key
-    except keyring.errors.NoKeyringError:
-        logger.debug("No keyring backend — AI key not in keychain.")
+    except keyring.errors.KeyringError:
+        logger.debug("Keyring unavailable — AI key not in keychain.")
         return None
 
 
