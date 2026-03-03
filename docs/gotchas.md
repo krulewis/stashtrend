@@ -18,6 +18,9 @@ See `docs/architecture.md` → DDL Init Order.
 ### getByText Ambiguity
 Use `getByRole('button', { name: /.../ })` when text appears in multiple elements.
 
+### Integration Test Multi-Element Matches
+In integration tests (real child components, no mocks), group/entity names like "Liquid Cash" appear in multiple children (e.g. snapshot controls AND manager cards). Use `getAllByText()` with `.length` assertions instead of `getByText()`, or query by a child-specific element (e.g. `getByText(/2 accts/)` to confirm GroupsSnapshot rendered).
+
 ### aria-label Sibling Ambiguity
 When action buttons (rename, delete) are added alongside a named element, their `aria-label` values inherit the parent name — e.g. `aria-label="Rename Net Worth View"` and `aria-label="Delete Net Worth View"` both match `/Net Worth View/`. Existing tests using partial-name regexes break with "Found multiple elements". Fix: switch those tests to `getByTestId` or an exact-match regex (`/^Net Worth View$/`).
 

@@ -590,7 +590,252 @@
     "requested": [],
     "default": []
   },
+  "narrative": {
+    "phase": "stagnation",
+    "headline": "Zero open findings!",
+    "dimensions": {
+      "lowest_dimensions": [
+        {
+          "name": "Type safety",
+          "strict": 68.0,
+          "issues": 0,
+          "impact": 0.0,
+          "subjective": true,
+          "impact_description": "re-review to improve"
+        },
+        {
+          "name": "Stale migration",
+          "strict": 78.0,
+          "issues": 0,
+          "impact": 0.0,
+          "subjective": true,
+          "impact_description": "re-review to improve"
+        },
+        {
+          "name": "Error consistency",
+          "strict": 80.0,
+          "issues": 0,
+          "impact": 0.0,
+          "subjective": true,
+          "impact_description": "re-review to improve"
+        }
+      ],
+      "biggest_gap_dimensions": [
+        {
+          "name": "File health",
+          "lenient": 100.0,
+          "strict": 85.7,
+          "gap": 14.3,
+          "wontfix_count": 0
+        },
+        {
+          "name": "Code quality",
+          "lenient": 100.0,
+          "strict": 98.8,
+          "gap": 1.2,
+          "wontfix_count": 0
+        }
+      ],
+      "stagnant_dimensions": [
+        {
+          "name": "Naming quality",
+          "strict": 88.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Logic clarity",
+          "strict": 90.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Type safety",
+          "strict": 68.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Contracts",
+          "strict": 85.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Error consistency",
+          "strict": 80.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Abstraction fit",
+          "strict": 88.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "AI generated debt",
+          "strict": 92.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "High elegance",
+          "strict": 90.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Mid elegance",
+          "strict": 85.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Low elegance",
+          "strict": 87.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Cross-module arch",
+          "strict": 82.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Init coupling",
+          "strict": 95.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Convention drift",
+          "strict": 82.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Dep health",
+          "strict": 92.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "API coherence",
+          "strict": 80.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Auth consistency",
+          "strict": 90.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Stale migration",
+          "strict": 78.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Structure nav",
+          "strict": 88.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Design coherence",
+          "strict": 82.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "File health",
+          "strict": 85.7,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Code quality",
+          "strict": 98.8,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Duplication",
+          "strict": 100.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Test health",
+          "strict": 100.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Security",
+          "strict": 100.0,
+          "stuck_scans": 5
+        }
+      ]
+    },
+    "actions": [],
+    "strategy": {
+      "fixer_leverage": {
+        "auto_fixable_count": 0,
+        "total_count": 0,
+        "coverage": 0.0,
+        "impact_ratio": 0.0,
+        "recommendation": "none"
+      },
+      "lanes": {},
+      "can_parallelize": false,
+      "hint": "Try a different dimension to break the plateau."
+    },
+    "tools": {
+      "fixers": [],
+      "move": {
+        "available": true,
+        "relevant": false,
+        "reason": null,
+        "usage": "desloppify move <source> <dest> [--dry-run]"
+      },
+      "plan": {
+        "command": "desloppify plan",
+        "description": "Generate prioritized markdown cleanup plan"
+      },
+      "badge": {
+        "generated": true,
+        "in_readme": false,
+        "path": "scorecard.png",
+        "recommendation": "Add to README: <img src=\"scorecard.png\" width=\"100%\">"
+      }
+    },
+    "debt": {
+      "overall_gap": 0.4,
+      "wontfix_count": 27,
+      "worst_dimension": "File health",
+      "worst_gap": 14.3,
+      "trend": "stable"
+    },
+    "milestone": "Zero open findings!",
+    "primary_action": null,
+    "why_now": "Try a different dimension to break the plateau.",
+    "verification_step": {
+      "command": "desloppify scan",
+      "reason": "revalidate after changes"
+    },
+    "risk_flags": [
+      {
+        "type": "wontfix_gap",
+        "severity": "medium",
+        "message": "Strict/lenient gap is 0.4 pts with 27 wontfix findings"
+      }
+    ],
+    "strict_target": {
+      "target": 95.0,
+      "current": 89.8,
+      "gap": 5.2,
+      "state": "below",
+      "warning": null
+    },
+    "reminders": [],
+    "reminder_history": {
+      "zone_classification": 3,
+      "report_scores": 15,
+      "feedback_nudge": 3,
+      "stagnant_nudge": 25,
+      "fp_calibration_orphaned_production": 3,
+      "fp_calibration_test_coverage_production": 3,
+      "fp_calibration_unused_production": 3,
+      "review_findings_pending": 3,
+      "review_not_run": 3,
+      "wontfix_growing": 3
+    }
+  },
+  "next_command": "desloppify review --external-submit --session-id <id> --import <file>",
   "config": {
+    "target_strict_score": 95,
     "review_max_age_days": 30,
     "review_batch_max_files": 80,
     "holistic_max_age_days": 30,

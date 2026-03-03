@@ -1,5 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { fetchJSON, postJSON, deleteGroup, fetchSetupStatus } from './api.js'
+import {
+  fetchJSON, postJSON, deleteGroup, fetchSetupStatus,
+  fetchNetworthStats, fetchNetworthHistory, fetchAccountsSummary,
+  fetchGroups, fetchGroupsHistory, fetchGroupsSnapshot, fetchGroupsConfigs,
+  createGroup, updateGroup, saveGroupsConfigs,
+  fetchBudgetHistory,
+  fetchAiConfig, saveAiConfig, runAiAnalysis,
+  fetchSyncHistory, fetchSyncLastStatus, fetchSyncStatus, startSync,
+  fetchSettings, saveSettings, setupToken,
+  fetchBuilderProfile, saveBuilderProfile,
+  fetchBuilderRegional, saveBuilderRegional, fetchRegionalFromAI,
+  generateBudgetPlan, fetchBuilderPlans, fetchBuilderPlan,
+  updateBuilderPlan, deleteBuilderPlan, applyBuilderPlan,
+} from './api.js'
 
 beforeEach(() => {
   vi.restoreAllMocks()
@@ -95,5 +108,57 @@ describe('fetchSetupStatus', () => {
     const result = await fetchSetupStatus()
     expect(result).toEqual({ configured: true })
     expect(global.fetch).toHaveBeenCalledWith('/api/setup/status')
+  })
+})
+
+// ── API endpoint contracts — URL and method correctness ─────────────────
+
+describe('GET endpoint contracts', () => {
+  it.each([
+    ['fetchNetworthStats',   () => fetchNetworthStats(),         '/api/networth/stats'],
+    ['fetchNetworthHistory', () => fetchNetworthHistory(),       '/api/networth/history'],
+    ['fetchAccountsSummary', () => fetchAccountsSummary(),       '/api/accounts/summary'],
+    ['fetchGroups',          () => fetchGroups(),                '/api/groups'],
+    ['fetchGroupsHistory',   () => fetchGroupsHistory(),        '/api/groups/history'],
+    ['fetchGroupsSnapshot',  () => fetchGroupsSnapshot(),       '/api/groups/snapshot'],
+    ['fetchGroupsConfigs',   () => fetchGroupsConfigs(),        '/api/groups/configs'],
+    ['fetchBudgetHistory',   () => fetchBudgetHistory(6),       '/api/budgets/history?months=6'],
+    ['fetchAiConfig',        () => fetchAiConfig(),             '/api/ai/config'],
+    ['fetchSyncHistory',     () => fetchSyncHistory(),          '/api/sync/history'],
+    ['fetchSyncLastStatus',  () => fetchSyncLastStatus(),       '/api/sync/last-status'],
+    ['fetchSyncStatus',      () => fetchSyncStatus('job-123'),  '/api/sync/status/job-123'],
+    ['fetchSettings',        () => fetchSettings(),             '/api/settings'],
+    ['fetchBuilderProfile',  () => fetchBuilderProfile(),       '/api/budget-builder/profile'],
+    ['fetchBuilderRegional', () => fetchBuilderRegional(),      '/api/budget-builder/regional'],
+    ['fetchBuilderPlans',    () => fetchBuilderPlans(),         '/api/budget-builder/plans'],
+    ['fetchBuilderPlan',     () => fetchBuilderPlan(1),         '/api/budget-builder/plans/1'],
+  ])('%s calls GET %s', async (_name, invoke, expectedUrl) => {
+    global.fetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) })
+    await invoke()
+    expect(global.fetch).toHaveBeenCalledWith(expectedUrl)
+  })
+})
+
+describe('Mutating endpoint contracts', () => {
+  it.each([
+    ['createGroup',       () => createGroup({ name: 'X' }),            'POST',   '/api/groups'],
+    ['updateGroup',       () => updateGroup(1, { name: 'X' }),         'PUT',    '/api/groups/1'],
+    ['saveGroupsConfigs', () => saveGroupsConfigs({ configs: [] }),    'POST',   '/api/groups/configs'],
+    ['saveAiConfig',      () => saveAiConfig({ provider: 'x' }),       'POST',   '/api/ai/config'],
+    ['runAiAnalysis',     () => runAiAnalysis(),                        'POST',   '/api/ai/analyze'],
+    ['startSync',         () => startSync(['accounts'], false),         'POST',   '/api/sync/start'],
+    ['saveSettings',      () => saveSettings({ interval: 6 }),          'POST',   '/api/settings'],
+    ['setupToken',        () => setupToken('tok_123'),                  'POST',   '/api/setup/token'],
+    ['saveBuilderProfile',  () => saveBuilderProfile({ income: 6000 }), 'POST', '/api/budget-builder/profile'],
+    ['saveBuilderRegional', () => saveBuilderRegional({ food: '$9' }),   'POST', '/api/budget-builder/regional'],
+    ['fetchRegionalFromAI', () => fetchRegionalFromAI(),                 'POST', '/api/budget-builder/regional/fetch'],
+    ['generateBudgetPlan',  () => generateBudgetPlan({ months_ahead: 3 }), 'POST', '/api/budget-builder/generate'],
+    ['updateBuilderPlan',   () => updateBuilderPlan(1, { name: 'X' }),  'PUT',  '/api/budget-builder/plans/1'],
+    ['deleteBuilderPlan',   () => deleteBuilderPlan(1),                 'DELETE', '/api/budget-builder/plans/1'],
+    ['applyBuilderPlan',    () => applyBuilderPlan(1),                  'POST',  '/api/budget-builder/plans/1/apply'],
+  ])('%s sends %s to %s', async (_name, invoke, method, expectedUrl) => {
+    global.fetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) })
+    await invoke()
+    expect(global.fetch).toHaveBeenCalledWith(expectedUrl, expect.objectContaining({ method }))
   })
 })

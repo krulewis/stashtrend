@@ -205,7 +205,7 @@ describe('SyncPage — polling lifecycle', () => {
     await act(async () => {})
 
     // Advance past the 2-second poll interval to trigger first poll
-    await act(async () => { vi.advanceTimersByTime(2100) })
+    await act(async () => { vi.advanceTimersToNextTimer() })
 
     const statusCalls = global.fetch.mock.calls.filter(([url]) =>
       url.includes('/api/sync/status/job-running')
@@ -239,9 +239,9 @@ describe('SyncPage — polling lifecycle', () => {
     // Flush initial history fetch (returns RUNNING_JOB, starts polling)
     await act(async () => {})
     // First poll — still running
-    await act(async () => { vi.advanceTimersByTime(2100) })
+    await act(async () => { vi.advanceTimersToNextTimer() })
     // Second poll — job completes, stopPolling() is called
-    await act(async () => { vi.advanceTimersByTime(2100) })
+    await act(async () => { vi.advanceTimersToNextTimer() })
 
     // After completion, isRunning=false so Start Sync button is enabled
     const startBtn = screen.getByRole('button', { name: /start sync/i })
@@ -294,7 +294,7 @@ describe('SyncPage — polling lifecycle', () => {
     await act(async () => {})
 
     // First poll throws network error — should log but not crash
-    await act(async () => { vi.advanceTimersByTime(2100) })
+    await act(async () => { vi.advanceTimersToNextTimer() })
 
     expect(consoleSpy).toHaveBeenCalledWith('Polling error', expect.any(Error))
     // Page still renders
@@ -315,7 +315,7 @@ describe('SyncPage — polling lifecycle', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
     render(<SyncPage />)
     await act(async () => {})
-    await act(async () => { vi.advanceTimersByTime(2100) })
+    await act(async () => { vi.advanceTimersToNextTimer() })
 
     expect(screen.getByText(/lost connection|sync status may be stale/i)).toBeInTheDocument()
   })

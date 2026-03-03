@@ -1,0 +1,40 @@
+{
+  "assessments": {
+    "test_strategy": 93.0
+  },
+  "findings": [
+    {
+      "dimension": "test_strategy",
+      "severity": "minor",
+      "deduction": -3,
+      "file": "src/pages/GroupsPage.integration.test.jsx",
+      "description": "Integration tests exist only for GroupsPage. BudgetBuilderPage, SyncPage, and BudgetPage each orchestrate multiple child components and API calls but have no integration-level tests that render real children. BudgetBuilderPage.test.jsx mocks all three child components (BuilderProfileForm, BuilderRegionalData, BuilderResultsTable), which validates the page's callback wiring but does not verify that real props flow correctly from parent state through to child rendering. SyncPage similarly composes SyncControl, SyncJobStatus, SyncHistory, and AutoSyncSettings but tests only at the page level with full fetch mocking."
+    },
+    {
+      "dimension": "test_strategy",
+      "severity": "minor",
+      "deduction": -2,
+      "file": "src/components/chartUtils.jsx",
+      "line": 29,
+      "description": "formatDateLabel (line 29-32) is a pure function used as the XAxis tickFormatter in sharedChartElements but has no direct unit test. Date formatting edge cases (year boundaries, locale sensitivity) are unvalidated."
+    },
+    {
+      "dimension": "test_strategy",
+      "severity": "minor",
+      "deduction": -2,
+      "file": "src/components/chartUtils.jsx",
+      "line": 140,
+      "description": "sharedChartElements (line 140-162) is a rendering helper that produces recharts JSX children (CartesianGrid, XAxis, YAxis, Tooltip) consumed by both NetWorthChart and GroupsTimeChart. It has no dedicated test. While recharts is mocked in consuming tests, the function's prop-wiring logic (yAxisWidth, tooltip content, tickFormatter binding) is untested at the unit level."
+    }
+  ],
+  "provenance": {
+    "kind": "blind_review_batch_import",
+    "blind": true,
+    "runner": "claude",
+    "run_stamp": "ext_20260303_153816_9f65d96d",
+    "created_at": "2026-03-03T15:40:32+00:00",
+    "packet_path": "/Users/kellyl./Documents/Cowork Projects/Personal Finance/monarch-dashboard/.claude/worktrees/refactor/.desloppify/review_packet_blind.json",
+    "packet_sha256": "c7814d1e12ee42674379b6d9a00c1a350c27e100bcf2a1373262cfb24cdc8b74",
+    "external_session_id": "ext_20260303_153816_9f65d96d"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "session_id": "ext_20260303_154824_b878256e",
+  "status": "submitted",
+  "runner": "claude",
+  "created_at": "2026-03-03T15:48:24+00:00",
+  "expires_at": "2026-03-04T15:48:24+00:00",
+  "ttl_hours": 24,
+  "token": "2bf570c48e83e8e65af8d2b7067a954d",
+  "attest": "I validated this review was completed without awareness of overall score and is unbiased.",
+  "packet_path": "/Users/kellyl./Documents/Cowork Projects/Personal Finance/monarch-dashboard/.claude/worktrees/refactor/.desloppify/review_packets/holistic_packet_20260303_154824.json",
+  "blind_packet_path": "/Users/kellyl./Documents/Cowork Projects/Personal Finance/monarch-dashboard/.claude/worktrees/refactor/.desloppify/review_packet_blind.json",
+  "packet_sha256": "f8e2d02b3cb9f94c1daa77646d03842611d8c48e7a247b6e0e5966034b207935",
+  "template_path": "/Users/kellyl./Documents/Cowork Projects/Personal Finance/monarch-dashboard/.claude/worktrees/refactor/.desloppify/external_review_sessions/ext_20260303_154824_b878256e/review_result.template.json",
+  "launch_prompt_path": "/Users/kellyl./Documents/Cowork Projects/Personal Finance/monarch-dashboard/.claude/worktrees/refactor/.desloppify/external_review_sessions/ext_20260303_154824_b878256e/claude_launch_prompt.md",
+  "instructions_path": "/Users/kellyl./Documents/Cowork Projects/Personal Finance/monarch-dashboard/.claude/worktrees/refactor/.desloppify/external_review_sessions/ext_20260303_154824_b878256e/reviewer_instructions.md",
+  "expected_output_path": "/Users/kellyl./Documents/Cowork Projects/Personal Finance/monarch-dashboard/.claude/worktrees/refactor/.desloppify/external_review_sessions/ext_20260303_154824_b878256e/review_result.json",
+  "submitted_at": "2026-03-03T15:51:39+00:00",
+  "submitted_input_file": ".desloppify/external_review_sessions/ext_20260303_154824_b878256e/review_result.json",
+  "submitted_canonical_file": "/Users/kellyl./Documents/Cowork Projects/Personal Finance/monarch-dashboard/.claude/worktrees/refactor/.desloppify/external_review_sessions/ext_20260303_154824_b878256e/canonical_import_20260303_155139.json"
+}

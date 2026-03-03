@@ -1,0 +1,62 @@
+{
+  "assessments": {
+    "test_strategy": 92.0
+  },
+  "findings": [
+    {
+      "dimension": "test_strategy",
+      "identifier": "missing_builder_integration_test",
+      "summary": "BudgetBuilderPage lacks an integration test unlike the other 3 page-level integration tests",
+      "related_files": [
+        "frontend/src/pages/BudgetBuilderPage.test.jsx",
+        "frontend/src/pages/BudgetBuilderPage.jsx"
+      ],
+      "evidence": [
+        "GroupsPage, BudgetPage, and SyncPage each have .integration.test.jsx files that render real child components",
+        "BudgetBuilderPage.test.jsx mocks all 3 child components (BuilderProfileForm, BuilderRegionalData, BuilderResultsTable) but has no integration test counterpart",
+        "This means the real prop-passing and data flow from BudgetBuilderPage to its children is never verified in tests"
+      ],
+      "suggestion": "Add BudgetBuilderPage.integration.test.jsx that renders with real child components (mocking only recharts/useResponsive) to verify parent-to-child data flow, matching the pattern of the other 3 integration tests",
+      "confidence": "high"
+    },
+    {
+      "dimension": "test_strategy",
+      "identifier": "mockfetch_route_ambiguity",
+      "summary": "mockFetch substring matching can silently match wrong routes when URL prefixes overlap",
+      "related_files": [
+        "frontend/src/test/fixtures.js"
+      ],
+      "evidence": [
+        "mockFetch uses url.includes(key) \u2014 '/api/budget-builder/regional' matches both the GET endpoint and '/api/budget-builder/regional/fetch'",
+        "Tests that need both routes (e.g. BudgetBuilderPage handleFetchRegionalAI) work around this by replacing global.fetch entirely with vi.fn() instead of using mockFetch",
+        "Route match order depends on Object.entries iteration order, creating implicit ordering dependencies"
+      ],
+      "suggestion": "Sort routes by descending key length in mockFetch so longer/more-specific routes match first, or switch to exact path matching with optional query string handling",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "test_strategy",
+      "identifier": "weak_range_interaction_assertions",
+      "summary": "NetWorthChart range button test only checks no crash, not that range filtering actually occurred",
+      "related_files": [
+        "frontend/src/components/NetWorthChart.test.jsx"
+      ],
+      "evidence": [
+        "Line 48-53: test 'clicking a range button does not crash' only asserts the chart container still exists after click",
+        "No assertion that the active range state changed, the correct range is highlighted, or that data was filtered"
+      ],
+      "suggestion": "Assert the clicked range button receives an active class or aria-pressed attribute, or verify the active range label in the RangeSelector child",
+      "confidence": "medium"
+    }
+  ],
+  "provenance": {
+    "kind": "blind_review_batch_import",
+    "blind": true,
+    "runner": "claude",
+    "run_stamp": "ext_20260303_154824_b878256e",
+    "created_at": "2026-03-03T15:51:39+00:00",
+    "packet_path": "/Users/kellyl./Documents/Cowork Projects/Personal Finance/monarch-dashboard/.claude/worktrees/refactor/.desloppify/review_packet_blind.json",
+    "packet_sha256": "f8e2d02b3cb9f94c1daa77646d03842611d8c48e7a247b6e0e5966034b207935",
+    "external_session_id": "ext_20260303_154824_b878256e"
+  }
+}

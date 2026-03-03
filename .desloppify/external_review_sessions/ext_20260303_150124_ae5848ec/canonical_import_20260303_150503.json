@@ -1,0 +1,100 @@
+{
+  "assessments": {
+    "test_strategy": 78.0
+  },
+  "findings": [
+    {
+      "dimension": "test_strategy",
+      "identifier": "no_integration_tests",
+      "summary": "No cross-module integration tests exist; all component tests mock their children or recharts",
+      "related_files": [
+        "frontend/src/pages/GroupsPage.test.jsx",
+        "frontend/src/pages/BudgetPage.test.jsx",
+        "frontend/src/pages/SyncPage.test.jsx"
+      ],
+      "evidence": [
+        "GroupsPage.test.jsx mocks recharts and useResponsive; BudgetPage.test.jsx mocks BudgetChart, BudgetTable, and AIAnalysisPanel as stubs; App.test.jsx mocks all four page components. No test verifies that real child components render correctly within their parent page context."
+      ],
+      "suggestion": "Add at least one integration test per page that renders with real child components (not mocked) to verify data flows correctly from page-level fetch through to leaf component rendering. Start with GroupsPage since it has the most complex data flow (configs, conflict map, snapshot filtering).",
+      "confidence": "high"
+    },
+    {
+      "dimension": "test_strategy",
+      "identifier": "budget_builder_page_thin_coverage",
+      "summary": "BudgetBuilderPage has only 3 smoke tests despite being a complex multi-step workflow page",
+      "related_files": [
+        "frontend/src/pages/BudgetBuilderPage.test.jsx",
+        "frontend/src/pages/BudgetBuilderPage.jsx"
+      ],
+      "evidence": [
+        "BudgetBuilderPage.jsx has 8 callback handlers (handleSaveProfile, handleSaveRegional, handleFetchRegionalAI, handleGenerate, handleCellEdit, handleSavePlan, handleApply, plus state for monthsAhead). The test file only verifies: (1) AI not configured banner, (2) profile form renders, (3) 3-step sections render. Zero interaction tests for save, generate, apply, or error flows."
+      ],
+      "suggestion": "Add tests for: saving profile triggers API call and updates state, generate button calls generateBudgetPlan with monthsAhead, apply flow shows result, and error state displays when API calls fail.",
+      "confidence": "high"
+    },
+    {
+      "dimension": "test_strategy",
+      "identifier": "range_selector_untested",
+      "summary": "RangeSelector.jsx has no corresponding test file despite being shared by two chart components",
+      "related_files": [
+        "frontend/src/components/RangeSelector.jsx"
+      ],
+      "evidence": [
+        "RangeSelector.jsx is imported by both NetWorthChart and GroupsTimeChart. It handles range button rendering and active state via aria attributes. No RangeSelector.test.jsx exists. While it is indirectly exercised through parent tests (which mock recharts), those tests don't verify RangeSelector's prop-driven behavior in isolation."
+      ],
+      "suggestion": "Add a RangeSelector.test.jsx covering: renders all range labels, calls onSelect with correct label, applies active styling to the activeRange button.",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "test_strategy",
+      "identifier": "sync_polling_timing_fragility",
+      "summary": "SyncPage polling tests hardcode 2100ms timer advances coupled to a 2000ms implementation interval",
+      "related_files": [
+        "frontend/src/pages/SyncPage.test.jsx"
+      ],
+      "evidence": [
+        "Multiple tests use vi.advanceTimersByTime(2100) which assumes the poll interval is 2000ms. If the interval constant in SyncPage.jsx changes (e.g., to 3000ms for rate limiting), these tests will silently pass without actually triggering polls, giving false confidence."
+      ],
+      "suggestion": "Extract the poll interval as a named constant from SyncPage and import it in tests, or use vi.advanceTimersToNextTimer() instead of hardcoded millisecond values.",
+      "confidence": "high"
+    },
+    {
+      "dimension": "test_strategy",
+      "identifier": "api_wrapper_coverage_gaps",
+      "summary": "api.js exports 25+ endpoint functions but tests only cover 4; wrapper correctness is unverified",
+      "related_files": [
+        "frontend/src/api.test.js",
+        "frontend/src/api.js"
+      ],
+      "evidence": [
+        "api.test.js tests fetchJSON, postJSON, deleteGroup, and fetchSetupStatus. Functions like updateGroup, startSync, saveSettings, saveGroupsConfigs, all budget-builder endpoints, and all AI endpoints have no direct tests. While they are thin wrappers, URL construction bugs (e.g., wrong path, missing interpolation) would go undetected."
+      ],
+      "suggestion": "Add a parametrized test that verifies each exported wrapper calls fetch with the expected URL and method. This can be a single describe block with it.each covering all endpoints.",
+      "confidence": "medium"
+    },
+    {
+      "dimension": "test_strategy",
+      "identifier": "fmtDollar_untested",
+      "summary": "chartUtils.jsx exports fmtDollar (parenthesized negative format) but it has no test coverage",
+      "related_files": [
+        "frontend/src/components/chartUtils.jsx",
+        "frontend/src/components/chartUtils.test.jsx"
+      ],
+      "evidence": [
+        "fmtDollar (line 23-27) formats numbers as $X,XXX with parentheses for negatives and a dash for null. chartUtils.test.jsx tests fmtCompact, fmtFull, fmtBudgetMonth, fmtDatetime, fmtDatetimeSecs, filterByRange, downsample, durationFinal, and durationElapsed, but not fmtDollar. fmtDollar is used in GroupManager for balance display."
+      ],
+      "suggestion": "Add test cases for fmtDollar covering: positive value, negative value (parenthesized), zero, and null/undefined (dash).",
+      "confidence": "high"
+    }
+  ],
+  "provenance": {
+    "kind": "blind_review_batch_import",
+    "blind": true,
+    "runner": "claude",
+    "run_stamp": "ext_20260303_150124_ae5848ec",
+    "created_at": "2026-03-03T15:05:03+00:00",
+    "packet_path": "/Users/kellyl./Documents/Cowork Projects/Personal Finance/monarch-dashboard/.claude/worktrees/refactor/.desloppify/review_packet_blind.json",
+    "packet_sha256": "88b1d566fbd1c17d015fbb8f6f8edb0d67cedd0117673cd5beb10ee3c0fea0a0",
+    "external_session_id": "ext_20260303_150124_ae5848ec"
+  }
+}
