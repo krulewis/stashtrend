@@ -17,14 +17,16 @@ class TestAIConfig(unittest.TestCase):
         self.client = app.test_client()
 
     def test_get_config_unconfigured(self):
-        with patch("app.get_db", return_value=make_db()):
+        with patch("app.get_db", return_value=make_db()), \
+             patch("app.auth.load_ai_key", return_value=None):
             resp = self.client.get("/api/ai/config")
         self.assertEqual(resp.status_code, 200)
         data = resp.get_json()
         self.assertFalse(data["configured"])
 
     def test_save_config_success(self):
-        with patch("app.get_db", return_value=make_db()):
+        with patch("app.get_db", return_value=make_db()), \
+             patch("app.auth.save_ai_key"):
             resp = self.client.post("/api/ai/config", json={
                 "api_key":  "test-key-abc",
                 "model":    "claude-opus-4-5",
@@ -36,12 +38,14 @@ class TestAIConfig(unittest.TestCase):
 
     def test_save_config_then_get_shows_configured(self):
         db = make_db()
-        with patch("app.get_db", return_value=db):
+        with patch("app.get_db", return_value=db), \
+             patch("app.auth.save_ai_key", side_effect=Exception("no keyring")):
             self.client.post("/api/ai/config", json={
                 "api_key": "key", "model": "claude-opus-4-5",
                 "provider": "anthropic",
             })
-        with patch("app.get_db", return_value=db):
+        with patch("app.get_db", return_value=db), \
+             patch("app.auth.load_ai_key", return_value=None):
             resp = self.client.get("/api/ai/config")
         data = resp.get_json()
         self.assertTrue(data["configured"])
@@ -50,12 +54,14 @@ class TestAIConfig(unittest.TestCase):
 
     def test_get_config_never_returns_api_key(self):
         db = make_db()
-        with patch("app.get_db", return_value=db):
+        with patch("app.get_db", return_value=db), \
+             patch("app.auth.save_ai_key", side_effect=Exception("no keyring")):
             self.client.post("/api/ai/config", json={
                 "api_key": "super-secret", "model": "gpt-4o",
                 "provider": "openai_compatible",
             })
-        with patch("app.get_db", return_value=db):
+        with patch("app.get_db", return_value=db), \
+             patch("app.auth.load_ai_key", return_value=None):
             resp = self.client.get("/api/ai/config")
         data = resp.get_json()
         self.assertNotIn("api_key", data)
@@ -79,13 +85,15 @@ class TestAIConfig(unittest.TestCase):
 
     def test_openai_compatible_saves_base_url(self):
         db = make_db()
-        with patch("app.get_db", return_value=db):
+        with patch("app.get_db", return_value=db), \
+             patch("app.auth.save_ai_key", side_effect=Exception("no keyring")):
             self.client.post("/api/ai/config", json={
                 "api_key": "key", "model": "llama3",
                 "provider": "openai_compatible",
                 "base_url": "http://localhost:11434/v1",
             })
-        with patch("app.get_db", return_value=db):
+        with patch("app.get_db", return_value=db), \
+             patch("app.auth.load_ai_key", return_value=None):
             resp = self.client.get("/api/ai/config")
         self.assertEqual(resp.get_json()["base_url"], "http://localhost:11434/v1")
 
@@ -97,6 +105,8 @@ if __name__ == "__main__":
 class TestAIAnalyze(unittest.TestCase):
     def setUp(self):
         self.client = app.test_client()
+        import app as app_module
+        app_module._ai_cooldowns.clear()
 
     def _configured_db(self, provider="anthropic"):
         db = make_db()
@@ -123,7 +133,17 @@ class TestAIAnalyze(unittest.TestCase):
         return db
 
     def test_analyze_returns_400_when_not_configured(self):
-        with patch("app.get_db", return_value=make_db()):
+        """With no budget data seeded, returns 400 early. With data but no AI config,
+        _call_ai returns None and we get the 'not configured' message."""
+        db = make_db()
+        # Seed budget data so we get past the "no budget data" check
+        db.execute("INSERT OR IGNORE INTO categories (id, name, group_name) VALUES (?, ?, ?)",
+                   ("cat_1", "Groceries", "Food & Drink"))
+        db.execute("INSERT OR IGNORE INTO budgets VALUES (?, ?, ?, ?, ?)",
+                   ("cat_1", "2025-11-01", 500.0, 523.0, -23.0))
+        db.commit()
+        with patch("app.get_db", return_value=db), \
+             patch("app.auth.load_ai_key", return_value=None):
             resp = self.client.post("/api/ai/analyze")
         self.assertEqual(resp.status_code, 400)
         self.assertIn("configured", resp.get_json()["error"].lower())
@@ -131,13 +151,15 @@ class TestAIAnalyze(unittest.TestCase):
     def test_analyze_anthropic_returns_analysis(self):
         mock_msg = MagicMock()
         mock_msg.content = [MagicMock(text="Groceries is consistently over budget.")]
+        mock_msg.stop_reason = "end_turn"
 
         mock_client = MagicMock()
         mock_client.messages.create.return_value = mock_msg
 
-        with patch("app.get_db", return_value=self._configured_db("anthropic")):
-            with patch("anthropic.Anthropic", return_value=mock_client):
-                resp = self.client.post("/api/ai/analyze")
+        with patch("app.get_db", return_value=self._configured_db("anthropic")), \
+             patch("app.auth.load_ai_key", return_value=None), \
+             patch("anthropic.Anthropic", return_value=mock_client):
+            resp = self.client.post("/api/ai/analyze")
 
         self.assertEqual(resp.status_code, 200)
         data = resp.get_json()
@@ -152,14 +174,16 @@ class TestAIAnalyze(unittest.TestCase):
             captured["messages"] = kwargs.get("messages", [])
             mock_msg = MagicMock()
             mock_msg.content = [MagicMock(text="Analysis result.")]
+            mock_msg.stop_reason = "end_turn"
             return mock_msg
 
         mock_client = MagicMock()
         mock_client.messages.create.side_effect = capture_call
 
-        with patch("app.get_db", return_value=self._configured_db("anthropic")):
-            with patch("anthropic.Anthropic", return_value=mock_client):
-                self.client.post("/api/ai/analyze")
+        with patch("app.get_db", return_value=self._configured_db("anthropic")), \
+             patch("app.auth.load_ai_key", return_value=None), \
+             patch("anthropic.Anthropic", return_value=mock_client):
+            self.client.post("/api/ai/analyze")
 
         prompt = captured["messages"][0]["content"]
         self.assertIn("budget", prompt.lower())
@@ -168,15 +192,17 @@ class TestAIAnalyze(unittest.TestCase):
     def test_analyze_openai_compatible_returns_analysis(self):
         mock_choice = MagicMock()
         mock_choice.message.content = "Spending looks off."
+        mock_choice.finish_reason = "stop"
         mock_resp = MagicMock()
         mock_resp.choices = [mock_choice]
 
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = mock_resp
 
-        with patch("app.get_db", return_value=self._configured_db("openai_compatible")):
-            with patch("openai.OpenAI", return_value=mock_client):
-                resp = self.client.post("/api/ai/analyze")
+        with patch("app.get_db", return_value=self._configured_db("openai_compatible")), \
+             patch("app.auth.load_ai_key", return_value=None), \
+             patch("openai.OpenAI", return_value=mock_client):
+            resp = self.client.post("/api/ai/analyze")
 
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.get_json()["analysis"], "Spending looks off.")
@@ -189,7 +215,8 @@ class TestAIAnalyze(unittest.TestCase):
         set_setting(db, "ai_provider", "anthropic")
         set_setting(db, "ai_base_url", "")
         # No budget rows seeded
-        with patch("app.get_db", return_value=db):
+        with patch("app.get_db", return_value=db), \
+             patch("app.auth.load_ai_key", return_value=None):
             resp = self.client.post("/api/ai/analyze")
         self.assertEqual(resp.status_code, 400)
         self.assertIn("budget data", resp.get_json()["error"].lower())

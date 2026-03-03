@@ -26,6 +26,9 @@ TOKEN_PATH = DATA_DIR / ".token"   # fallback only — used when keyring unavail
 KEYRING_SERVICE = "monarch-pipeline"
 KEYRING_USERNAME = "bearer_token"
 
+KEYRING_AI_SERVICE = "monarch-pipeline"
+KEYRING_AI_USERNAME = "ai_api_key"
+
 # How many months back to sync budgets on a full refresh
 BUDGET_LOOKBACK_MONTHS = 12
 

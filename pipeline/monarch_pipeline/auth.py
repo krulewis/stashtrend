@@ -102,6 +102,35 @@ def delete_token(token_path: Path) -> None:
         logger.debug("Token fallback file removed.")
 
 
+# ── AI API key storage (keyring → settings table fallback in app.py) ──────────
+
+def save_ai_key(api_key: str) -> None:
+    """Store the AI API key in the system keychain. Re-raises NoKeyringError."""
+    keyring.set_password(config.KEYRING_AI_SERVICE, config.KEYRING_AI_USERNAME, api_key)
+    logger.info("AI API key saved to system keychain.")
+
+
+def load_ai_key() -> str | None:
+    """Load the AI API key from the system keychain. Returns None on NoKeyringError."""
+    try:
+        key = keyring.get_password(config.KEYRING_AI_SERVICE, config.KEYRING_AI_USERNAME)
+        if key:
+            logger.debug("AI API key loaded from system keychain.")
+        return key
+    except keyring.errors.NoKeyringError:
+        logger.debug("No keyring backend — AI key not in keychain.")
+        return None
+
+
+def delete_ai_key() -> None:
+    """Remove the AI API key from the keychain. Swallows all errors."""
+    try:
+        keyring.delete_password(config.KEYRING_AI_SERVICE, config.KEYRING_AI_USERNAME)
+        logger.debug("AI API key removed from keychain.")
+    except Exception:
+        pass
+
+
 # ── MonarchMoney client construction ──────────────────────────────────────────
 
 def _mm_from_token(token: str) -> "MonarchMoney":
