@@ -13,6 +13,7 @@ import RangeSelector from './RangeSelector.jsx'
 import {
   fmtFull, fmtPct, filterByRange, downsample,
   sharedChartElements, TOOLTIP_STYLE, COMMON_RANGES,
+  COLOR_POSITIVE, COLOR_NEGATIVE,
 } from './chartUtils.jsx'
 import styles from './TypeStackedChart.module.css'
 
@@ -35,9 +36,9 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 function CagrCell({ value }) {
   if (value == null) {
-    return <span style={{ color: '#64748b' }}>--</span>
+    return <span className={styles.cagrNull}>--</span>
   }
-  const color = value >= 0 ? '#34d399' : '#f87171'
+  const color = value >= 0 ? COLOR_POSITIVE : COLOR_NEGATIVE
   return <span style={{ color }}>{fmtPct(value)}</span>
 }
 

@@ -99,6 +99,10 @@
   border-bottom: none;
 }
 
+.cagrNull {
+  color: var(--text-muted);
+}
+
 .bucketDot {
   display: inline-block;
   width: 8px;

@@ -66,8 +66,8 @@ describe('TypeStackedChart', () => {
     // Real Estate, Debt, Other all have null CAGR for all periods
     const dashes = screen.getAllByText('--')
     expect(dashes.length).toBeGreaterThanOrEqual(9) // 3 buckets × 3 periods
-    // Check muted color
-    expect(dashes[0]).toHaveStyle({ color: '#64748b' })
+    // Check muted styling via CSS module class (cagrNull)
+    expect(dashes[0].className).toMatch(/cagrNull/)
   })
 
   it('renders positive CAGR with green color', () => {

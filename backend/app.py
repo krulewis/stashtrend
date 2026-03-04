@@ -14,8 +14,6 @@ import os
 import re
 import sqlite3
 import threading
-from collections import defaultdict
-from datetime import datetime
 import time
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -736,11 +734,16 @@ def _compute_bucket_cagr(bal_by_date):
         return {"1y": None, "3y": None, "5y": None}
 
     pairs = [(d, bal_by_date[d]) for d in nonzero_dates]
-    today_str = sorted_dates[-1]
+    today_str = nonzero_dates[-1]
 
     def _cagr_for_years(years):
         cutoff_dt = datetime.strptime(today_str, "%Y-%m-%d")
-        cutoff_dt = cutoff_dt.replace(year=cutoff_dt.year - years)
+        target_year = cutoff_dt.year - years
+        # Handle leap day: Feb 29 doesn't exist in non-leap years
+        try:
+            cutoff_dt = cutoff_dt.replace(year=target_year)
+        except ValueError:
+            cutoff_dt = cutoff_dt.replace(year=target_year, day=28)
         cutoff = cutoff_dt.strftime("%Y-%m-%d")
         start_pairs = [(d, b) for d, b in pairs if d >= cutoff]
         if len(start_pairs) < 2:

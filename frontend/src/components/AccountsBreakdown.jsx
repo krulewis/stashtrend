@@ -29,7 +29,7 @@ function AccountGroup({ group }) {
         <span className={styles.groupName}>{group.type}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span className={styles.groupTotal}>{fmtFull(group.total)}</span>
-          <span style={{ color: '#64748b', fontSize: 12 }}>{open ? '▲' : '▼'}</span>
+          <span className={styles.expandIcon}>{open ? '▲' : '▼'}</span>
         </div>
       </div>
       {open && (

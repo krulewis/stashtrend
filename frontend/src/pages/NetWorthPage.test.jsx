@@ -61,7 +61,7 @@ describe('NetWorthPage', () => {
     await waitFor(() => expect(screen.queryByTestId('networth-loading')).not.toBeInTheDocument())
     const callsBefore = global.fetch.mock.calls.length
     fireEvent.click(screen.getByRole('button', { name: /Refresh/ }))
-    // Refresh triggers 3 more fetch calls (stats, history, accounts)
+    // Refresh triggers 4 more fetch calls (stats, history, accounts, by-type)
     await waitFor(() => {
       expect(global.fetch.mock.calls.length).toBeGreaterThan(callsBefore)
     })
