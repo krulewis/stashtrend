@@ -18,9 +18,9 @@ import { fmtCompact, fmtFull, GRID_STROKE, TOOLTIP_STYLE } from './chartUtils.js
 // Tooltip rendered by recharts — keep inline
 const tooltipStyles = {
   wrap:  TOOLTIP_STYLE,
-  name:  { color: '#f1f5f9', fontWeight: 600 },
-  total: { fontSize: 16, fontWeight: 700, color: '#f1f5f9', marginBottom: 2 },
-  meta:  { fontSize: 12, color: '#94a3b8' },
+  name:  { color: '#F0F6FF', fontWeight: 600 },
+  total: { fontSize: 16, fontWeight: 700, color: '#F0F6FF', marginBottom: 2 },
+  meta:  { fontSize: 12, color: '#8BA8CC' },
 }
 
 const CustomTooltip = ({ active, payload }) => {
@@ -136,13 +136,13 @@ export default function GroupsSnapshot({
               <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} horizontal vertical={false} />
               <XAxis
                 dataKey="name"
-                tick={{ fill: '#94a3b8', fontSize: 12 }}
+                tick={{ fill: '#8BA8CC', fontSize: 12 }}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
                 tickFormatter={fmtCompact}
-                tick={{ fill: '#64748b', fontSize: 11 }}
+                tick={{ fill: '#4A6080', fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
                 width={yAxisWidth}

@@ -4,9 +4,9 @@ import GroupSnapshotControls from './GroupSnapshotControls'
 
 // Groups where 1 and 3 share an account — they conflict
 const MOCK_GROUPS = [
-  { id: 1, name: 'Liquid Cash',  color: '#6366f1', account_ids: ['acc1', 'acc2'] },
-  { id: 2, name: 'Debt',         color: '#f87171', account_ids: ['acc3'] },
-  { id: 3, name: 'Investments',  color: '#34d399', account_ids: ['acc2'] }, // shares acc2 with group 1
+  { id: 1, name: 'Liquid Cash',  color: '#4D9FFF', account_ids: ['acc1', 'acc2'] },
+  { id: 2, name: 'Debt',         color: '#FF5A7A', account_ids: ['acc3'] },
+  { id: 3, name: 'Investments',  color: '#2ECC8A', account_ids: ['acc2'] }, // shares acc2 with group 1
 ]
 
 const NO_CONFLICTS   = { 1: new Set(), 2: new Set(), 3: new Set() }

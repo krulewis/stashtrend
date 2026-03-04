@@ -74,7 +74,7 @@ describe('TypeStackedChart', () => {
     render(<TypeStackedChart data={MOCK_NETWORTH_BY_TYPE} />)
     // Retirement 1Y = 9.1 → "+9.1%"
     const positiveCell = screen.getByText('+9.1%')
-    expect(positiveCell).toHaveStyle({ color: '#34d399' })
+    expect(positiveCell).toHaveStyle({ color: '#2ECC8A' })
   })
 
   it('renders range selector with default All selected', () => {

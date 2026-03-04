@@ -5,10 +5,10 @@ import { fmtFull } from './chartUtils.jsx'
 import { createGroup, updateGroup, deleteGroup } from '../api.js'
 
 const PRESET_COLORS = [
-  '#6366f1', // indigo
-  '#34d399', // emerald
-  '#f59e0b', // amber
-  '#f87171', // red
+  '#4D9FFF', // indigo
+  '#2ECC8A', // emerald
+  '#F5A623', // amber
+  '#FF5A7A', // red
   '#38bdf8', // sky
   '#a78bfa', // violet
   '#fb923c', // orange

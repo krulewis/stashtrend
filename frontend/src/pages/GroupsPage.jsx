@@ -143,10 +143,10 @@ export default function GroupsPage() {
   if (error) {
     return (
       <div className={styles.error}>
-        <div style={{ fontSize: 16, fontWeight: 600, color: '#f87171', marginBottom: 8 }}>
+        <div style={{ fontSize: 16, fontWeight: 600, color: '#FF5A7A', marginBottom: 8 }}>
           ⚠ Error loading data
         </div>
-        <div style={{ color: '#94a3b8', fontSize: 13, fontFamily: 'monospace' }}>{error}</div>
+        <div style={{ color: '#8BA8CC', fontSize: 13, fontFamily: 'monospace' }}>{error}</div>
       </div>
     )
   }

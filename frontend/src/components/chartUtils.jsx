@@ -78,8 +78,8 @@ export function downsample(data, maxPoints = 200) {
   return data.filter((_, i) => i % step === 0 || i === data.length - 1)
 }
 
-export const AXIS_TICK = { fill: '#64748b', fontSize: 11 }
-export const GRID_STROKE = '#2d3348'
+export const AXIS_TICK = { fill: '#4A6080', fontSize: 11 }
+export const GRID_STROKE = '#1E2D4A'
 
 function formatSeconds(secs) {
   if (secs < 60) return `${secs}s`
@@ -104,19 +104,19 @@ export function durationElapsed(startedAt, finishedAt) {
  * Uses raw hex because SVG/canvas tooltip backdrops don't support CSS vars.
  */
 export const TOOLTIP_STYLE = {
-  background: '#1e2130',
-  border: '1px solid #2d3348',
+  background: '#1C2333',
+  border: '1px solid #1E2D4A',
   borderRadius: 8,
   padding: '10px 14px',
-  color: '#f1f5f9',
+  color: '#F0F6FF',
   fontSize: 13,
 }
 
 /** Raw hex values for recharts SVG attributes (CSS variables don't work in SVG attrs). */
-export const COLOR_ACCENT   = '#6366f1'
-export const COLOR_POSITIVE = '#34d399'
-export const COLOR_NEGATIVE = '#f87171'
-export const COLOR_AMBER    = '#f59e0b'
+export const COLOR_ACCENT   = '#4D9FFF'
+export const COLOR_POSITIVE = '#2ECC8A'
+export const COLOR_NEGATIVE = '#FF5A7A'
+export const COLOR_AMBER    = '#F5A623'
 
 /** Range options shared by both time-series charts; NetWorthChart prepends '1M'. */
 export const COMMON_RANGES = [

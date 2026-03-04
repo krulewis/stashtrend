@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import styles from './SetupPage.module.css'
 import { setupToken } from '../api.js'
+import logo from '../assets/stashtrend-logo.svg'
 
 export default function SetupPage({ onComplete }) {
   const [token,   setToken]   = useState('')
@@ -24,7 +25,7 @@ export default function SetupPage({ onComplete }) {
   return (
     <div className={styles.root}>
       <div className={styles.card}>
-        <div className={styles.logo}>◈</div>
+        <img src={logo} alt="Stashtrend" className={styles.logo} />
         <h1 className={styles.heading}>Connect to Monarch Money</h1>
         <p className={styles.tagline}>Stashtrend — your self-hosted finance dashboard</p>
 

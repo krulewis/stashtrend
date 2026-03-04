@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 385" width="300" height="385">
+
+  <!-- Rounded dark card — expanded to balance top/bottom padding -->
+  <rect x="10" y="10" width="280" height="365" rx="24" fill="#0A0F1E"/>
+
+  <!-- Arrowhead marker -->
+  <defs>
+    <marker id="arrow" markerWidth="14" markerHeight="10" refX="12" refY="5"
+      orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M 0,0 L 12,5 L 0,10 Z" fill="#4D9FFF"/>
+    </marker>
+  </defs>
+
+  <!-- Dotted trend line — shifted down 45px to match bottom spacing -->
+  <path d="M 65,177 C 108,175 158,125 242,57"
+    fill="none" stroke="#4D9FFF" stroke-width="1.8"
+    stroke-dasharray="4,4"
+    marker-end="url(#arrow)"/>
+
+  <!-- Bar 1 — short -->
+  <rect x="54" y="203" width="48" height="72" rx="6" fill="#4D9FFF" opacity="0.25"/>
+
+  <!-- Bar 2 — medium -->
+  <rect x="126" y="162" width="48" height="113" rx="6" fill="#4D9FFF" opacity="0.55"/>
+
+  <!-- Bar 3 — tall -->
+  <rect x="198" y="103" width="48" height="172" rx="6" fill="#4D9FFF"/>
+
+  <!-- Baseline -->
+  <line x1="44" y1="277" x2="256" y2="277" stroke="#4D9FFF" stroke-width="1.5" opacity="0.3"/>
+
+  <!-- Wordmark -->
+  <text
+    x="44" y="328"
+    text-anchor="start"
+    textLength="212"
+    lengthAdjust="spacing"
+    font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+    font-size="22"
+    font-weight="400"
+    fill="#4D9FFF">STASHTREND</text>
+
+</svg>

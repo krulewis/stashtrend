@@ -36,19 +36,19 @@ export const MOCK_NETWORTH_BY_TYPE = {
     Other:         { '1y': null, '3y': null, '5y': null },
   },
   bucket_colors: {
-    Retirement:    '#6366f1',
-    Brokerage:     '#34d399',
-    Cash:          '#60a5fa',
-    'Real Estate': '#f59e0b',
-    Debt:          '#f87171',
-    Other:         '#94a3b8',
+    Retirement:    '#4D9FFF',
+    Brokerage:     '#2ECC8A',
+    Cash:          '#7DBFFF',
+    'Real Estate': '#F5A623',
+    Debt:          '#FF5A7A',
+    Other:         '#8BA8CC',
   },
   bucket_order: ['Retirement', 'Brokerage', 'Cash', 'Real Estate', 'Debt', 'Other'],
 }
 
 export const MOCK_GROUPS = [
-  { id: 1, name: 'Liquid Cash', color: '#6366f1', account_ids: [1, 2] },
-  { id: 2, name: 'Debt',        color: '#f87171', account_ids: [4] },
+  { id: 1, name: 'Liquid Cash', color: '#4D9FFF', account_ids: [1, 2] },
+  { id: 2, name: 'Debt',        color: '#FF5A7A', account_ids: [4] },
 ]
 
 export const MOCK_HISTORY_DATA = {
@@ -57,14 +57,14 @@ export const MOCK_HISTORY_DATA = {
     { date: '2026-01-01', 'Liquid Cash': 60000, 'Debt': -180000 },
   ],
   groups_meta: {
-    'Liquid Cash': { color: '#6366f1' },
-    'Debt':        { color: '#f87171' },
+    'Liquid Cash': { color: '#4D9FFF' },
+    'Debt':        { color: '#FF5A7A' },
   },
 }
 
 export const MOCK_SNAPSHOT = [
-  { id: 1, name: 'Liquid Cash', color: '#6366f1', total: 60000,   account_count: 2 },
-  { id: 2, name: 'Debt',        color: '#f87171', total: -180000, account_count: 1 },
+  { id: 1, name: 'Liquid Cash', color: '#4D9FFF', total: 60000,   account_count: 2 },
+  { id: 2, name: 'Debt',        color: '#FF5A7A', total: -180000, account_count: 1 },
 ]
 
 export const MOCK_SYNC_LAST_STATUS = [

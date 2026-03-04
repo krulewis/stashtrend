@@ -27,7 +27,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   return (
     <div style={TOOLTIP_STYLE}>
-      <div style={{ color: '#94a3b8', marginBottom: 6, fontSize: 12 }}>{label}</div>
+      <div style={{ color: '#8BA8CC', marginBottom: 6, fontSize: 12 }}>{label}</div>
       {payload.map((p) => {
         const displayValue = NEGATIVE_BUCKETS.has(p.name) ? -Math.abs(p.value) : p.value
         return (
@@ -153,7 +153,7 @@ export default function TypeStackedChart({ data }) {
               yAxisId="right"
             />
           ))}
-          <Legend iconType="line" wrapperStyle={{ color: '#94a3b8', fontSize: 12 }} />
+          <Legend iconType="line" wrapperStyle={{ color: '#8BA8CC', fontSize: 12 }} />
         </AreaChart>
       </ResponsiveContainer>
 

@@ -7,42 +7,42 @@
 }
 
 :root {
-  /* ─── Background colours ─────────────────────────────────────────────── */
-  --bg-root:    #0f1117;
-  --bg-card:    #1e2130;
-  --bg-deep:    #161b27;
-  --bg-sunken:  #0f1117;
-  --bg-hover:   #252a3d;
-  --bg-inset:   #12151f;   /* recessed inputs, code blocks */
-  --bg-raised:  #232840;   /* slightly elevated surfaces */
-  --bg-table-alt: #161b2e; /* alternating table rows */
-  --bg-table-active: #1e253533; /* semi-transparent active/selected row */
+  /* ─── Background colours — Dark Cobalt ────────────────────────────────── */
+  --bg-root:    #0A0F1E;
+  --bg-card:    #1C2333;
+  --bg-deep:    #0E1423;
+  --bg-sunken:  #0A0F1E;
+  --bg-hover:   #243044;
+  --bg-inset:   #0D1220;   /* recessed inputs, code blocks */
+  --bg-raised:  #1E2D4A;   /* slightly elevated surfaces */
+  --bg-table-alt: #111827; /* alternating table rows */
+  --bg-table-active: #1C233344; /* semi-transparent active/selected row */
 
   /* ─── Border colours ─────────────────────────────────────────────────── */
-  --border:       #2d3348;
-  --border-sub:   #1e2535;
-  --border-mid:   #2a2d3a; /* setup/form card borders */
-  --border-focus: #4f6082; /* focused/active element borders */
+  --border:       #1E2D4A;
+  --border-sub:   #162035;
+  --border-mid:   #1E2D4A; /* setup/form card borders */
+  --border-focus: #4D9FFF; /* focused/active element borders */
 
   /* ─── Text colours ───────────────────────────────────────────────────── */
-  --text-primary:   #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted:     #64748b;
-  --text-faint:     #475569;
-  --text-bright:    #e2e8f0; /* slightly softer than primary */
-  --text-subtle:    #cbd5e1; /* between primary and secondary */
+  --text-primary:   #F0F6FF;
+  --text-secondary: #8BA8CC;
+  --text-muted:     #4A6080;
+  --text-faint:     #2B4060;
+  --text-bright:    #F0F6FF; /* headlines, values */
+  --text-subtle:    #8BA8CC; /* between primary and secondary */
 
-  /* ─── Brand / accent colours ─────────────────────────────────────────── */
-  --accent:       #6366f1;
-  --accent-hover: #4f52d0;
-  --accent-light: #818cf8;
-  --accent-wash:  #a5b4fc; /* tags, badges, light accent text */
-  --accent-glow:  #c7d2fe; /* active chip text, highlights */
-  --green:        #34d399;
-  --green-light:  #6ee7b7;
-  --red:          #f87171;
-  --red-light:    #fca5a5;
-  --amber:        #f59e0b;
+  /* ─── Brand / accent colours — Cobalt ───────────────────────────────── */
+  --accent:       #4D9FFF;
+  --accent-hover: #2B7FE0;
+  --accent-light: #7DBFFF;
+  --accent-wash:  #99CCFF; /* tags, badges, light accent text */
+  --accent-glow:  #99CCFF; /* active chip text, highlights */
+  --green:        #2ECC8A;
+  --green-light:  #5EDDA8;
+  --red:          #FF5A7A;
+  --red-light:    #FF8DA4;
+  --amber:        #F5A623;
   --white:        #fff;
 
   /* ─── Semantic aliases ───────────────────────────────────────────────── */
@@ -53,9 +53,9 @@
 
   /* ─── Semantic surfaces ──────────────────────────────────────────────── */
   --bg-error:        #3b1c1c;
-  --bg-error-subtle: #f8717122;
-  --border-error:    #f8717144;
-  --bg-info:         #2d3348;
+  --bg-error-subtle: #FF5A7A22;
+  --border-error:    #FF5A7A44;
+  --bg-info:         #1E2D4A;
 
   /* ─── Spacing scale ──────────────────────────────────────────────────── */
   --sp-1: 4px;

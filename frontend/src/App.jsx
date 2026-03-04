@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import styles from './App.module.css'
+import logo from './assets/stashtrend-logo.svg'
 import Sidebar from './components/Sidebar.jsx'
 import BottomTabBar from './components/BottomTabBar.jsx'
 import NetWorthPage from './pages/NetWorthPage.jsx'
@@ -66,7 +67,7 @@ export default function App() {
       {/* ── Header ──────────────────────────────────────────── */}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <div className={styles.logo}>◈</div>
+          <img src={logo} alt="Stashtrend" className={styles.logo} />
           <div>
             <div className={styles.appName}>Stashtrend</div>
             <div className={styles.appSub}>Personal Finance Intelligence Powered by Monarch Money Data</div>

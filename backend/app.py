@@ -709,12 +709,12 @@ TYPE_MAP = {
 BUCKET_ORDER = ["Retirement", "Brokerage", "Cash", "Real Estate", "Debt", "Other"]
 
 BUCKET_COLORS = {
-    "Retirement":   "#6366f1",
-    "Brokerage":    "#34d399",
-    "Cash":         "#60a5fa",
-    "Real Estate":  "#f59e0b",
-    "Debt":         "#f87171",
-    "Other":        "#94a3b8",
+    "Retirement":   "#4D9FFF",
+    "Brokerage":    "#2ECC8A",
+    "Cash":         "#7DBFFF",
+    "Real Estate":  "#F5A623",
+    "Debt":         "#FF5A7A",
+    "Other":        "#8BA8CC",
 }
 
 

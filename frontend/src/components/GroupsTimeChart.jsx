@@ -8,7 +8,7 @@ import { fmtFull, filterByRange, downsample, GRID_STROKE, COMMON_RANGES, sharedC
 // Tooltip rendered by recharts — keep inline
 const tooltipStyles = {
   wrap: { ...TOOLTIP_STYLE, minWidth: 200 },
-  date: { color: '#94a3b8', marginBottom: 8, fontSize: 12, fontWeight: 600 },
+  date: { color: '#8BA8CC', marginBottom: 8, fontSize: 12, fontWeight: 600 },
   row:  { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginBottom: 4 },
 }
 
@@ -24,7 +24,7 @@ const CustomTooltip = ({ active, payload, label }) => {
             <span style={{ width: 8, height: 8, borderRadius: 2, background: p.color, display: 'inline-block' }} />
             {p.name}
           </span>
-          <span style={{ fontWeight: 600, color: '#f1f5f9' }}>{fmtFull(p.value)}</span>
+          <span style={{ fontWeight: 600, color: '#F0F6FF' }}>{fmtFull(p.value)}</span>
         </div>
       ))}
     </div>
@@ -85,7 +85,7 @@ export default function GroupsTimeChart({ historyData }) {
       {/* Group toggle chips */}
       <div className={styles.chipsRow}>
         {groupNames.map((name) => {
-          const color  = groupsMeta[name]?.color || '#6366f1'
+          const color  = groupsMeta[name]?.color || '#4D9FFF'
           const active = selectedGroups.has(name)
           return (
             <button
@@ -96,7 +96,7 @@ export default function GroupsTimeChart({ historyData }) {
               style={{
                 background:  active ? `${color}22` : 'transparent',
                 borderColor: active ? color         : GRID_STROKE,
-                color:       active ? '#f1f5f9'     : '#64748b',
+                color:       active ? '#F0F6FF'     : '#4A6080',
               }}
             >
               <span
@@ -123,7 +123,7 @@ export default function GroupsTimeChart({ historyData }) {
                 key={name}
                 type="monotone"
                 dataKey={name}
-                stroke={groupsMeta[name]?.color || '#6366f1'}
+                stroke={groupsMeta[name]?.color || '#4D9FFF'}
                 strokeWidth={2}
                 dot={false}
                 activeDot={{ r: 5 }}

@@ -97,7 +97,7 @@ describe('GroupManager', () => {
     })
 
     it('calls onGroupsChanged and closes form on successful save', async () => {
-      mockFetch({ '/api/groups': { id: 3, name: 'Test', color: '#6366f1', account_ids: [] } })
+      mockFetch({ '/api/groups': { id: 3, name: 'Test', color: '#4D9FFF', account_ids: [] } })
       fireEvent.change(screen.getByPlaceholderText(/e.g. Liquid Assets/), {
         target: { value: 'Test Group' },
       })
