@@ -13,7 +13,7 @@ import { fmtFull } from './chartUtils.jsx'
 function groupAccounts(accounts) {
   const groups = {}
   for (const acct of accounts) {
-    const key = acct.type || 'Other'
+    const key = acct.bucket || acct.type || 'Other'
     if (!groups[key]) groups[key] = { type: key, is_asset: acct.is_asset, total: 0, accounts: [] }
     groups[key].total += acct.current_balance || 0
     groups[key].accounts.push(acct)

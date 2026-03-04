@@ -605,7 +605,12 @@ def accounts_summary():
         ORDER BY is_asset DESC, type, current_balance DESC
     """).fetchall()
     conn.close()
-    return jsonify([dict(r) for r in rows])
+    result = []
+    for r in rows:
+        d = dict(r)
+        d["bucket"] = _get_bucket(d.get("type"), d.get("subtype"))
+        result.append(d)
+    return jsonify(result)
 
 
 # ---------------------------------------------------------------------------
