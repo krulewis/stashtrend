@@ -26,6 +26,8 @@ export function fmtDollar(n) {
   return n < 0 ? `(${abs})` : abs
 }
 
+export const fmtPct = (n) => (n == null ? '—' : `${n > 0 ? '+' : ''}${n.toFixed(1)}%`)
+
 export const formatDateLabel = (d) => {
   const dt = new Date(d + 'T00:00:00')
   return dt.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })

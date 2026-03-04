@@ -33,6 +33,20 @@ When action buttons (rename, delete) are added alongside a named element, their 
 ### Split Text Nodes
 JSX conditionals render separate text nodes; use a custom `el.textContent` function matcher instead of `getByText`.
 
+### Monarch Account Types vs BUCKET_MAP (Fixed)
+**Where:** `BUCKET_MAP` in `app.py` — NW by Type endpoint.
+**Symptom:** Cash bucket showed `--` and "Other" had unexpected values during QA.
+**Root cause:** Monarch uses `depository` (not `checking`/`savings`) and `vehicle` as account types — neither was in the initial `BUCKET_MAP`.
+**Fix:** Added `"depository": "Cash"` and `"vehicle": "Other"` (plus `other_asset`, `collectible`, `valuable`) to `BUCKET_MAP`.
+**Rule:** After deploying NW by Type, check backend logs for "Unknown account type" warnings and update `BUCKET_MAP`/`TYPE_MAP`. The maps were initially built from Monarch API docs; real data may use different type strings.
+
+### Monarch Subtypes for Investment Accounts (Fixed)
+**Where:** `TYPE_MAP` in `app.py` — NW by Type endpoint.
+**Symptom:** Retirement row in CAGR table showed `--` for all periods; no Retirement data in stacked chart.
+**Root cause:** Monarch uses `type=brokerage` for ALL investment accounts (retirement, brokerage, HSA, 529). The actual classification lives in `subtype` — e.g., `st_401k`, `roth`, `ira`, `thrift_savings_plan`, `st_403b` for retirement; `brokerage`, `st_529`, `health_savings_account` for brokerage. TYPE_MAP only had standard subtypes (`traditional_ira`, `roth_ira`, etc.) but not Monarch-specific ones.
+**Fix:** Added Monarch-specific subtypes to TYPE_MAP: `ira`, `roth`, `st_401k`, `st_403b`, `thrift_savings_plan` → Retirement; `brokerage`, `st_529`, `health_savings_account` → Brokerage; `cash_management`, `checking`, `savings` → Cash.
+**Rule:** Monarch subtype strings often differ from standard financial API conventions. Always check real account data (`/api/accounts/summary`) when a bucket shows empty — the subtype naming may be non-obvious (e.g., `st_401k` not `401k`).
+
 ---
 
 ## Bug Patterns

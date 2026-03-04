@@ -23,6 +23,7 @@ export const postJSON = (url, body) => mutateJSON(url, 'POST', body)
 // ── Net Worth ──────────────────────────────────────────────────────────────
 export const fetchNetworthStats = () => fetchJSON('/api/networth/stats')
 export const fetchNetworthHistory = () => fetchJSON('/api/networth/history')
+export const fetchNetworthByType = () => fetchJSON('/api/networth/by-type')
 
 // ── Accounts ───────────────────────────────────────────────────────────────
 export const fetchAccountsSummary = () => fetchJSON('/api/accounts/summary')

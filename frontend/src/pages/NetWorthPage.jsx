@@ -3,12 +3,14 @@ import styles from './NetWorthPage.module.css'
 import StatsCards from '../components/StatsCards.jsx'
 import NetWorthChart from '../components/NetWorthChart.jsx'
 import AccountsBreakdown from '../components/AccountsBreakdown.jsx'
-import { fetchNetworthStats, fetchNetworthHistory, fetchAccountsSummary } from '../api.js'
+import TypeStackedChart from '../components/TypeStackedChart.jsx'
+import { fetchNetworthStats, fetchNetworthHistory, fetchAccountsSummary, fetchNetworthByType } from '../api.js'
 
 export default function NetWorthPage() {
   const [stats,       setStats]       = useState(null)
   const [history,     setHistory]     = useState(null)
   const [accounts,    setAccounts]    = useState(null)
+  const [typeData,    setTypeData]    = useState(null)
   const [error,       setError]       = useState(null)
   const [lastUpdated, setLastUpdated] = useState(null)
   const [loading,     setLoading]     = useState(true)
@@ -20,11 +22,13 @@ export default function NetWorthPage() {
       fetchNetworthStats(),
       fetchNetworthHistory(),
       fetchAccountsSummary(),
+      fetchNetworthByType(),
     ])
-      .then(([s, h, a]) => {
+      .then(([s, h, a, t]) => {
         setStats(s)
         setHistory(h)
         setAccounts(a)
+        setTypeData(t)
         setLastUpdated(new Date().toLocaleTimeString())
       })
       .catch((err) => setError(err.message))
@@ -72,6 +76,7 @@ export default function NetWorthPage() {
         <>
           <StatsCards stats={stats} />
           <NetWorthChart history={history} />
+          <TypeStackedChart data={typeData} />
           <AccountsBreakdown accounts={accounts} />
         </>
       )}

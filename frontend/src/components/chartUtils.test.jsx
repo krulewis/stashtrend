@@ -3,6 +3,7 @@ import {
   fmtCompact,
   fmtFull,
   fmtDollar,
+  fmtPct,
   fmtBudgetMonth,
   fmtDatetime,
   fmtDatetimeSecs,
@@ -256,5 +257,27 @@ describe('sharedChartElements', () => {
     const elements = sharedChartElements({ yAxisWidth: 60, tooltip: CustomTooltip })
     expect(elements[3].key).toBe('tooltip')
     expect(elements[3].props.content).toBe(CustomTooltip)
+  })
+})
+
+describe('fmtPct', () => {
+  it('formats positive percentage with + sign', () => {
+    expect(fmtPct(8.2)).toBe('+8.2%')
+  })
+
+  it('formats negative percentage without + sign', () => {
+    expect(fmtPct(-3.1)).toBe('-3.1%')
+  })
+
+  it('formats zero without + sign', () => {
+    expect(fmtPct(0)).toBe('0.0%')
+  })
+
+  it('returns dash for null', () => {
+    expect(fmtPct(null)).toBe('—')
+  })
+
+  it('returns dash for undefined', () => {
+    expect(fmtPct(undefined)).toBe('—')
   })
 })

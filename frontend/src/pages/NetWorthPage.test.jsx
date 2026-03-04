@@ -1,12 +1,13 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import NetWorthPage from './NetWorthPage.jsx'
-import { MOCK_STATS, MOCK_HISTORY, MOCK_ACCOUNTS, mockFetch } from '../test/fixtures.js'
+import { MOCK_STATS, MOCK_HISTORY, MOCK_ACCOUNTS, MOCK_NETWORTH_BY_TYPE, mockFetch } from '../test/fixtures.js'
 
 // Mock child components so this test only exercises NetWorthPage's own behavior
 vi.mock('../components/StatsCards.jsx',        () => ({ default: () => <div data-testid="stats-cards" /> }))
 vi.mock('../components/NetWorthChart.jsx',     () => ({ default: () => <div data-testid="networth-chart" /> }))
 vi.mock('../components/AccountsBreakdown.jsx', () => ({ default: () => <div data-testid="accounts-breakdown" /> }))
+vi.mock('../components/TypeStackedChart.jsx',  () => ({ default: () => <div data-testid="type-stacked-chart" /> }))
 
 describe('NetWorthPage', () => {
   beforeEach(() => {
@@ -14,6 +15,7 @@ describe('NetWorthPage', () => {
       '/api/networth/stats':   MOCK_STATS,
       '/api/networth/history': MOCK_HISTORY,
       '/api/accounts/summary': MOCK_ACCOUNTS,
+      '/api/networth/by-type': MOCK_NETWORTH_BY_TYPE,
     })
   })
 
@@ -28,12 +30,13 @@ describe('NetWorthPage', () => {
     expect(screen.getByTestId('networth-loading')).toBeInTheDocument()
   })
 
-  it('renders StatsCards, NetWorthChart, AccountsBreakdown after data loads', async () => {
+  it('renders StatsCards, NetWorthChart, TypeStackedChart, AccountsBreakdown after data loads', async () => {
     render(<NetWorthPage />)
     await waitFor(() => {
       expect(screen.getByTestId('stats-cards')).toBeInTheDocument()
     })
     expect(screen.getByTestId('networth-chart')).toBeInTheDocument()
+    expect(screen.getByTestId('type-stacked-chart')).toBeInTheDocument()
     expect(screen.getByTestId('accounts-breakdown')).toBeInTheDocument()
     expect(screen.queryByTestId('networth-loading')).not.toBeInTheDocument()
   })
@@ -58,7 +61,7 @@ describe('NetWorthPage', () => {
     await waitFor(() => expect(screen.queryByTestId('networth-loading')).not.toBeInTheDocument())
     const callsBefore = global.fetch.mock.calls.length
     fireEvent.click(screen.getByRole('button', { name: /Refresh/ }))
-    // Refresh triggers 3 more fetch calls (stats, history, accounts)
+    // Refresh triggers 4 more fetch calls (stats, history, accounts, by-type)
     await waitFor(() => {
       expect(global.fetch.mock.calls.length).toBeGreaterThan(callsBefore)
     })
