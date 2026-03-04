@@ -41,12 +41,22 @@ const CustomTooltip = ({ active, payload, label }) => {
   )
 }
 
+CustomTooltip.propTypes = {
+  active: PropTypes.bool,
+  payload: PropTypes.array,
+  label: PropTypes.string,
+}
+
 function CagrCell({ value }) {
   if (value == null) {
     return <span className={styles.cagrNull}>--</span>
   }
   const color = value >= 0 ? COLOR_POSITIVE : COLOR_NEGATIVE
   return <span style={{ color }}>{fmtPct(value)}</span>
+}
+
+CagrCell.propTypes = {
+  value: PropTypes.number,
 }
 
 export default function TypeStackedChart({ data }) {

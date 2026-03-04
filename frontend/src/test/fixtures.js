@@ -21,15 +21,6 @@ export const MOCK_ACCOUNTS = [
   { id: 4, name: 'Mortgage',  type: 'mortgage',  institution: 'Wells Fargo', current_balance: -200000, is_asset: 0 },
 ]
 
-// All fixture account IDs are TEXT strings to match accounts.id TEXT PRIMARY KEY in schema.py
-export const MOCK_ACCOUNTS_TEXT_IDS = [
-  { id: 'acc_chk',   name: 'Checking',  type: 'checking',   institution: 'Chase',       current_balance: 10000,   is_asset: 1 },
-  { id: 'acc_sav',   name: 'Savings',   type: 'savings',    institution: 'Chase',       current_balance: 50000,   is_asset: 1 },
-  { id: 'acc_brok',  name: 'Brokerage', type: 'brokerage',  institution: 'Fidelity',    current_balance: 200000,  is_asset: 1 },
-  { id: 'acc_401k',  name: '401(k)',    type: '401k',       institution: 'Fidelity',    current_balance: 240000,  is_asset: 1 },
-  { id: 'acc_mort',  name: 'Mortgage',  type: 'mortgage',   institution: 'Wells Fargo', current_balance: -200000, is_asset: 0 },
-]
-
 export const MOCK_NETWORTH_BY_TYPE = {
   series: [
     { date: '2024-01-01', Retirement: 200000, Brokerage: 180000, Cash: 55000, 'Real Estate': 0, Debt: -200000, Other: 0 },

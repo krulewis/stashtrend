@@ -589,28 +589,30 @@ def networth_stats():
 @app.route("/api/accounts/summary")
 def accounts_summary():
     conn = get_db()
-    rows = conn.execute("""
-        SELECT
-            id,
-            type,
-            subtype,
-            is_asset,
-            institution,
-            name,
-            current_balance,
-            display_balance
-        FROM accounts
-        WHERE include_in_net_worth = 1
-          AND is_hidden = 0
-        ORDER BY is_asset DESC, type, current_balance DESC
-    """).fetchall()
-    conn.close()
-    result = []
-    for r in rows:
-        d = dict(r)
-        d["bucket"] = _get_bucket(d.get("type"), d.get("subtype"))
-        result.append(d)
-    return jsonify(result)
+    try:
+        rows = conn.execute("""
+            SELECT
+                id,
+                type,
+                subtype,
+                is_asset,
+                institution,
+                name,
+                current_balance,
+                display_balance
+            FROM accounts
+            WHERE include_in_net_worth = 1
+              AND is_hidden = 0
+            ORDER BY is_asset DESC, type, current_balance DESC
+        """).fetchall()
+        result = []
+        for r in rows:
+            d = dict(r)
+            d["bucket"] = _get_bucket(d.get("type"), d.get("subtype"))
+            result.append(d)
+        return jsonify(result)
+    finally:
+        conn.close()
 
 
 # ---------------------------------------------------------------------------
