@@ -316,6 +316,20 @@ class TestFetchHoldings(unittest.TestCase):
         result = _run(fetch_holdings(mm, "acct-1"))
         self.assertEqual(result, [])
 
+    def test_fetch_skips_nodes_with_no_id(self):
+        """Nodes with missing id should be skipped to avoid NULL primary key."""
+        from monarch_pipeline.fetchers import fetch_holdings
+        response = _make_api_response([_make_api_node(node_id="valid-1")])
+        # Add a node with no id
+        response["portfolio"]["aggregateHoldings"]["edges"].append(
+            {"node": {"id": None, "quantity": 1, "basis": 100, "totalValue": 110,
+                      "lastSyncedAt": None, "security": None, "holdings": []}}
+        )
+        mm = self._make_mm(response)
+        result = _run(fetch_holdings(mm, "acct-1"))
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["id"], "valid-1")
+
 
 # ---------------------------------------------------------------------------
 # Entity constant tests

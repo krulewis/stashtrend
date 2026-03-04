@@ -169,12 +169,15 @@ async def fetch_holdings(
         node = edge.get("node", {})
         if not node:
             continue
+        node_id = node.get("id")
+        if not node_id:
+            continue
         security = node.get("security") or {}
         raw_holdings = node.get("holdings") or []
         h0 = raw_holdings[0] if raw_holdings else {}
 
         holdings.append({
-            "id":             node.get("id"),
+            "id":             node_id,
             "account_id":    account_id,
             "security_id":   security.get("id"),
             "security_name": security.get("name"),
