@@ -9,7 +9,6 @@ overridden via the MONARCH_DATA_DIR environment variable (used by Docker).
 import asyncio
 import contextlib
 import json
-import logging
 import os
 import re
 import sqlite3

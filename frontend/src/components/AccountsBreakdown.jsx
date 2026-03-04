@@ -92,7 +92,7 @@ export default function AccountsBreakdown({ accounts }) {
 
 AccountsBreakdown.propTypes = {
   accounts: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string.isRequired,
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     name: PropTypes.string.isRequired,
     type: PropTypes.string,
     current_balance: PropTypes.number.isRequired,

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   fetchJSON, postJSON, deleteGroup, fetchSetupStatus,
-  fetchNetworthStats, fetchNetworthHistory, fetchAccountsSummary,
+  fetchNetworthStats, fetchNetworthHistory, fetchNetworthByType, fetchAccountsSummary,
   fetchGroups, fetchGroupsHistory, fetchGroupsSnapshot, fetchGroupsConfigs,
   createGroup, updateGroup, saveGroupsConfigs,
   fetchBudgetHistory,
@@ -117,6 +117,7 @@ describe('GET endpoint contracts', () => {
   it.each([
     ['fetchNetworthStats',   () => fetchNetworthStats(),         '/api/networth/stats'],
     ['fetchNetworthHistory', () => fetchNetworthHistory(),       '/api/networth/history'],
+    ['fetchNetworthByType',  () => fetchNetworthByType(),        '/api/networth/by-type'],
     ['fetchAccountsSummary', () => fetchAccountsSummary(),       '/api/accounts/summary'],
     ['fetchGroups',          () => fetchGroups(),                '/api/groups'],
     ['fetchGroupsHistory',   () => fetchGroupsHistory(),        '/api/groups/history'],
