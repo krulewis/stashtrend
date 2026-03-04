@@ -25,6 +25,9 @@ All colors in CSS module files MUST use CSS custom properties defined in `index.
 - **Named API exports:** All API calls go through named exports in `api.js` (e.g. `fetchGroups()`, `saveGroupsConfigs()`). Pages must never use raw `fetchJSON`/`postJSON` with URL strings — those are internal helpers.
 - **Shared formatters in chartUtils.jsx:** Dollar/date formatters (`fmtDollar`, `fmtCompact`, `fmtFull`, `fmtBudgetMonth`, etc.) live in `chartUtils.jsx`. Don't duplicate formatting logic in component files.
 - **PropTypes:** All components receiving props should have PropTypes validation.
+- **Navigation items:** All nav items defined in `src/nav.js` (`NAV_ITEMS` array). Sidebar and BottomTabBar both consume this. To add/remove/reorder pages, edit `nav.js` and add a `<Route>` in `App.jsx`.
+- **App.jsx is a thin shell:** Setup gate + header + `<AppShell>` (routes) + `<BottomTabBar>`. Page-specific state lives in page components, not App. `AppShell` inner component uses `useLocation` for focus management.
+- **Router wrapping:** `BrowserRouter` lives in `main.jsx`. Tests use `MemoryRouter` with `initialEntries`. Component tests wrap only the component under test, not `<App>`.
 - **Inline styles:** kept only for data-driven values (group colors, status badges, active/selected states, recharts tooltips, progress bar widths)
 - **Progress bars in BudgetTable:** `CellValue` renders an absolutely-positioned bar `<div>` behind the text `<span>` for expense cells with `budgeted > 0 && actual > 0`. Three color zones: green (0–84%), amber (85–100%), red (>100%). `WARNING_THRESHOLD = 0.85` constant. ARIA `role="progressbar"` with `aria-valuenow` capped at 100. Use `color-mix()` for translucent bar backgrounds.
 - **Recharts tooltips:** always `const tooltipStyles = {...}` at module level — recharts renders outside React tree, CSS Modules can't reach them

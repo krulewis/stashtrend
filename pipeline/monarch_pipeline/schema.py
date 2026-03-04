@@ -71,6 +71,23 @@ CREATE TABLE IF NOT EXISTS budgets (
     FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 
+CREATE TABLE IF NOT EXISTS holdings (
+    id                  TEXT PRIMARY KEY,
+    account_id          TEXT NOT NULL,
+    security_id         TEXT,
+    security_name       TEXT,
+    ticker              TEXT,
+    security_type       TEXT,
+    quantity            REAL,
+    basis               REAL,
+    total_value         REAL,
+    current_price       REAL,
+    is_manual           INTEGER DEFAULT 0,
+    last_synced_at      TEXT,
+    synced_at           TEXT NOT NULL,
+    FOREIGN KEY (account_id) REFERENCES accounts(id)
+);
+
 CREATE TABLE IF NOT EXISTS sync_log (
     entity          TEXT PRIMARY KEY,
     last_synced_at  TEXT NOT NULL,

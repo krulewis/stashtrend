@@ -35,15 +35,18 @@ from app import DASHBOARD_DDL
 ENTITY_TABLE_MAP = {
     "accounts":        "accounts",
     "account_history": "account_history",
+    "holdings":        "holdings",
     "categories":      "categories",
     "transactions":    "transactions",
     "budgets":         "budgets",
 }
 
 # account_history must always run after accounts (needs account IDs to exist)
+# holdings must run after accounts (filtered to investment accounts by ID)
 ENTITY_RUN_ORDER = [
     "accounts",
     "account_history",
+    "holdings",
     "categories",
     "transactions",
     "budgets",
@@ -447,10 +450,10 @@ class TestEntityOrdering(unittest.TestCase):
         self.assertLess(result.index("accounts"), result.index("account_history"))
 
     def test_all_entities_in_order(self):
-        selected = ["budgets", "transactions", "account_history", "categories", "accounts"]
+        selected = ["holdings", "budgets", "transactions", "account_history", "categories", "accounts"]
         result = ordered_entities(selected)
         self.assertEqual(result, [
-            "accounts", "account_history", "categories", "transactions", "budgets"
+            "accounts", "account_history", "holdings", "categories", "transactions", "budgets"
         ])
 
     def test_single_entity_unchanged(self):
