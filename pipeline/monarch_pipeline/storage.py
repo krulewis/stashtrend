@@ -196,3 +196,54 @@ def get_sync_status(conn: sqlite3.Connection) -> list[dict]:
         "SELECT entity, last_synced_at, last_sync_count, total_records FROM sync_log ORDER BY entity"
     ).fetchall()
     return [dict(r) for r in rows]
+
+
+# ── Holdings ──────────────────────────────────────────────────────────────────
+
+def upsert_holdings(
+    conn: sqlite3.Connection, account_id: str, holdings: list[dict[str, Any]]
+) -> int:
+    """
+    Replace all holdings for one account with the current snapshot.
+    Deletes stale rows then inserts current — scoped to account_id only.
+    Returns number of rows written.
+    """
+    # Delete existing rows for this account (stale cleanup)
+    conn.execute("DELETE FROM holdings WHERE account_id = ?", (account_id,))
+
+    if not holdings:
+        conn.commit()
+        return 0
+
+    now = _now()
+    rows = [
+        (
+            h["id"],
+            account_id,
+            h.get("security_id"),
+            h.get("security_name"),
+            h.get("ticker"),
+            h.get("security_type"),
+            h.get("quantity"),
+            h.get("basis"),
+            h.get("total_value"),
+            h.get("current_price"),
+            h.get("is_manual", 0),
+            h.get("last_synced_at"),
+            now,
+        )
+        for h in holdings
+    ]
+
+    conn.executemany(
+        """
+        INSERT INTO holdings
+            (id, account_id, security_id, security_name, ticker, security_type,
+             quantity, basis, total_value, current_price, is_manual,
+             last_synced_at, synced_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        rows,
+    )
+    conn.commit()
+    return len(rows)

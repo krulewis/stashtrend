@@ -18,10 +18,11 @@ describe('SyncControl', () => {
     onSyncStarted.mockClear()
   })
 
-  it('renders all five entity checkboxes', () => {
+  it('renders all six entity checkboxes', () => {
     render(<SyncControl isRunning={false} onSyncStarted={onSyncStarted} />)
     expect(screen.getByText('Accounts')).toBeInTheDocument()
     expect(screen.getByText('Account History')).toBeInTheDocument()
+    expect(screen.getByText('Holdings')).toBeInTheDocument()
     expect(screen.getByText('Categories')).toBeInTheDocument()
     expect(screen.getByText('Transactions')).toBeInTheDocument()
     expect(screen.getByText('Budgets')).toBeInTheDocument()

@@ -139,3 +139,54 @@ async def fetch_budgets(
 
     logger.info("  → %d budget rows fetched", len(rows))
     return rows
+
+
+async def fetch_holdings(
+    mm: MonarchMoney, account_id: str
+) -> list[dict[str, Any]]:
+    """
+    Fetch aggregate holdings for a single investment account.
+
+    Response path: data["portfolio"]["aggregateHoldings"]["edges"][].node
+    One dict per aggregate node. account_id injected into each dict.
+    Returns empty list if account has no holdings or on any error.
+    """
+    logger.debug("Fetching holdings for account %s", account_id)
+    try:
+        data = await mm.get_account_holdings(account_id)
+    except Exception:
+        logger.warning("  → get_account_holdings failed for account %s", account_id)
+        return []
+
+    edges = (
+        data.get("portfolio", {})
+            .get("aggregateHoldings", {})
+            .get("edges", [])
+    )
+
+    holdings: list[dict[str, Any]] = []
+    for edge in edges:
+        node = edge.get("node", {})
+        if not node:
+            continue
+        security = node.get("security") or {}
+        raw_holdings = node.get("holdings") or []
+        h0 = raw_holdings[0] if raw_holdings else {}
+
+        holdings.append({
+            "id":             node.get("id"),
+            "account_id":    account_id,
+            "security_id":   security.get("id"),
+            "security_name": security.get("name"),
+            "ticker":        security.get("ticker"),
+            "security_type": security.get("type"),
+            "quantity":      node.get("quantity"),
+            "basis":         node.get("basis"),
+            "total_value":   node.get("totalValue"),
+            "current_price": security.get("currentPrice"),
+            "is_manual":     int(h0.get("isManual", False)),
+            "last_synced_at": node.get("lastSyncedAt"),
+        })
+
+    logger.debug("  → %d holdings found for account %s", len(holdings), account_id)
+    return holdings

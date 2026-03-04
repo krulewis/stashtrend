@@ -3,6 +3,7 @@
 export const SYNC_ENTITY_ORDER = [
   'accounts',
   'account_history',
+  'holdings',
   'categories',
   'transactions',
   'budgets',
@@ -11,6 +12,7 @@ export const SYNC_ENTITY_ORDER = [
 export const SYNC_ENTITY_LABELS = {
   accounts:        'Accounts',
   account_history: 'Account History',
+  holdings:        'Holdings',
   categories:      'Categories',
   transactions:    'Transactions',
   budgets:         'Budgets',
@@ -19,6 +21,7 @@ export const SYNC_ENTITY_LABELS = {
 export const SYNC_ENTITY_DESCS = {
   accounts:        'Account names, balances, and metadata',
   account_history: 'Daily balance snapshots for all accounts',
+  holdings:        'Investment holdings for brokerage accounts',
   categories:      'Transaction category definitions',
   transactions:    'Individual transaction records',
   budgets:         'Monthly budget vs. actual data',
@@ -27,6 +30,7 @@ export const SYNC_ENTITY_DESCS = {
 export const SYNC_ENTITY_SHORT = {
   accounts:        'Accounts',
   account_history: 'History',
+  holdings:        'Holdings',
   categories:      'Categories',
   transactions:    'Transactions',
   budgets:         'Budgets',

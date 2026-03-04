@@ -7,6 +7,7 @@
 - **DB:** SQLite at `~/.monarch_pipeline/monarch.db` (local) or `/data/monarch.db` (Docker volume), WAL mode enabled
 
 ## Features Implemented
+- **Sidebar Navigation + URL Routing:** COMPLETE — react-router-dom v6, `<Sidebar>` (desktop) + `<BottomTabBar>` (mobile), `nav.js` single source of truth, `NetWorthPage` extracted from App, `AppShell` inner component for `useLocation` focus management, routes: `/networth`, `/groups`, `/budgets`, `/builder`, `/sync` with `/` and `*` redirects to `/networth` ✅
 - **Budget vs Actuals:** COMPLETE — all backend endpoints ✅ · `BudgetChart`, `BudgetTable`, `AIAnalysisPanel`, `BudgetPage` ✅ · wired into `App.jsx` as "💰 Budgets" tab ✅
 - **Income bar in Budget Chart:** `BudgetPage` aggregates `group_type === 'income'` category actuals per month via `useMemo` → `incomeTotalsByMonth` prop → `BudgetChart` renders amber `<Bar dataKey="Income">` conditionally ✅
 - **Stacked Groups charts:** `GroupsPage.module.css` always single-column (removed `3fr 2fr` tablet breakpoint) · `GroupsTimeChart` desktop height 380px · `GroupsSnapshot` non-mobile height 340px ✅
@@ -19,7 +20,7 @@
 
 ## DDL Init Order (Critical)
 Two DDLs — **init order matters:**
-- `pipeline/monarch_pipeline/schema.py` → pipeline tables (accounts, account_history, categories, transactions, budgets, sync_log)
+- `pipeline/monarch_pipeline/schema.py` → pipeline tables (accounts, account_history, holdings, categories, transactions, budgets, sync_log)
 - `DASHBOARD_DDL` in `app.py` → dashboard tables (account_groups, account_group_members, sync_jobs, settings, budget_builder_profile, budget_builder_regional, budget_builder_plans)
 - `init_dashboard_schema()` must call `pipeline_schema.init_db(DB_PATH)` **FIRST** — otherwise fresh-install 500s
 
@@ -33,6 +34,12 @@ from monarchmoney import MonarchMoney
 - `get_transaction_categories()` → `{"categories": [...]}`
 - `get_transactions()` → `{"allTransactions": {"totalCount", "results": [...]}}`
 - `get_budgets()` → `{"budgetData": {"monthlyAmountsByCategory": [...]}}`
+- `get_account_holdings(account_id)` → `{"portfolio": {"aggregateHoldings": {"edges": [{"node": {...}}]}}}` — one node per position, nested `security` + `holdings[]` sub-objects
+
+## Sync Pipeline
+- **Entity run order:** accounts → account_history → holdings → categories → transactions → budgets
+- **Holdings sync:** Fetches per investment account (`type = 'investment'`), upserts with stale cleanup (DELETE + INSERT per account). 13-column `holdings` table (id, account_id, security_id, security_name, ticker, security_type, quantity, basis, total_value, current_price, is_manual, last_synced_at, synced_at). Uses `last_accounts` from prior accounts sync step for filtering.
+- **Frontend:** Entity constants in `frontend/src/constants/syncEntities.js` (ORDER, LABELS, DESCS, SHORT)
 
 ## Other Libraries
 - **APScheduler:** optional dep — `try/except ImportError` in app.py, no-op stub if absent

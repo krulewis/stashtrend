@@ -48,6 +48,7 @@ export const MOCK_SYNC_LAST_STATUS = [
   { entity: 'categories',      last_synced_at: '2026-02-23T10:00:00Z', total_records: 102  },
   { entity: 'transactions',    last_synced_at: '2026-02-23T10:00:00Z', total_records: 964  },
   { entity: 'budgets',         last_synced_at: '2026-02-23T10:00:00Z', total_records: 1313 },
+  { entity: 'holdings',        last_synced_at: '2026-02-23T10:00:00Z', total_records: 42   },
 ]
 
 export const MOCK_SYNC_JOB = {

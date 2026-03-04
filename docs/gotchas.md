@@ -5,6 +5,9 @@
 ### conn.close() Omission Pattern (Partially resolved)
 `get_db_connection()` context manager added to auto-close connections. Endpoints that use `get_db()` directly (budget-related, AI, budget-builder) still intentionally omit `conn.close()` because tests share a single in-memory connection across multiple `patch` blocks. Migration to `get_db_connection()` is incremental — endpoints need `get_db()` when tests mock the return value. The context manager is for new code and non-test-mocked endpoints. Exception: `ai_analyze()` uses `try/finally: conn.close()` because it was refactored to use `_call_ai()` and the connection must stay open through the AI call but close on all exit paths.
 
+### Python 3.14: asyncio.get_event_loop() Removed
+`asyncio.get_event_loop()` raises `RuntimeError` in Python 3.14 when no loop exists. Use `asyncio.run(coro)` in tests instead. Affects any test that calls async functions (e.g., `fetch_holdings`).
+
 ### Fresh Install 500 (Fixed)
 `init_dashboard_schema()` now calls `pipeline_schema.init_db()` first.
 Any new endpoint querying pipeline tables is safe — but don't break this init order.

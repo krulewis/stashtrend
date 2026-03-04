@@ -253,6 +253,7 @@ def _reschedule(interval_hours: int) -> None:
 ENTITY_TABLE_MAP = {
     "accounts":        "accounts",
     "account_history": "account_history",
+    "holdings":        "holdings",
     "categories":      "categories",
     "transactions":    "transactions",
     "budgets":         "budgets",
@@ -261,6 +262,7 @@ ENTITY_TABLE_MAP = {
 ENTITY_RUN_ORDER = [
     "accounts",
     "account_history",
+    "holdings",
     "categories",
     "transactions",
     "budgets",
@@ -269,6 +271,7 @@ ENTITY_RUN_ORDER = [
 ENTITY_LABELS = {
     "accounts":        "Accounts",
     "account_history": "Account History",
+    "holdings":        "Holdings",
     "categories":      "Categories",
     "transactions":    "Transactions",
     "budgets":         "Budgets",
@@ -454,6 +457,26 @@ def _run_sync_worker(job_id: int, entities: list, full_refresh: bool):
                         data = await fetchers.fetch_budgets(mm, b_start, b_end)
                         entity_count = storage.upsert_budgets(pipeline_conn, data)
                         storage.update_sync_log(pipeline_conn, "budgets", entity_count)
+
+                    elif entity == "holdings":
+                        inv_accounts = getattr(_run_sync_worker, "last_accounts", None)
+                        if inv_accounts is not None:
+                            investment_ids = [
+                                a["id"] for a in inv_accounts
+                                if a.get("type", {}).get("name") == "investment"
+                            ]
+                        else:
+                            acct_rows = pipeline_conn.execute(
+                                "SELECT id FROM accounts WHERE type = 'investment'"
+                            ).fetchall()
+                            investment_ids = [r["id"] for r in acct_rows]
+
+                        total = 0
+                        for acct_id in investment_ids:
+                            h_data = await fetchers.fetch_holdings(mm, acct_id)
+                            total += storage.upsert_holdings(pipeline_conn, acct_id, h_data)
+                        storage.update_sync_log(pipeline_conn, "holdings", total)
+                        entity_count = total
 
                 except Exception as exc:
                     entity_status = "failed"
