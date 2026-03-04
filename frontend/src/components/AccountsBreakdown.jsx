@@ -49,6 +49,15 @@ function AccountGroup({ group }) {
   )
 }
 
+AccountGroup.propTypes = {
+  group: PropTypes.shape({
+    type: PropTypes.string,
+    is_asset: PropTypes.number,
+    total: PropTypes.number,
+    accounts: PropTypes.array,
+  }).isRequired,
+}
+
 function AccountSection({ label, totalColor, groups }) {
   const total = groups.reduce((s, g) => s + (g.is_asset ? g.total : -Math.abs(g.total)), 0)
   return (
@@ -64,6 +73,12 @@ function AccountSection({ label, totalColor, groups }) {
       </div>
     </div>
   )
+}
+
+AccountSection.propTypes = {
+  label: PropTypes.string.isRequired,
+  totalColor: PropTypes.string.isRequired,
+  groups: PropTypes.array.isRequired,
 }
 
 export default function AccountsBreakdown({ accounts }) {
