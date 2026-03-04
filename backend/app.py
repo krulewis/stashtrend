@@ -666,21 +666,36 @@ BUCKET_MAP = {
 }
 
 # Subtypes that override the parent type bucket (checked first if subtype is set).
+# Includes both standard Plaid subtypes and Monarch-specific prefixed subtypes
+# (e.g., st_401k, st_529). Check backend logs for "Unknown account type" warnings
+# to catch new subtypes as Monarch adds them.
 TYPE_MAP = {
-    # Retirement subtypes
+    # Retirement subtypes — standard
     "traditional_ira":    "Retirement",
     "roth_ira":           "Retirement",
     "rollover_ira":       "Retirement",
     "sep_ira":            "Retirement",
     "simple_ira":         "Retirement",
     "inherited_ira":      "Retirement",
+    # Retirement subtypes — Monarch-specific
+    "ira":                "Retirement",
+    "roth":               "Retirement",
+    "st_401k":            "Retirement",
+    "st_403b":            "Retirement",
+    "thrift_savings_plan":"Retirement",
     # Brokerage subtypes
     "individual":         "Brokerage",
     "joint":              "Brokerage",
     "trust":              "Brokerage",
     "ugma_utma":          "Brokerage",
+    "brokerage":          "Brokerage",
+    "st_529":             "Brokerage",
+    "health_savings_account": "Brokerage",
     # Cash subtypes
     "high_yield_savings": "Cash",
+    "cash_management":    "Cash",
+    "checking":           "Cash",
+    "savings":            "Cash",
     "cd":                 "Cash",
 }
 
