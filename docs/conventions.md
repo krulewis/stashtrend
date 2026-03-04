@@ -10,7 +10,7 @@
 
 All colors in CSS module files MUST use CSS custom properties defined in `index.css`. Never use hardcoded hex values. The token system includes:
 
-- **Backgrounds:** `--bg-root`, `--bg-card`, `--bg-deep`, `--bg-sunken`, `--bg-hover`, `--bg-inset`, `--bg-raised`, `--bg-table-alt`
+- **Backgrounds:** `--bg-root`, `--bg-card`, `--bg-deep`, `--bg-sunken`, `--bg-hover`, `--bg-inset`, `--bg-raised`, `--bg-table-alt`, `--bg-table-active`
 - **Borders:** `--border`, `--border-sub`, `--border-mid`, `--border-focus`, `--border-error`
 - **Text:** `--text-primary`, `--text-secondary`, `--text-muted`, `--text-faint`, `--text-bright`, `--text-subtle`
 - **Accent:** `--accent`, `--accent-hover`, `--accent-light`, `--accent-wash`, `--accent-glow`

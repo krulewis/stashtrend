@@ -76,7 +76,7 @@
 }
 
 .tdActive {
-  background: var(--bg-hover);
+  background: var(--bg-table-active);
 }
 
 .tdRight {

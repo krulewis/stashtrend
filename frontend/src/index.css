@@ -16,6 +16,7 @@
   --bg-inset:   #12151f;   /* recessed inputs, code blocks */
   --bg-raised:  #232840;   /* slightly elevated surfaces */
   --bg-table-alt: #161b2e; /* alternating table rows */
+  --bg-table-active: #1e253533; /* semi-transparent active/selected row */
 
   /* ─── Border colours ─────────────────────────────────────────────────── */
   --border:       #2d3348;
