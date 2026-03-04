@@ -84,8 +84,8 @@ def load_token(token_path: Path) -> str | None:
                     token_path,
                 )
                 return token
-        except Exception as e:
-            logger.warning("Could not read token fallback file (%s).", e)
+        except Exception:
+            logger.warning("Could not read token fallback file.")
 
     return None
 
@@ -96,7 +96,7 @@ def delete_token(token_path: Path) -> None:
         keyring.delete_password(config.KEYRING_SERVICE, config.KEYRING_USERNAME)
         logger.debug("Token removed from keychain.")
     except (keyring.errors.NoKeyringError, keyring.errors.PasswordDeleteError):
-        pass
+        logger.debug("Keyring delete skipped — no keyring or no entry.")
     if token_path.exists():
         token_path.unlink()
         logger.debug("Token fallback file removed.")
@@ -128,7 +128,7 @@ def delete_ai_key() -> None:
         keyring.delete_password(config.KEYRING_AI_SERVICE, config.KEYRING_AI_USERNAME)
         logger.debug("AI API key removed from keychain.")
     except Exception:
-        pass
+        logger.debug("AI key keyring delete skipped — no keyring or no entry.")
 
 
 # ── MonarchMoney client construction ──────────────────────────────────────────
