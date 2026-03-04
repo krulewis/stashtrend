@@ -1,8 +1,6 @@
 import PropTypes from 'prop-types'
 import styles from './StatsCards.module.css'
-import { fmtFull, COLOR_POSITIVE, COLOR_NEGATIVE } from './chartUtils.jsx'
-
-const fmtPct = (n) => (n == null ? '—' : `${n > 0 ? '+' : ''}${n.toFixed(1)}%`)
+import { fmtFull, fmtPct, COLOR_POSITIVE, COLOR_NEGATIVE } from './chartUtils.jsx'
 const fmtDelta = (n) => (n == null ? '—' : `${n > 0 ? '+' : ''}${fmtFull(n)}`)
 
 const Arrow = ({ value }) => {

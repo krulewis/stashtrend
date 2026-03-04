@@ -17,6 +17,10 @@
   - Frontend: `BudgetBuilderPage` (3-step workflow), `BuilderProfileForm`, `BuilderRegionalData`, `BuilderResultsTable`, 11 API functions in `api.js`
   - Flow: profile → AI regional fetch → AI budget generation → editable table → apply to Monarch via `set_budget_amount`
   - Apply endpoint uses `asyncio.run()` pattern, processes months chronologically, `apply_to_future=False`, partial failure handling
+- **NW by Account Type + CAGR:** COMPLETE — stacked area chart + CAGR sidebar ✅
+  - Backend: `GET /api/networth/by-type` — `BUCKET_MAP`/`TYPE_MAP` constants, `_get_bucket()`, `_compute_bucket_cagr()`. Buckets: Retirement, Brokerage, Cash, Real Estate, Debt, Other. Filter: `include_in_net_worth=1` only (matches `networth_history`, no `is_hidden` filter)
+  - Frontend: `TypeStackedChart.jsx` (stacked area + CAGR table), `AccountsBreakdown.jsx` simplified (pie charts removed, collapsible list retained), `fmtPct` moved to `chartUtils.jsx`
+  - CAGR: aggregate-balance approximation `(end/start)^(1/years) - 1` for 1Y/3Y/5Y. Null for <30 days non-zero history. UI tooltip: "Estimated CAGR — actual returns may differ."
 
 ## DDL Init Order (Critical)
 Two DDLs — **init order matters:**

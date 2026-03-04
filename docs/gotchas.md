@@ -33,6 +33,13 @@ When action buttons (rename, delete) are added alongside a named element, their 
 ### Split Text Nodes
 JSX conditionals render separate text nodes; use a custom `el.textContent` function matcher instead of `getByText`.
 
+### Monarch Account Types vs BUCKET_MAP (Fixed)
+**Where:** `BUCKET_MAP` in `app.py` — NW by Type endpoint.
+**Symptom:** Cash bucket showed `--` and "Other" had unexpected values during QA.
+**Root cause:** Monarch uses `depository` (not `checking`/`savings`) and `vehicle` as account types — neither was in the initial `BUCKET_MAP`.
+**Fix:** Added `"depository": "Cash"` and `"vehicle": "Other"` (plus `other_asset`, `collectible`, `valuable`) to `BUCKET_MAP`.
+**Rule:** After deploying NW by Type, check backend logs for "Unknown account type" warnings and update `BUCKET_MAP`. The map was initially built from Monarch API docs; real data may use different type strings.
+
 ---
 
 ## Bug Patterns

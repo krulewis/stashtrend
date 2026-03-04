@@ -9,10 +9,13 @@ overridden via the MONARCH_DATA_DIR environment variable (used by Docker).
 import asyncio
 import contextlib
 import json
+import logging
 import os
 import re
 import sqlite3
 import threading
+from collections import defaultdict
+from datetime import datetime
 import time
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -606,6 +609,242 @@ def accounts_summary():
     """).fetchall()
     conn.close()
     return jsonify([dict(r) for r in rows])
+
+
+# ---------------------------------------------------------------------------
+# Net Worth by Account Type — bucket mapping
+# ---------------------------------------------------------------------------
+
+# Maps Monarch account `type` values to a display bucket.
+# Keep include_in_net_worth = 1 filter consistent with networth_history endpoint.
+# NOTE: is_hidden is intentionally NOT filtered here — networth_history only uses
+# include_in_net_worth=1, so totals across bucket series match the main NW chart.
+BUCKET_MAP = {
+    # Retirement
+    "401k":               "Retirement",
+    "403b":               "Retirement",
+    "ira":                "Retirement",
+    "roth_ira":           "Retirement",
+    "roth_401k":          "Retirement",
+    "sep_ira":            "Retirement",
+    "simple_ira":         "Retirement",
+    "pension":            "Retirement",
+    "401a":               "Retirement",
+    # Brokerage / taxable investments
+    "brokerage":          "Brokerage",
+    "investment":         "Brokerage",
+    "crypto":             "Brokerage",
+    "hsa":                "Brokerage",
+    "529":                "Brokerage",
+    "education":          "Brokerage",
+    "stock":              "Brokerage",
+    # Cash / liquid
+    "checking":           "Cash",
+    "savings":            "Cash",
+    "depository":         "Cash",
+    "money_market":       "Cash",
+    "cash":               "Cash",
+    "prepaid":            "Cash",
+    "cash_management":    "Cash",
+    # Real estate
+    "real_estate":        "Real Estate",
+    "property":           "Real Estate",
+    # Other assets
+    "vehicle":            "Other",
+    "other_asset":        "Other",
+    "collectible":        "Other",
+    "valuable":           "Other",
+    # Debt / liabilities
+    "mortgage":           "Debt",
+    "student_loan":       "Debt",
+    "auto_loan":          "Debt",
+    "personal_loan":      "Debt",
+    "credit":             "Debt",
+    "credit_card":        "Debt",
+    "line_of_credit":     "Debt",
+    "home_equity":        "Debt",
+    "medical":            "Debt",
+    "other_liability":    "Debt",
+    "loan":               "Debt",
+}
+
+# Subtypes that override the parent type bucket (checked first if subtype is set).
+TYPE_MAP = {
+    # Retirement subtypes
+    "traditional_ira":    "Retirement",
+    "roth_ira":           "Retirement",
+    "rollover_ira":       "Retirement",
+    "sep_ira":            "Retirement",
+    "simple_ira":         "Retirement",
+    "inherited_ira":      "Retirement",
+    # Brokerage subtypes
+    "individual":         "Brokerage",
+    "joint":              "Brokerage",
+    "trust":              "Brokerage",
+    "ugma_utma":          "Brokerage",
+    # Cash subtypes
+    "high_yield_savings": "Cash",
+    "cd":                 "Cash",
+}
+
+BUCKET_ORDER = ["Retirement", "Brokerage", "Cash", "Real Estate", "Debt", "Other"]
+
+BUCKET_COLORS = {
+    "Retirement":   "#6366f1",
+    "Brokerage":    "#34d399",
+    "Cash":         "#60a5fa",
+    "Real Estate":  "#f59e0b",
+    "Debt":         "#f87171",
+    "Other":        "#94a3b8",
+}
+
+
+def _get_bucket(account_type, account_subtype):
+    """
+    Map an account's type + subtype to a display bucket.
+    Subtype is checked first (TYPE_MAP), then type (BUCKET_MAP).
+    Logs a WARNING for unknown types so new Monarch types are caught early.
+    """
+    if account_subtype and account_subtype in TYPE_MAP:
+        return TYPE_MAP[account_subtype]
+    if account_type and account_type in BUCKET_MAP:
+        return BUCKET_MAP[account_type]
+    if account_type:
+        app.logger.warning("Unknown account type for bucket mapping: %r (subtype=%r)", account_type, account_subtype)
+    return "Other"
+
+
+def _compute_bucket_cagr(bal_by_date):
+    """
+    Compute 1Y/3Y/5Y CAGR for a bucket using aggregate balance CAGR.
+
+    Edge cases:
+    - <30 days of non-zero history → return null for all periods.
+    - First non-zero balance is the start point (not a return event).
+    - Zero-balance days are skipped.
+
+    Returns: {"1y": float|None, "3y": float|None, "5y": float|None}
+    """
+    if not bal_by_date:
+        return {"1y": None, "3y": None, "5y": None}
+
+    sorted_dates = sorted(bal_by_date.keys())
+    # Strip leading zero-balance entries — first non-zero is the start
+    nonzero_dates = [d for d in sorted_dates if bal_by_date[d] > 0]
+
+    if len(nonzero_dates) < 30:
+        return {"1y": None, "3y": None, "5y": None}
+
+    pairs = [(d, bal_by_date[d]) for d in nonzero_dates]
+    today_str = sorted_dates[-1]
+
+    def _cagr_for_years(years):
+        cutoff_dt = datetime.strptime(today_str, "%Y-%m-%d")
+        cutoff_dt = cutoff_dt.replace(year=cutoff_dt.year - years)
+        cutoff = cutoff_dt.strftime("%Y-%m-%d")
+        start_pairs = [(d, b) for d, b in pairs if d >= cutoff]
+        if len(start_pairs) < 2:
+            return None
+        start_date, start_bal = start_pairs[0]
+        end_date, end_bal = pairs[-1]
+        if start_bal <= 0 or end_bal <= 0:
+            return None
+        dt_start = datetime.strptime(start_date, "%Y-%m-%d")
+        dt_end = datetime.strptime(end_date, "%Y-%m-%d")
+        elapsed_years = (dt_end - dt_start).days / 365.25
+        if elapsed_years < 0.1:
+            return None
+        # Simple CAGR: (end/start)^(1/years) - 1
+        # At bucket level we use aggregate balance CAGR as an approximation.
+        cagr_val = (end_bal / start_bal) ** (1.0 / elapsed_years) - 1
+        return round(cagr_val * 100, 2)
+
+    return {
+        "1y": _cagr_for_years(1),
+        "3y": _cagr_for_years(3),
+        "5y": _cagr_for_years(5),
+    }
+
+
+@app.route("/api/networth/by-type")
+def networth_by_type():
+    """
+    Returns per-bucket NW history (stacked area) and CAGR estimates.
+
+    Filter: include_in_net_worth = 1 only — matches networth_history so bucket
+    series totals add up to the main NW chart total. is_hidden is NOT filtered.
+
+    CAGR approximation: aggregate balance CAGR.
+    Tooltip in the UI reads: "Estimated CAGR — actual returns may differ."
+    """
+    conn = get_db()
+    try:
+        # Step 1: Fetch all accounts in scope
+        acct_rows = conn.execute("""
+            SELECT id, type, subtype, is_asset
+            FROM accounts
+            WHERE include_in_net_worth = 1
+        """).fetchall()
+
+        acct_bucket = {}
+        for row in acct_rows:
+            bucket = _get_bucket(row["type"], row["subtype"])
+            acct_bucket[row["id"]] = (bucket, bool(row["is_asset"]))
+
+        if not acct_bucket:
+            return jsonify({"series": [], "cagr": {}, "bucket_colors": BUCKET_COLORS,
+                            "bucket_order": BUCKET_ORDER})
+
+        # Step 2: Fetch full account_history for all in-scope accounts
+        placeholders = ",".join("?" * len(acct_bucket))
+        history_rows = conn.execute(f"""
+            SELECT account_id, date, balance
+            FROM account_history
+            WHERE account_id IN ({placeholders})
+            ORDER BY date ASC
+        """, list(acct_bucket.keys())).fetchall()
+
+        # Step 3: Build date-keyed series grouped by bucket
+        date_bucket_totals = defaultdict(lambda: defaultdict(float))
+        acct_history = defaultdict(list)
+
+        for row in history_rows:
+            acct_id = row["account_id"]
+            bucket, is_asset = acct_bucket[acct_id]
+            balance = row["balance"] or 0
+            nw_contribution = balance if is_asset else -abs(balance)
+            date_bucket_totals[row["date"]][bucket] += nw_contribution
+            acct_history[acct_id].append((row["date"], balance))
+
+        all_dates = sorted(date_bucket_totals.keys())
+        series = []
+        for date in all_dates:
+            point = {"date": date}
+            for bucket in BUCKET_ORDER:
+                point[bucket] = round(date_bucket_totals[date].get(bucket, 0), 2)
+            series.append(point)
+
+        # Step 4: Compute per-bucket CAGR
+        bucket_balances = defaultdict(lambda: defaultdict(float))
+        for acct_id, history in acct_history.items():
+            bucket, is_asset = acct_bucket[acct_id]
+            for date, balance in history:
+                val = (balance or 0) if is_asset else abs(balance or 0)
+                bucket_balances[bucket][date] += val
+
+        cagr = {}
+        for bucket in BUCKET_ORDER:
+            bal_by_date = bucket_balances.get(bucket, {})
+            cagr[bucket] = _compute_bucket_cagr(bal_by_date)
+
+        return jsonify({
+            "series": series,
+            "cagr": cagr,
+            "bucket_colors": BUCKET_COLORS,
+            "bucket_order": BUCKET_ORDER,
+        })
+    finally:
+        conn.close()
 
 
 # ===========================================================================

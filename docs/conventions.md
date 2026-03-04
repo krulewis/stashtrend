@@ -23,7 +23,7 @@ All colors in CSS module files MUST use CSS custom properties defined in `index.
 
 ## Frontend
 - **Named API exports:** All API calls go through named exports in `api.js` (e.g. `fetchGroups()`, `saveGroupsConfigs()`). Pages must never use raw `fetchJSON`/`postJSON` with URL strings — those are internal helpers.
-- **Shared formatters in chartUtils.jsx:** Dollar/date formatters (`fmtDollar`, `fmtCompact`, `fmtFull`, `fmtBudgetMonth`, etc.) live in `chartUtils.jsx`. Don't duplicate formatting logic in component files.
+- **Shared formatters in chartUtils.jsx:** Dollar/date/percent formatters (`fmtDollar`, `fmtCompact`, `fmtFull`, `fmtPct`, `fmtBudgetMonth`, etc.) live in `chartUtils.jsx`. Don't duplicate formatting logic in component files.
 - **PropTypes:** All components receiving props should have PropTypes validation.
 - **Navigation items:** All nav items defined in `src/nav.js` (`NAV_ITEMS` array). Sidebar and BottomTabBar both consume this. To add/remove/reorder pages, edit `nav.js` and add a `<Route>` in `App.jsx`.
 - **App.jsx is a thin shell:** Setup gate + header + `<AppShell>` (routes) + `<BottomTabBar>`. Page-specific state lives in page components, not App. `AppShell` inner component uses `useLocation` for focus management.
