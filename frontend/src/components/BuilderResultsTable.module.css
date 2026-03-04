@@ -119,7 +119,7 @@
 
 .btnPrimary {
   background: var(--accent);
-  color: #fff;
+  color: var(--white);
   border: none;
   border-radius: 6px;
   padding: 8px 16px;
@@ -128,12 +128,12 @@
   cursor: pointer;
 }
 
-.btnPrimary:hover:not(:disabled) { background: #818cf8; }
+.btnPrimary:hover:not(:disabled) { background: var(--accent-light); }
 .btnPrimary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .btnSuccess {
   background: var(--green);
-  color: #0f1117;
+  color: var(--bg-root);
   border: none;
   border-radius: 6px;
   padding: 8px 16px;
@@ -142,7 +142,7 @@
   cursor: pointer;
 }
 
-.btnSuccess:hover:not(:disabled) { background: #6ee7b7; }
+.btnSuccess:hover:not(:disabled) { background: var(--green-light); }
 .btnSuccess:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .btnGhost {

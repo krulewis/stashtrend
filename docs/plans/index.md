@@ -5,7 +5,7 @@
 - `DISTRIBUTION_PLAN.md` (parent dir) — Distribution strategy and packaging plan.
 
 ## Active
-None currently.
+- **UI/UX Improvements** — Comprehensive audit-driven redesign. Audit reports: `ui-ux-audit-pass1.md`, `ui-ux-audit-pass2.md`. 36 items across 4 phases. Completed so far: stats card deltas (XS), design token system (S), color consolidation (S), budget table progress bars (M). Remaining: sidebar navigation (M).
 
 ## Recently Completed (cont.)
 - **Security Remediation (OWASP Top 10)** — 7 findings fixed: debug mode env-gated, CORS localhost-only, AI key to keychain, prompt sanitization, rate limiting, error sanitization, nginx security headers. 15 new tests in `test_security.py`.

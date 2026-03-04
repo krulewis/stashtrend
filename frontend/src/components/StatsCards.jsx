@@ -3,6 +3,7 @@ import styles from './StatsCards.module.css'
 import { fmtFull, COLOR_POSITIVE, COLOR_NEGATIVE } from './chartUtils.jsx'
 
 const fmtPct = (n) => (n == null ? '—' : `${n > 0 ? '+' : ''}${n.toFixed(1)}%`)
+const fmtDelta = (n) => (n == null ? '—' : `${n > 0 ? '+' : ''}${fmtFull(n)}`)
 
 const Arrow = ({ value }) => {
   if (value == null) return null
@@ -16,12 +17,12 @@ const Arrow = ({ value }) => {
 const Card = ({ label, value, change, pct, sublabel }) => (
   <div className={styles.card}>
     <div className={styles.cardLabel}>{label}</div>
-    <div className={styles.cardValue}>{fmtFull(value)}</div>
+    <div className={styles.cardValue}>{change != null ? fmtDelta(change) : fmtFull(value)}</div>
     {change != null && (
       <div className={styles.cardChange}>
         <Arrow value={change} />
         <span style={{ color: change >= 0 ? COLOR_POSITIVE : COLOR_NEGATIVE, marginLeft: 4 }}>
-          {fmtFull(change)} ({fmtPct(pct)})
+          {fmtPct(pct)}
         </span>
         <span className={styles.cardSublabel}> vs {sublabel}</span>
       </div>

@@ -111,7 +111,7 @@
 
 .tableName {
   font-size: 13px;
-  color: #cbd5e1;
+  color: var(--text-subtle);
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;

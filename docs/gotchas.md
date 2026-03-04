@@ -94,6 +94,12 @@ JSX conditionals render separate text nodes; use a custom `el.textContent` funct
 **Root cause:** desloppify's import resolver doesn't track JSX imports (e.g. `<GroupsTimeChart />` isn't seen as a reference to `GroupsTimeChart.jsx`).
 **Fix:** Resolve as false positives with `desloppify resolve false_positive "pattern" --attest "I have actually verified ... not gaming"`. These reopen on every rescan and must be re-resolved.
 
+### StatsCards Hero Value — Show Delta, Not Repeated Net Worth
+**Where:** `StatsCards.jsx` — MoM and YoY cards.
+**Symptom:** All three cards showed the same `$500,000` net worth as the hero value, making the MoM/YoY cards redundant.
+**Fix:** When a card has a `change` value, display the delta as the hero (e.g., `+$5,000`) instead of the current net worth. Percentage and sublabel remain below.
+**Rule:** Comparison cards should lead with the comparison metric (the delta), not repeat the base value. The base value belongs on a single "current state" card.
+
 ### Generic Conflict Messages Create Investigation Overhead
 **Where:** `GroupSnapshotControls.jsx` chip `title` attribute.
 **Symptom:** Tooltip said "Shares an account with a selected group" — user couldn't tell which group conflicted with which, making group definition problems impossible to self-diagnose.

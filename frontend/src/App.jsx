@@ -1,34 +1,52 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import styles from './App.module.css'
-import StatsCards from './components/StatsCards.jsx'
-import NetWorthChart from './components/NetWorthChart.jsx'
-import AccountsBreakdown from './components/AccountsBreakdown.jsx'
+import Sidebar from './components/Sidebar.jsx'
+import BottomTabBar from './components/BottomTabBar.jsx'
+import NetWorthPage from './pages/NetWorthPage.jsx'
 import GroupsPage from './pages/GroupsPage.jsx'
 import BudgetPage from './pages/BudgetPage.jsx'
 import BudgetBuilderPage from './pages/BudgetBuilderPage.jsx'
 import SyncPage from './pages/SyncPage.jsx'
 import SetupPage from './pages/SetupPage.jsx'
-import { fetchNetworthStats, fetchNetworthHistory, fetchAccountsSummary, fetchSetupStatus } from './api.js'
+import { fetchSetupStatus } from './api.js'
 import { version } from '../package.json'
 
-const TABS = [
-  { id: 'networth', label: '📈  Net Worth' },
-  { id: 'groups',   label: '⬡  Account Groups' },
-  { id: 'budgets',  label: '💰  Budgets' },
-  { id: 'builder',  label: '🏗  Budget Builder' },
-  { id: 'sync',     label: '🔄  Sync Data' },
-]
+// Inner component that uses router hooks — must be a child of BrowserRouter.
+function AppShell() {
+  const location = useLocation()
+  const mainRef  = useRef(null)
+
+  // Move focus to <main> on route change so keyboard/screen-reader users
+  // receive a signal that page content has changed.
+  useEffect(() => {
+    mainRef.current?.focus()
+  }, [location.pathname])
+
+  return (
+    <div className={styles.body}>
+      <Sidebar />
+      <main
+        ref={mainRef}
+        tabIndex={-1}
+        className={styles.main}
+      >
+        <Routes>
+          <Route path="/"        element={<Navigate to="/networth" replace />} />
+          <Route path="/networth" element={<NetWorthPage />} />
+          <Route path="/groups"  element={<GroupsPage />} />
+          <Route path="/budgets" element={<BudgetPage />} />
+          <Route path="/builder" element={<BudgetBuilderPage />} />
+          <Route path="/sync"    element={<SyncPage />} />
+          <Route path="*"        element={<Navigate to="/networth" replace />} />
+        </Routes>
+      </main>
+    </div>
+  )
+}
 
 export default function App() {
   const [configured, setConfigured] = useState(null) // null=loading, false=needs setup, true=ready
-  const [activeTab, setActiveTab] = useState('networth')
-
-  // Net Worth tab data
-  const [stats,    setStats]    = useState(null)
-  const [history,  setHistory]  = useState(null)
-  const [accounts, setAccounts] = useState(null)
-  const [error,    setError]    = useState(null)
-  const [lastUpdated, setLastUpdated] = useState(null)
 
   // NOTE: This app is designed for local-only use (localhost). It relies on the
   // /api/setup/status configured flag rather than session-based authentication,
@@ -39,27 +57,6 @@ export default function App() {
       .then((d) => setConfigured(d.configured))
       .catch(() => setConfigured(false))
   }, [])
-
-  function loadDashboardData() {
-    setError(null)
-    Promise.all([
-      fetchNetworthStats(),
-      fetchNetworthHistory(),
-      fetchAccountsSummary(),
-    ])
-      .then(([stats, history, accounts]) => {
-        setStats(stats)
-        setHistory(history)
-        setAccounts(accounts)
-        setLastUpdated(new Date().toLocaleTimeString())
-      })
-      .catch((err) => setError(err.message))
-  }
-
-  useEffect(() => {
-    if (configured !== true) return
-    loadDashboardData()
-  }, [configured])
 
   if (configured === null) return <div className={styles.loading}>Loading…</div>
   if (configured === false) return <SetupPage onComplete={() => setConfigured(true)} />
@@ -77,61 +74,14 @@ export default function App() {
         </div>
         <div className={styles.headerRight}>
           <span className={styles.versionBadge}>v{version}</span>
-          {lastUpdated && (
-            <span className={styles.updatedAt}>Updated at {lastUpdated}</span>
-          )}
-          <button className={styles.refreshBtn} onClick={loadDashboardData}>
-            ↻ Refresh
-          </button>
         </div>
       </header>
 
-      {/* ── Tab bar ─────────────────────────────────────────── */}
-      <nav className={styles.tabBar}>
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`${styles.tabBtn} ${activeTab === tab.id ? styles.tabBtnActive : ''}`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </nav>
+      {/* ── Body (sidebar + main) ────────────────────────────── */}
+      <AppShell />
 
-      {/* ── Main content ────────────────────────────────────── */}
-      <main className={styles.main}>
-        {activeTab === 'networth' && (
-          <>
-            {error ? (
-              <div className={styles.errorBox}>
-                <div className={styles.errorTitle}>⚠ Could not connect to the API</div>
-                <div className={styles.errorMsg}>Make sure the backend is running:</div>
-                <pre className={styles.errorCode}>
-                  cd monarch-dashboard/backend{'\n'}
-                  pip install -r requirements.txt{'\n'}
-                  python app.py
-                </pre>
-                <div className={styles.errorDetail}>{error}</div>
-              </div>
-            ) : (
-              <>
-                <StatsCards stats={stats} />
-                <NetWorthChart history={history} />
-                <AccountsBreakdown accounts={accounts} />
-              </>
-            )}
-          </>
-        )}
-
-        {activeTab === 'groups' && <GroupsPage />}
-
-        {activeTab === 'budgets' && <BudgetPage />}
-
-        {activeTab === 'builder' && <BudgetBuilderPage />}
-
-        {activeTab === 'sync' && <SyncPage />}
-      </main>
+      {/* ── Mobile bottom tab bar ───────────────────────────── */}
+      <BottomTabBar />
     </div>
   )
 }

@@ -19,10 +19,28 @@ describe('StatsCards', () => {
     expect(screen.getByText('Year-over-Year')).toBeInTheDocument()
   })
 
-  it('formats net worth as USD currency', () => {
+  it('formats net worth as USD currency on the first card', () => {
     render(<StatsCards stats={MOCK_STATS} />)
-    // $500,000 appears in all three cards (current net worth)
-    expect(screen.getAllByText('$500,000').length).toBeGreaterThanOrEqual(1)
+    // $500,000 appears only on the Net Worth Today card
+    expect(screen.getByText('$500,000')).toBeInTheDocument()
+  })
+
+  it('shows delta as hero value on MoM and YoY cards', () => {
+    render(<StatsCards stats={MOCK_STATS} />)
+    // MoM card hero = +$5,000, YoY card hero = +$50,000
+    expect(screen.getByText('+$5,000')).toBeInTheDocument()
+    expect(screen.getByText('+$50,000')).toBeInTheDocument()
+  })
+
+  it('shows negative delta as hero value with minus sign', () => {
+    const negStats = {
+      current: { net_worth: 500000 },
+      mom: { change: -5000, pct_change: -1.0 },
+      yoy: { change: -50000, pct_change: -11.1 },
+    }
+    render(<StatsCards stats={negStats} />)
+    expect(screen.getByText('-$5,000')).toBeInTheDocument()
+    expect(screen.getByText('-$50,000')).toBeInTheDocument()
   })
 
   it('shows upward arrow for positive MoM and YoY changes', () => {

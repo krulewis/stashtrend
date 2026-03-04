@@ -1,6 +1,6 @@
 .settingsCard {
-  background: #1e2535;
-  border: 1px solid #2d3a4f;
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 20px 24px;
 }
@@ -9,13 +9,13 @@
   margin: 0 0 4px;
   font-size: 15px;
   font-weight: 600;
-  color: #f1f5f9;
+  color: var(--text-primary);
 }
 
 .settingsSubtitle {
   margin: 0 0 16px;
   font-size: 13px;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .intervalRow {
@@ -28,15 +28,15 @@
 .intervalLabel {
   font-size: 13px;
   font-weight: 500;
-  color: #94a3b8;
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 
 .intervalSelect {
-  background: #0f172a;
-  border: 1px solid #2d3a4f;
+  background: var(--bg-root);
+  border: 1px solid var(--border);
   border-radius: 6px;
-  color: #f1f5f9;
+  color: var(--text-primary);
   font-size: 13px;
   padding: 6px 10px;
   cursor: pointer;
@@ -49,7 +49,7 @@
 }
 
 .intervalSelect:focus {
-  outline: 2px solid #6366f1;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
