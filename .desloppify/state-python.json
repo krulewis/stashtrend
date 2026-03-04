@@ -1,25 +1,25 @@
 {
   "version": 1,
   "created": "2026-03-04T22:11:51+00:00",
-  "last_scan": "2026-03-04T22:17:10+00:00",
-  "scan_count": 3,
+  "last_scan": "2026-03-04T22:31:37+00:00",
+  "scan_count": 4,
   "overall_score": 39.7,
   "objective_score": 99.3,
-  "strict_score": 29.4,
-  "verified_strict_score": 72.1,
+  "strict_score": 29.6,
+  "verified_strict_score": 72.4,
   "stats": {
     "total": 50,
     "open": 7,
     "fixed": 0,
-    "auto_resolved": 2,
-    "wontfix": 28,
+    "auto_resolved": 3,
+    "wontfix": 27,
     "false_positive": 13,
     "by_tier": {
       "2": {
         "open": 0,
         "fixed": 0,
-        "auto_resolved": 2,
-        "wontfix": 4,
+        "auto_resolved": 3,
+        "wontfix": 3,
         "false_positive": 12
       },
       "3": {
@@ -45,9 +45,9 @@
       "file": "backend/app.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Needs decomposition: large (2162 LOC) / complexity score 167",
+      "summary": "Needs decomposition: large (2168 LOC) / complexity score 167",
       "detail": {
-        "loc": 2162,
+        "loc": 2168,
         "complexity_score": 167,
         "complexity_signals": [
           "nesting depth 36",
@@ -57,7 +57,7 @@
       "status": "wontfix",
       "note": "app.py is a single-file Flask app by design \u2014 all endpoints in one module. Splitting would add complexity without benefit for this project size.",
       "first_seen": "2026-03-04T22:11:51+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:13:56+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -105,7 +105,7 @@
       "status": "wontfix",
       "note": "Test files \u2014 grouping related tests in one file is idiomatic pytest",
       "first_seen": "2026-03-04T22:11:51+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:13:48+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -153,7 +153,7 @@
       "status": "wontfix",
       "note": "Test files \u2014 grouping related tests in one file is idiomatic pytest",
       "first_seen": "2026-03-04T22:11:51+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:13:48+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -201,7 +201,7 @@
       "status": "wontfix",
       "note": "Test files \u2014 grouping related tests in one file is idiomatic pytest",
       "first_seen": "2026-03-04T22:11:51+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:13:48+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -250,7 +250,7 @@
       "status": "wontfix",
       "note": "Test files \u2014 grouping related tests in one file is idiomatic pytest",
       "first_seen": "2026-03-04T22:11:51+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:13:48+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -299,7 +299,7 @@
       "status": "wontfix",
       "note": "Test files \u2014 grouping related tests in one file is idiomatic pytest",
       "first_seen": "2026-03-04T22:11:51+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:13:48+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -347,7 +347,7 @@
       "status": "wontfix",
       "note": "Test files \u2014 grouping related tests in one file is idiomatic pytest",
       "first_seen": "2026-03-04T22:11:51+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:13:48+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -394,7 +394,7 @@
       "status": "wontfix",
       "note": "auth.py at 195 LOC with complexity 48 is reasonable for a module handling keychain + file + AI key storage with fallbacks",
       "first_seen": "2026-03-04T22:11:51+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:14:01+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -440,7 +440,7 @@
       "status": "wontfix",
       "note": "Test files \u2014 grouping related tests in one file is idiomatic pytest",
       "first_seen": "2026-03-04T22:11:51+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:13:48+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -486,7 +486,7 @@
       "status": "wontfix",
       "note": "Test files \u2014 grouping related tests in one file is idiomatic pytest",
       "first_seen": "2026-03-04T22:11:51+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:13:48+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -553,7 +553,7 @@
       "status": "wontfix",
       "note": "app.py: single-file Flask app by design. test_sync.py: test file grouping sync-related tests. storage.py: single storage module for all entity upserts.",
       "first_seen": "2026-03-04T22:11:51+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:15:52+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -635,7 +635,7 @@
       "status": "wontfix",
       "note": "app.py: single-file Flask app by design. test_sync.py: test file grouping sync-related tests. storage.py: single storage module for all entity upserts.",
       "first_seen": "2026-03-04T22:11:51+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:15:52+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -685,19 +685,19 @@
       "file": "backend/app.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Mixed responsibilities: 65 top-level funcs across 4 disconnected clusters (61, 2, 1, 1)",
+      "summary": "Mixed responsibilities: 67 top-level funcs across 4 disconnected clusters (63, 2, 1, 1)",
       "detail": {
-        "loc": 2162,
-        "function_count": 65,
+        "loc": 2168,
+        "function_count": 67,
         "component_count": 4,
         "component_sizes": [
-          61,
+          63,
           2,
           1,
           1
         ],
         "family_count": 28,
-        "import_cluster_count": 25,
+        "import_cluster_count": 26,
         "families": [
           "",
           "accounts",
@@ -712,7 +712,7 @@
       "status": "wontfix",
       "note": "app.py: single-file Flask app by design. test_sync.py: test file grouping sync-related tests. storage.py: single storage module for all entity upserts.",
       "first_seen": "2026-03-04T22:11:51+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:15:52+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -763,14 +763,14 @@
       "file": "backend/app.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Orphaned file (2162 LOC): zero importers, not an entry point",
+      "summary": "Orphaned file (2168 LOC): zero importers, not an entry point",
       "detail": {
-        "loc": 2162
+        "loc": 2168
       },
       "status": "false_positive",
       "note": "app.py is the Flask entry point \u2014 run via gunicorn/python, not imported",
       "first_seen": "2026-03-04T22:11:53+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:15:31+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -801,7 +801,7 @@
       "status": "wontfix",
       "note": "Pipeline modules tested indirectly via backend integration tests (test_sync, test_pipeline_holdings). Direct unit tests deferred \u2014 pipeline is a thin wrapper around monarchmoney SDK.",
       "first_seen": "2026-03-04T22:11:53+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:15:39+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -845,7 +845,7 @@
       "status": "wontfix",
       "note": "Pipeline modules tested indirectly via backend integration tests (test_sync, test_pipeline_holdings). Direct unit tests deferred \u2014 pipeline is a thin wrapper around monarchmoney SDK.",
       "first_seen": "2026-03-04T22:11:53+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:15:39+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -890,7 +890,7 @@
       "status": "wontfix",
       "note": "Pipeline modules tested indirectly via backend integration tests (test_sync, test_pipeline_holdings). Direct unit tests deferred \u2014 pipeline is a thin wrapper around monarchmoney SDK.",
       "first_seen": "2026-03-04T22:11:53+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:15:39+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -935,7 +935,7 @@
       "status": "wontfix",
       "note": "Pipeline modules tested indirectly via backend integration tests (test_sync, test_pipeline_holdings). Direct unit tests deferred \u2014 pipeline is a thin wrapper around monarchmoney SDK.",
       "first_seen": "2026-03-04T22:11:53+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:15:39+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -980,7 +980,7 @@
       "status": "wontfix",
       "note": "Pipeline modules tested indirectly via backend integration tests (test_sync, test_pipeline_holdings). Direct unit tests deferred \u2014 pipeline is a thin wrapper around monarchmoney SDK.",
       "first_seen": "2026-03-04T22:11:53+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:15:39+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -1030,7 +1030,7 @@
       "status": "wontfix",
       "note": "Intentional fallback pattern: keychain \u2192 plaintext file \u2192 None. Logging the failure and continuing is the designed behavior.",
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:13:07+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -1143,11 +1143,11 @@
           1815
         ]
       },
-      "status": "wontfix",
-      "note": "generate_budget_plan() is 200 LOC \u2014 a single AI endpoint that builds context, calls AI, parses response. Splitting adds complexity without clear benefit since the steps are tightly coupled.",
+      "status": "auto_resolved",
+      "note": "Fixed despite wontfix \u2014 disappeared from scan (was wontfix)",
       "first_seen": "2026-03-04T22:11:54+00:00",
       "last_seen": "2026-03-04T22:17:10+00:00",
-      "resolved_at": "2026-03-04T22:13:20+00:00",
+      "resolved_at": "2026-03-04T22:31:37+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
@@ -1155,10 +1155,10 @@
       "suppressed_at": null,
       "suppression_pattern": null,
       "resolution_attestation": {
-        "kind": "manual",
-        "text": "I have actually reviewed the function and confirmed the 200 LOC is cohesive prompt-assembly + AI-call + response-parsing that would add indirection if split, and I am not gaming the score by resolving without fixing.",
-        "attested_at": "2026-03-04T22:13:20+00:00",
-        "scan_verified": false
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-04T22:31:37+00:00",
+        "scan_verified": true
       },
       "wontfix_scan_count": 1,
       "wontfix_snapshot": {
@@ -1203,7 +1203,7 @@
       "status": "wontfix",
       "note": "dead_function: APScheduler no-op stubs (intentional fallback). hardcoded_url: CORS localhost origins (security requirement). deferred_import: asyncio.run() pattern needs local import. annotation_quality: Flask app uses dynamic types from request/DB. magic_number: 1000 char limit is a validation constant. unsafe_file_write: token file write is best-effort fallback.",
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:14:16+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -1268,7 +1268,7 @@
       "status": "wontfix",
       "note": "dead_function: APScheduler no-op stubs (intentional fallback). hardcoded_url: CORS localhost origins (security requirement). deferred_import: asyncio.run() pattern needs local import. annotation_quality: Flask app uses dynamic types from request/DB. magic_number: 1000 char limit is a validation constant. unsafe_file_write: token file write is best-effort fallback.",
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:14:16+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -1328,7 +1328,7 @@
       "status": "wontfix",
       "note": "dead_function: APScheduler no-op stubs (intentional fallback). hardcoded_url: CORS localhost origins (security requirement). deferred_import: asyncio.run() pattern needs local import. annotation_quality: Flask app uses dynamic types from request/DB. magic_number: 1000 char limit is a validation constant. unsafe_file_write: token file write is best-effort fallback.",
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:14:16+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -1380,7 +1380,7 @@
       "status": "wontfix",
       "note": "dead_function: APScheduler no-op stubs (intentional fallback). hardcoded_url: CORS localhost origins (security requirement). deferred_import: asyncio.run() pattern needs local import. annotation_quality: Flask app uses dynamic types from request/DB. magic_number: 1000 char limit is a validation constant. unsafe_file_write: token file write is best-effort fallback.",
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:14:16+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -1428,13 +1428,13 @@
           1480,
           1480,
           1578,
-          1904
+          1820
         ]
       },
       "status": "wontfix",
       "note": "dead_function: APScheduler no-op stubs (intentional fallback). hardcoded_url: CORS localhost origins (security requirement). deferred_import: asyncio.run() pattern needs local import. annotation_quality: Flask app uses dynamic types from request/DB. magic_number: 1000 char limit is a validation constant. unsafe_file_write: token file write is best-effort fallback.",
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:14:16+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -1489,7 +1489,7 @@
       "status": "wontfix",
       "note": "dead_function: APScheduler no-op stubs (intentional fallback). hardcoded_url: CORS localhost origins (security requirement). deferred_import: asyncio.run() pattern needs local import. annotation_quality: Flask app uses dynamic types from request/DB. magic_number: 1000 char limit is a validation constant. unsafe_file_write: token file write is best-effort fallback.",
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:14:16+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -1538,7 +1538,7 @@
       "status": "wontfix",
       "note": "dead_function: APScheduler no-op stubs (intentional fallback). hardcoded_url: CORS localhost origins (security requirement). deferred_import: asyncio.run() pattern needs local import. annotation_quality: Flask app uses dynamic types from request/DB. magic_number: 1000 char limit is a validation constant. unsafe_file_write: token file write is best-effort fallback.",
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:14:16+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -1584,7 +1584,7 @@
       "status": "wontfix",
       "note": "_ai_cooldowns is an intentional module-level dict for thread-safe per-endpoint AI rate limiting, protected by _ai_cooldowns_lock (threading.Lock)",
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:17:01+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -1629,7 +1629,7 @@
       "status": "false_positive",
       "note": "These log status messages (e.g. 'Token saved to keychain') not actual token values",
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:12:29+00:00",
       "reopen_count": 0,
       "zone": "production",
@@ -1661,7 +1661,7 @@
       "status": "false_positive",
       "note": "These log status messages (e.g. 'Token saved to keychain') not actual token values",
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:12:29+00:00",
       "reopen_count": 0,
       "zone": "production",
@@ -1693,7 +1693,7 @@
       "status": "false_positive",
       "note": "These log status messages (e.g. 'Token saved to keychain') not actual token values",
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:12:29+00:00",
       "reopen_count": 0,
       "zone": "production",
@@ -1725,7 +1725,7 @@
       "status": "false_positive",
       "note": "Log message says 'Could not read token fallback file' \u2014 status message, no sensitive data logged",
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:17:27+00:00",
       "reopen_count": 0,
       "zone": "production",
@@ -1757,7 +1757,7 @@
       "status": "false_positive",
       "note": "These log status messages (e.g. 'Token saved to keychain') not actual token values",
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:12:29+00:00",
       "reopen_count": 0,
       "zone": "production",
@@ -1789,7 +1789,7 @@
       "status": "false_positive",
       "note": "These log status messages (e.g. 'Token saved to keychain') not actual token values",
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:12:29+00:00",
       "reopen_count": 0,
       "zone": "production",
@@ -1821,7 +1821,7 @@
       "status": "false_positive",
       "note": "These log status messages (e.g. 'Token saved to keychain') not actual token values",
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:12:29+00:00",
       "reopen_count": 0,
       "zone": "production",
@@ -1853,7 +1853,7 @@
       "status": "false_positive",
       "note": "These log status messages (e.g. 'Token saved to keychain') not actual token values",
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:12:29+00:00",
       "reopen_count": 0,
       "zone": "production",
@@ -1885,7 +1885,7 @@
       "status": "false_positive",
       "note": "These log status messages (e.g. 'Token saved to keychain') not actual token values",
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:12:29+00:00",
       "reopen_count": 0,
       "zone": "production",
@@ -1917,7 +1917,7 @@
       "status": "false_positive",
       "note": "These log status messages (e.g. 'Token saved to keychain') not actual token values",
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:12:29+00:00",
       "reopen_count": 0,
       "zone": "production",
@@ -1948,7 +1948,7 @@
       "status": "false_positive",
       "note": "d = dict(r) from SQLite Row \u2014 keys come from DB columns",
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:12:21+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -1979,7 +1979,7 @@
       "status": "false_positive",
       "note": "d = dict(r) from SQLite Row \u2014 keys come from DB columns",
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": "2026-03-04T22:12:21+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -2003,12 +2003,12 @@
       "summary": "No design review on record \u2014 run `desloppify review --prepare`",
       "detail": {
         "reason": "unreviewed",
-        "loc": 2162
+        "loc": 2168
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2031,7 +2031,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2054,7 +2054,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2077,7 +2077,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2100,7 +2100,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2123,7 +2123,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2145,7 +2145,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-04T22:11:54+00:00",
-      "last_seen": "2026-03-04T22:17:10+00:00",
+      "last_seen": "2026-03-04T22:31:37+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2183,7 +2183,7 @@
           "reason": "missing_dependency"
         }
       ],
-      "updated_at": "2026-03-04T22:17:10+00:00"
+      "updated_at": "2026-03-04T22:31:37+00:00"
     }
   },
   "score_confidence": {
@@ -2206,8 +2206,8 @@
     ]
   },
   "subjective_integrity": {
-    "status": "disabled",
-    "target_score": null,
+    "status": "pass",
+    "target_score": 95.0,
     "matched_count": 0,
     "matched_dimensions": [],
     "reset_dimensions": []
@@ -2515,6 +2515,103 @@
           "strict": 0.0
         }
       }
+    },
+    {
+      "timestamp": "2026-03-04T22:31:37+00:00",
+      "lang": "python",
+      "strict_score": 29.6,
+      "verified_strict_score": 72.4,
+      "objective_score": 99.3,
+      "overall_score": 39.7,
+      "open": 7,
+      "diff_new": 0,
+      "diff_resolved": 1,
+      "ignored": 0,
+      "raw_findings": 47,
+      "suppressed_pct": 0.0,
+      "ignore_patterns": 0,
+      "subjective_integrity": {
+        "status": "pass",
+        "matched_count": 0,
+        "reset_count": 0,
+        "target_score": 95.0
+      },
+      "score_confidence": {
+        "status": "reduced",
+        "confidence": 0.6,
+        "detector_count": 1,
+        "dimension_count": 1
+      },
+      "dimension_scores": {
+        "File health": {
+          "score": 100.0,
+          "strict": 80.0
+        },
+        "Code quality": {
+          "score": 100.0,
+          "strict": 92.9
+        },
+        "Duplication": {
+          "score": 100.0,
+          "strict": 100.0
+        },
+        "Test health": {
+          "score": 98.3,
+          "strict": 42.0
+        },
+        "Security": {
+          "score": 100.0,
+          "strict": 100.0
+        },
+        "Error consistency": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Abstraction fit": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "AI generated debt": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "High elegance": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Mid elegance": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Low elegance": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Cross-module arch": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Convention drift": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Dep health": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Test strategy": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Structure nav": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Design coherence": {
+          "score": 0.0,
+          "strict": 0.0
+        }
+      }
     }
   ],
   "tool_hash": "e073c6da67fa",
@@ -2543,14 +2640,14 @@
       "dict_keys": 7,
       "subjective_review": 6,
       "boilerplate_duplication": 0,
-      "dupes": 91,
-      "stale_wontfix": 28
+      "dupes": 93,
+      "stale_wontfix": 27
     }
   },
   "codebase_metrics": {
     "python": {
       "total_files": 22,
-      "total_loc": 7146,
+      "total_loc": 7152,
       "total_directories": 3
     }
   },
@@ -2574,8 +2671,8 @@
     },
     "Code quality": {
       "score": 100.0,
-      "strict_score": 91.9,
-      "verified_strict_score": 88.7,
+      "strict_score": 92.9,
+      "verified_strict_score": 89.6,
       "checks": 52,
       "issues": 0,
       "tier": 3,
@@ -2629,18 +2726,18 @@
           "weighted_failures": 0.0
         }
       },
-      "strict": 91.9
+      "strict": 92.9
     },
     "Duplication": {
       "score": 100.0,
       "strict_score": 100.0,
       "verified_strict_score": 100.0,
-      "checks": 91,
+      "checks": 93,
       "issues": 0,
       "tier": 3,
       "detectors": {
         "dupes": {
-          "potential": 91,
+          "potential": 93,
           "pass_rate": 1.0,
           "issues": 0,
           "weighted_failures": 0.0
@@ -2974,10 +3071,10 @@
   },
   "reminder_history": {
     "zone_classification": 3,
-    "report_scores": 3,
-    "fp_calibration_security_production": 2,
-    "feedback_nudge": 2,
+    "report_scores": 4,
+    "fp_calibration_security_production": 3,
+    "feedback_nudge": 3,
     "stagnant_nudge": 15,
-    "wontfix_growing": 1
+    "wontfix_growing": 2
   }
 }

@@ -1811,26 +1811,13 @@ Be specific with dollar amounts and percentages. Use current 2026 data."""
 
 # ── Budget Generation ───────────────────────────────────────────────────────
 
-@app.route("/api/budget-builder/generate", methods=["POST"])
-def generate_budget_plan():
-    blocked = _check_ai_rate_limit("generate_budget_plan")
-    if blocked:
-        return blocked
-    body = request.get_json() or {}
-    months_ahead = body.get("months_ahead", 3)
-    profile_overrides = body.get("profile_overrides", {})
 
-    conn = get_db()
+def _build_budget_prompt(conn, profile, months_ahead):
+    """Assemble the AI prompt for budget generation.
 
-    # Check AI config
-    api_key = _get_ai_key(conn)
-    if not api_key:
-        return jsonify({"error": "AI not configured"}), 400
-
-    # Load profile
-    profile_row = conn.execute("SELECT * FROM budget_builder_profile WHERE id = 1").fetchone()
-    profile = dict(profile_row) if profile_row else {}
-    profile.update(profile_overrides)
+    Returns (prompt, categories, category_ids, max_tokens).
+    """
+    from datetime import date
 
     # Load regional
     regional_row = conn.execute("SELECT * FROM budget_builder_regional WHERE id = 1").fetchone()
@@ -1857,7 +1844,7 @@ def generate_budget_plan():
            ORDER BY c.group_name, c.name, b.month ASC"""
     ).fetchall()
 
-    # Build prompt
+    # Format category list and history
     cat_list = "\n".join(f"  - ID: {c['id']}, Name: {c['name']}, Group: {c['group_name'] or 'Other'}"
                          for c in categories)
 
@@ -1870,6 +1857,7 @@ def generate_budget_plan():
         )
     history_text = "\n".join(history_lines) if history_lines else "  No historical data available."
 
+    # Sanitize profile fields
     income = _sanitize_prompt_field(str(profile.get("expected_income", "not specified")), 50)
     location = _sanitize_prompt_field(str(profile.get("location", "not specified")), 200)
     housing = _sanitize_prompt_field(str(profile.get("housing_type", "not specified")), 50)
@@ -1901,7 +1889,6 @@ Regional cost data for {location}:
   Electricity: {regional.get('electricity_cost', 'n/a')}"""
 
     # Generate future month keys
-    from datetime import date
     today = date.today()
     future_months = []
     for i in range(1, months_ahead + 1):
@@ -1952,9 +1939,58 @@ Rules:
 - Include amounts for each future month
 - Base recommendations on historical patterns, adjusted for regional costs and trends"""
 
-    # Dynamic max_tokens
-    num_categories = len(categories)
-    max_tokens = 4096 + max(0, (num_categories - 30)) * 512 // 10
+    max_tokens = 4096 + max(0, (len(categories) - 30)) * 512 // 10
+    return prompt, categories, category_ids, max_tokens
+
+
+def _save_budget_plan(conn, data, months_ahead):
+    """Persist AI-generated budget plan to the database. Returns the saved plan dict."""
+    now = datetime.now(timezone.utc).isoformat()
+    line_items = data.get("recommendations", [])
+    summary = data.get("summary", "")
+    total_monthly = data.get("total_monthly_budget", {})
+    plan_name = f"AI Plan — {datetime.now().strftime('%b %d, %Y')}"
+
+    cursor = conn.execute(
+        """INSERT INTO budget_builder_plans (name, months_ahead, line_items, summary, ai_generated_at)
+           VALUES (?, ?, ?, ?, ?)""",
+        (plan_name, months_ahead, json.dumps(line_items), summary, now),
+    )
+    plan_id = cursor.lastrowid
+    conn.commit()
+
+    return {
+        "id": plan_id,
+        "name": plan_name,
+        "months_ahead": months_ahead,
+        "line_items": line_items,
+        "summary": summary,
+        "total_monthly_budget": total_monthly,
+        "ai_generated_at": now,
+    }
+
+
+@app.route("/api/budget-builder/generate", methods=["POST"])
+def generate_budget_plan():
+    blocked = _check_ai_rate_limit("generate_budget_plan")
+    if blocked:
+        return blocked
+    body = request.get_json() or {}
+    months_ahead = body.get("months_ahead", 3)
+    profile_overrides = body.get("profile_overrides", {})
+
+    conn = get_db()
+
+    api_key = _get_ai_key(conn)
+    if not api_key:
+        return jsonify({"error": "AI not configured"}), 400
+
+    # Load and merge profile
+    profile_row = conn.execute("SELECT * FROM budget_builder_profile WHERE id = 1").fetchone()
+    profile = dict(profile_row) if profile_row else {}
+    profile.update(profile_overrides)
+
+    prompt, categories, category_ids, max_tokens = _build_budget_prompt(conn, profile, months_ahead)
 
     try:
         text, stop_reason, provider = _call_ai(prompt, conn, max_tokens=max_tokens)
@@ -1964,7 +2000,6 @@ Rules:
         app.logger.exception("Budget generation AI call failed")
         return jsonify({"error": "Budget generation failed. Check server logs."}), 500
 
-    # Truncation detection
     if stop_reason in ("max_tokens", "length"):
         return jsonify({
             "error": "Response was truncated — try reducing months_ahead or the number of categories."
@@ -1976,37 +2011,8 @@ Rules:
         app.logger.exception("Failed to parse budget generation AI response")
         return jsonify({"error": "Failed to parse AI response. Try again."}), 500
 
-    # Save as plan
-    now = datetime.now(timezone.utc).isoformat()
-    line_items = data.get("recommendations", [])
-    summary = data.get("summary", "")
-    total_monthly = data.get("total_monthly_budget", {})
-
-    cursor = conn.execute(
-        """INSERT INTO budget_builder_plans (name, months_ahead, line_items, summary, ai_generated_at)
-           VALUES (?, ?, ?, ?, ?)""",
-        (
-            f"AI Plan — {datetime.now().strftime('%b %d, %Y')}",
-            months_ahead,
-            json.dumps(line_items),
-            summary,
-            now,
-        ),
-    )
-    plan_id = cursor.lastrowid
-    conn.commit()
-
-    return jsonify({
-        "plan": {
-            "id": plan_id,
-            "name": f"AI Plan — {datetime.now().strftime('%b %d, %Y')}",
-            "months_ahead": months_ahead,
-            "line_items": line_items,
-            "summary": summary,
-            "total_monthly_budget": total_monthly,
-            "ai_generated_at": now,
-        }
-    })
+    plan = _save_budget_plan(conn, data, months_ahead)
+    return jsonify({"plan": plan})
 
 
 # ── Plan CRUD ───────────────────────────────────────────────────────────────

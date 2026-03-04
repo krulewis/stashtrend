@@ -2,8 +2,8 @@
   "command": "status",
   "overall_score": 39.7,
   "objective_score": 99.3,
-  "strict_score": 29.4,
-  "verified_strict_score": 72.1,
+  "strict_score": 29.6,
+  "verified_strict_score": 72.4,
   "dimension_scores": {
     "File health": {
       "score": 100.0,
@@ -24,8 +24,8 @@
     },
     "Code quality": {
       "score": 100.0,
-      "strict_score": 91.9,
-      "verified_strict_score": 88.7,
+      "strict_score": 92.9,
+      "verified_strict_score": 89.6,
       "checks": 52,
       "issues": 0,
       "tier": 3,
@@ -79,18 +79,18 @@
           "weighted_failures": 0.0
         }
       },
-      "strict": 91.9
+      "strict": 92.9
     },
     "Duplication": {
       "score": 100.0,
       "strict_score": 100.0,
       "verified_strict_score": 100.0,
-      "checks": 91,
+      "checks": 93,
       "issues": 0,
       "tier": 3,
       "detectors": {
         "dupes": {
-          "potential": 91,
+          "potential": 93,
           "pass_rate": 1.0,
           "issues": 0,
           "weighted_failures": 0.0
@@ -435,7 +435,7 @@
     {
       "name": "Code quality",
       "score": 100.0,
-      "strict": 91.9,
+      "strict": 92.9,
       "checks": 52,
       "issues": 0,
       "tier": 3,
@@ -445,7 +445,7 @@
       "name": "Duplication",
       "score": 100.0,
       "strict": 100.0,
-      "checks": 91,
+      "checks": 93,
       "issues": 0,
       "tier": 3,
       "subjective": false
@@ -474,15 +474,15 @@
     "total": 50,
     "open": 7,
     "fixed": 0,
-    "auto_resolved": 2,
-    "wontfix": 28,
+    "auto_resolved": 3,
+    "wontfix": 27,
     "false_positive": 13,
     "by_tier": {
       "2": {
         "open": 0,
         "fixed": 0,
-        "auto_resolved": 2,
-        "wontfix": 4,
+        "auto_resolved": 3,
+        "wontfix": 3,
         "false_positive": 12
       },
       "3": {
@@ -501,14 +501,14 @@
       }
     }
   },
-  "scan_count": 3,
-  "last_scan": "2026-03-04T22:17:10+00:00",
+  "scan_count": 4,
+  "last_scan": "2026-03-04T22:31:37+00:00",
   "by_tier": {
     "2": {
       "open": 0,
       "fixed": 0,
-      "auto_resolved": 2,
-      "wontfix": 4,
+      "auto_resolved": 3,
+      "wontfix": 3,
       "false_positive": 12
     },
     "3": {
@@ -529,12 +529,12 @@
   "ignores": [],
   "suppression": {
     "last_ignored": 0,
-    "last_raw_findings": 48,
+    "last_raw_findings": 47,
     "last_suppressed_pct": 0.0,
     "last_ignore_patterns": 0,
-    "recent_scans": 3,
+    "recent_scans": 4,
     "recent_ignored": 0,
-    "recent_raw_findings": 146,
+    "recent_raw_findings": 193,
     "recent_suppressed_pct": 0.0
   },
   "potentials": {
@@ -558,14 +558,14 @@
       "dict_keys": 7,
       "subjective_review": 6,
       "boilerplate_duplication": 0,
-      "dupes": 91,
-      "stale_wontfix": 28
+      "dupes": 93,
+      "stale_wontfix": 27
     }
   },
   "codebase_metrics": {
     "python": {
       "total_files": 22,
-      "total_loc": 7146,
+      "total_loc": 7152,
       "total_directories": 3
     }
   },
@@ -578,7 +578,7 @@
     "overall_score": 39.7,
     "mechanical_fraction": 0.4,
     "subjective_fraction": 0.6,
-    "mechanical_avg": 99.29554794520546,
+    "mechanical_avg": 99.30034013605442,
     "subjective_avg": 0.0,
     "entries": [
       {
@@ -589,9 +589,9 @@
         "sample_factor": 0.035,
         "configured_weight": 2.0,
         "effective_weight": 0.07,
-        "pool_share": 0.04794520547945205,
-        "overall_per_point": 0.019178082191780823,
-        "overall_contribution": 1.9178082191780823,
+        "pool_share": 0.04761904761904762,
+        "overall_per_point": 0.01904761904761905,
+        "overall_contribution": 1.9047619047619049,
         "overall_drag": 0.0
       },
       {
@@ -602,22 +602,22 @@
         "sample_factor": 0.26,
         "configured_weight": 1.0,
         "effective_weight": 0.26,
-        "pool_share": 0.1780821917808219,
-        "overall_per_point": 0.07123287671232877,
-        "overall_contribution": 7.123287671232877,
+        "pool_share": 0.17687074829931973,
+        "overall_per_point": 0.0707482993197279,
+        "overall_contribution": 7.07482993197279,
         "overall_drag": 0.0
       },
       {
         "name": "Duplication",
         "pool": "mechanical",
         "score": 100.0,
-        "checks": 91.0,
-        "sample_factor": 0.455,
+        "checks": 93.0,
+        "sample_factor": 0.465,
         "configured_weight": 1.0,
-        "effective_weight": 0.455,
-        "pool_share": 0.3116438356164383,
-        "overall_per_point": 0.12465753424657533,
-        "overall_contribution": 12.465753424657533,
+        "effective_weight": 0.465,
+        "pool_share": 0.3163265306122449,
+        "overall_per_point": 0.12653061224489798,
+        "overall_contribution": 12.653061224489798,
         "overall_drag": 0.0
       },
       {
@@ -628,10 +628,10 @@
         "sample_factor": 0.605,
         "configured_weight": 1.0,
         "effective_weight": 0.605,
-        "pool_share": 0.41438356164383555,
-        "overall_per_point": 0.16575342465753423,
-        "overall_contribution": 16.293561643835613,
-        "overall_drag": 0.2817808219178087
+        "pool_share": 0.41156462585034015,
+        "overall_per_point": 0.16462585034013608,
+        "overall_contribution": 16.182721088435375,
+        "overall_drag": 0.2798639455782318
       },
       {
         "name": "Security",
@@ -641,9 +641,9 @@
         "sample_factor": 0.07,
         "configured_weight": 1.0,
         "effective_weight": 0.07,
-        "pool_share": 0.04794520547945205,
-        "overall_per_point": 0.019178082191780823,
-        "overall_contribution": 1.9178082191780823,
+        "pool_share": 0.04761904761904762,
+        "overall_per_point": 0.01904761904761905,
+        "overall_contribution": 1.9047619047619049,
         "overall_drag": 0.0
       },
       {
@@ -853,86 +853,86 @@
         {
           "name": "Code quality",
           "lenient": 100.0,
-          "strict": 91.9,
-          "gap": 8.1,
-          "wontfix_count": 13
+          "strict": 92.9,
+          "gap": 7.1,
+          "wontfix_count": 12
         }
       ],
       "stagnant_dimensions": [
         {
           "name": "File health",
           "strict": 80.0,
-          "stuck_scans": 3
+          "stuck_scans": 4
         },
         {
           "name": "Duplication",
           "strict": 100.0,
-          "stuck_scans": 3
+          "stuck_scans": 4
         },
         {
           "name": "Test health",
           "strict": 42.0,
-          "stuck_scans": 3
+          "stuck_scans": 4
         },
         {
           "name": "Error consistency",
           "strict": 0.0,
-          "stuck_scans": 3
+          "stuck_scans": 4
         },
         {
           "name": "Abstraction fit",
           "strict": 0.0,
-          "stuck_scans": 3
+          "stuck_scans": 4
         },
         {
           "name": "AI generated debt",
           "strict": 0.0,
-          "stuck_scans": 3
+          "stuck_scans": 4
         },
         {
           "name": "High elegance",
           "strict": 0.0,
-          "stuck_scans": 3
+          "stuck_scans": 4
         },
         {
           "name": "Mid elegance",
           "strict": 0.0,
-          "stuck_scans": 3
+          "stuck_scans": 4
         },
         {
           "name": "Low elegance",
           "strict": 0.0,
-          "stuck_scans": 3
+          "stuck_scans": 4
         },
         {
           "name": "Cross-module arch",
           "strict": 0.0,
-          "stuck_scans": 3
+          "stuck_scans": 4
         },
         {
           "name": "Convention drift",
           "strict": 0.0,
-          "stuck_scans": 3
+          "stuck_scans": 4
         },
         {
           "name": "Dep health",
           "strict": 0.0,
-          "stuck_scans": 3
+          "stuck_scans": 4
         },
         {
           "name": "Test strategy",
           "strict": 0.0,
-          "stuck_scans": 3
+          "stuck_scans": 4
         },
         {
           "name": "Structure nav",
           "strict": 0.0,
-          "stuck_scans": 3
+          "stuck_scans": 4
         },
         {
           "name": "Design coherence",
           "strict": 0.0,
-          "stuck_scans": 3
+          "stuck_scans": 4
         }
       ]
     },
@@ -1010,7 +1010,7 @@
     },
     "debt": {
       "overall_gap": 4.7,
-      "wontfix_count": 28,
+      "wontfix_count": 27,
       "worst_dimension": "Test health",
       "worst_gap": 56.3,
       "trend": "growing"
@@ -1029,24 +1029,17 @@
       {
         "type": "wontfix_gap",
         "severity": "medium",
-        "message": "Strict/lenient gap is 4.7 pts with 28 wontfix findings"
+        "message": "Strict/lenient gap is 4.7 pts with 27 wontfix findings"
       }
     ],
     "strict_target": {
       "target": 95.0,
-      "current": 29.4,
-      "gap": 65.6,
+      "current": 29.6,
+      "gap": 65.4,
       "state": "below",
       "warning": null
     },
     "reminders": [
-      {
-        "type": "fp_calibration_security_production",
-        "message": "100% of security findings in production zone are false positives. Consider reviewing detection rules for production files.",
-        "command": null,
-        "priority": 2,
-        "severity": "medium"
-      },
       {
         "type": "wontfix_growing",
         "message": "Wontfix debt is growing. Review stale decisions: `desloppify show --status wontfix`.",
@@ -1057,11 +1050,11 @@
     ],
     "reminder_history": {
       "zone_classification": 3,
-      "report_scores": 3,
+      "report_scores": 4,
       "fp_calibration_security_production": 3,
-      "feedback_nudge": 2,
+      "feedback_nudge": 3,
       "stagnant_nudge": 15,
-      "wontfix_growing": 2
+      "wontfix_growing": 3
     }
   },
   "config": {
