@@ -6,20 +6,26 @@
 - **Upsert pattern:** `ON CONFLICT(key) DO UPDATE SET value = excluded.value`
 - **Singleton tables:** Use `CHECK (id = 1)` for single-row config tables (e.g. `budget_builder_profile`, `budget_builder_regional`). Upsert with `INSERT ... ON CONFLICT(id) DO UPDATE SET ...`.
 
-## Design Tokens
+## Design System — Dark Cobalt
+
+**Palette:** Dark navy backgrounds with cobalt blue (`#4D9FFF`) as the primary accent. Full color doc: `stashtrend-colors.html` (in Content dir).
+
+**Logo:** SVG bar chart with trend arrow + "STASHTREND" wordmark. Source: `frontend/src/assets/stashtrend-logo.svg`. Rendered as `<img>` in `App.jsx` and `SetupPage.jsx`.
 
 All colors in CSS module files MUST use CSS custom properties defined in `index.css`. Never use hardcoded hex values. The token system includes:
 
-- **Backgrounds:** `--bg-root`, `--bg-card`, `--bg-deep`, `--bg-sunken`, `--bg-hover`, `--bg-inset`, `--bg-raised`, `--bg-table-alt`, `--bg-table-active`
-- **Borders:** `--border`, `--border-sub`, `--border-mid`, `--border-focus`, `--border-error`
-- **Text:** `--text-primary`, `--text-secondary`, `--text-muted`, `--text-faint`, `--text-bright`, `--text-subtle`
-- **Accent:** `--accent`, `--accent-hover`, `--accent-light`, `--accent-wash`, `--accent-glow`
-- **Semantic:** `--color-positive`/`--green`, `--color-negative`/`--red`, `--color-warning`/`--amber`, `--white`
+- **Backgrounds:** `--bg-root` (#0A0F1E), `--bg-card` (#1C2333), `--bg-deep`, `--bg-sunken`, `--bg-hover`, `--bg-inset`, `--bg-raised` (#1E2D4A), `--bg-table-alt` (#111827), `--bg-table-active`
+- **Borders:** `--border` (#1E2D4A), `--border-sub`, `--border-mid`, `--border-focus` (#4D9FFF), `--border-error`
+- **Text:** `--text-primary` (#F0F6FF), `--text-secondary` (#8BA8CC), `--text-muted` (#4A6080), `--text-faint` (#2B4060), `--text-bright`, `--text-subtle`
+- **Accent:** `--accent` (#4D9FFF), `--accent-hover` (#2B7FE0), `--accent-light` (#7DBFFF), `--accent-wash` (#99CCFF), `--accent-glow`
+- **Semantic:** `--color-positive`/`--green` (#2ECC8A), `--color-negative`/`--red` (#FF5A7A), `--color-warning`/`--amber` (#F5A623), `--white`
 - **Surfaces:** `--bg-error`, `--bg-error-subtle`
 - **Spacing:** `--sp-1` through `--sp-12` (4px increments)
 - **Radius:** `--radius-sm` (6px), `--radius-md` (8px), `--radius-lg` (12px), `--radius-xl` (16px)
 - **Shadows:** `--shadow-sm`, `--shadow-md`, `--shadow-lg`
 - **Transitions:** `--ease-default` (150ms), `--ease-slow` (300ms)
+
+**Recharts hardcoded hex:** Charts use raw hex because SVG attrs don't support CSS vars. Constants in `chartUtils.jsx`: `COLOR_ACCENT` (#4D9FFF), `COLOR_POSITIVE` (#2ECC8A), `COLOR_NEGATIVE` (#FF5A7A), `COLOR_AMBER` (#F5A623), `AXIS_TICK` fill (#4A6080), `GRID_STROKE` (#1E2D4A), `TOOLTIP_STYLE` bg (#1C2333). Backend `BUCKET_COLORS` in `app.py` must stay in sync.
 
 ## Frontend
 - **Named API exports:** All API calls go through named exports in `api.js` (e.g. `fetchGroups()`, `saveGroupsConfigs()`). Pages must never use raw `fetchJSON`/`postJSON` with URL strings — those are internal helpers.

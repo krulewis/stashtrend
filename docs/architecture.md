@@ -21,6 +21,15 @@
   - Backend: `GET /api/networth/by-type` — `BUCKET_MAP`/`TYPE_MAP` constants, `_get_bucket()`, `_compute_bucket_cagr()`. Buckets: Retirement, Brokerage, Cash, Real Estate, Debt, Other. Filter: `include_in_net_worth=1` only (matches `networth_history`, no `is_hidden` filter)
   - Frontend: `TypeStackedChart.jsx` (stacked area + CAGR table), `AccountsBreakdown.jsx` simplified (pie charts removed, collapsible list retained), `fmtPct` moved to `chartUtils.jsx`
   - CAGR: aggregate-balance approximation `(end/start)^(1/years) - 1` for 1Y/3Y/5Y. Null for <30 days non-zero history. UI tooltip: "Estimated CAGR — actual returns may differ."
+  - **Dual-axis chart:** Left YAxis for positive buckets (stacked), Right YAxis for Debt (absolute values, minus-prefixed ticks). `NEGATIVE_BUCKETS` Set in TypeStackedChart.jsx. CustomTooltip negates values back for display.
+  - **AccountsBreakdown:** Groups by `bucket` field (from API) instead of raw Monarch `type`. API adds `bucket` via `_get_bucket()`.
+
+## Design System — Dark Cobalt
+- **Logo:** SVG bar chart + trend arrow + "STASHTREND" wordmark at `frontend/src/assets/stashtrend-logo.svg`. Rendered as `<img>` in App.jsx and SetupPage.jsx. Header: 48px mobile / 64px desktop.
+- **Palette:** `#0A0F1E` base, `#1C2333` cards, `#4D9FFF` cobalt accent, `#F0F6FF` text, `#2ECC8A` green, `#FF5A7A` red, `#F5A623` amber. Full token list: `docs/conventions.md` → Design System section.
+- **CSS tokens:** All colors as custom properties in `index.css :root`. Components use `var(--token)` — never hardcoded hex.
+- **Recharts exception:** SVG attrs can't use CSS vars. Constants in `chartUtils.jsx` (`COLOR_ACCENT`, `COLOR_POSITIVE`, etc.) and backend `BUCKET_COLORS` in `app.py` must stay in sync.
+- **Color doc:** `stashtrend-colors.html` (in Content dir) — full reference.
 
 ## DDL Init Order (Critical)
 Two DDLs — **init order matters:**
