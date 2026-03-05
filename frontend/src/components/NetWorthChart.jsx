@@ -114,9 +114,9 @@ export default function NetWorthChart({ history, milestones }) {
               activeDot={{ r: 5, fill: COLOR_ACCENT }}
             />
             {showBreakdown && <Legend iconType="line" wrapperStyle={{ color: '#94a3b8', fontSize: 13 }} />}
-            {milestones && milestones.map((m) => (
+            {milestones && milestones.map((m, i) => (
               <ReferenceLine
-                key={m.label || m.amount}
+                key={`milestone-${i}`}
                 y={m.amount}
                 stroke="#F5A623"
                 strokeDasharray="4 3"

@@ -2194,22 +2194,47 @@ def save_retirement():
     if target_age <= current_age:
         return jsonify({"error": "target_retirement_age must be greater than current_age"}), 400
 
-    # Finding #11: upper bounds on rate/amount fields
+    # Validate numeric fields: type check + lower/upper bounds
+    def _validate_numeric(name, val, lo, hi):
+        if val is None:
+            return None
+        if not isinstance(val, (int, float)):
+            return jsonify({"error": f"{name} must be a number"}), 400
+        if val < lo:
+            return jsonify({"error": f"{name} cannot be less than {lo}"}), 400
+        if val > hi:
+            return jsonify({"error": f"{name} cannot exceed {hi}"}), 400
+        return None
+
     withdrawal_rate = body.get("withdrawal_rate_pct")
-    if withdrawal_rate is not None and withdrawal_rate > 100:
-        return jsonify({"error": "withdrawal_rate_pct cannot exceed 100"}), 400
+    err = _validate_numeric("withdrawal_rate_pct", withdrawal_rate, 0, 100)
+    if err:
+        return err
 
     expected_return = body.get("expected_return_pct")
-    if expected_return is not None and expected_return > 50:
-        return jsonify({"error": "expected_return_pct cannot exceed 50"}), 400
+    err = _validate_numeric("expected_return_pct", expected_return, 0, 50)
+    if err:
+        return err
 
     monthly_contribution = body.get("monthly_contribution")
-    if monthly_contribution is not None and monthly_contribution > 1_000_000:
-        return jsonify({"error": "monthly_contribution cannot exceed 1,000,000"}), 400
+    err = _validate_numeric("monthly_contribution", monthly_contribution, 0, 1_000_000)
+    if err:
+        return err
 
     desired_income = body.get("desired_annual_income")
-    if desired_income is not None and desired_income > 10_000_000:
-        return jsonify({"error": "desired_annual_income cannot exceed 10,000,000"}), 400
+    err = _validate_numeric("desired_annual_income", desired_income, 0, 10_000_000)
+    if err:
+        return err
+
+    inflation_rate = body.get("inflation_rate_pct")
+    err = _validate_numeric("inflation_rate_pct", inflation_rate, 0, 100)
+    if err:
+        return err
+
+    ss_annual = body.get("social_security_annual")
+    err = _validate_numeric("social_security_annual", ss_annual, 0, 10_000_000)
+    if err:
+        return err
 
     # Finding #4: validate milestones
     milestones_raw = body.get("milestones")
@@ -2219,6 +2244,8 @@ def save_retirement():
         if len(milestones_raw) > 20:
             return jsonify({"error": "milestones may not exceed 20 items"}), 400
         for m in milestones_raw:
+            if not isinstance(m, dict):
+                return jsonify({"error": "Each milestone must be an object"}), 400
             if not isinstance(m.get("amount"), (int, float)) or m["amount"] <= 0:
                 return jsonify({"error": "Each milestone amount must be a positive number"}), 400
             label = m.get("label", "")
@@ -2253,8 +2280,8 @@ def save_retirement():
                 desired_income,
                 monthly_contribution,
                 expected_return,
-                body.get("inflation_rate_pct", 2.5),
-                body.get("social_security_annual", 0.0),
+                inflation_rate if inflation_rate is not None else 2.5,
+                ss_annual if ss_annual is not None else 0.0,
                 withdrawal_rate if withdrawal_rate is not None else 4.0,
                 milestones_json,
             ),

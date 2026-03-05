@@ -17,6 +17,7 @@ export default function NetWorthPage() {
   const [lastUpdated, setLastUpdated] = useState(null)
   const [loading,     setLoading]     = useState(true)
   const [retirementLoading, setRetirementLoading] = useState(false)
+  const [retirementError, setRetirementError] = useState(null)
 
   function loadDashboardData() {
     setError(null)
@@ -42,12 +43,13 @@ export default function NetWorthPage() {
 
   const handleSaveRetirement = useCallback(async (data) => {
     setRetirementLoading(true)
+    setRetirementError(null)
     try {
       await saveRetirement(data)
       const updated = await fetchRetirement()
       setRetirement(updated)
     } catch (err) {
-      console.error('Failed to save retirement settings', err)
+      setRetirementError(err.message || 'Failed to save retirement settings')
     } finally {
       setRetirementLoading(false)
     }
@@ -103,6 +105,7 @@ export default function NetWorthPage() {
             data={retirement}
             onSave={handleSaveRetirement}
             loading={retirementLoading}
+            error={retirementError}
           />
         </>
       )}

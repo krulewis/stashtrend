@@ -92,3 +92,11 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.errorMsg {
+  color: var(--color-negative);
+  font-size: 13px;
+  padding: 8px 12px;
+  background: var(--bg-error-subtle);
+  border-radius: 6px;
+}

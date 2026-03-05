@@ -5,7 +5,7 @@ import MilestoneEditor from './MilestoneEditor.jsx'
 import RetirementSummary from './RetirementSummary.jsx'
 import { computeNestEgg } from '../utils/retirementMath.js'
 
-export default function RetirementPanel({ data, onSave, loading }) {
+export default function RetirementPanel({ data, onSave, loading, error }) {
   const [currentAge, setCurrentAge] = useState('')
   const [targetAge, setTargetAge] = useState('')
   const [desiredIncome, setDesiredIncome] = useState('')
@@ -44,15 +44,17 @@ export default function RetirementPanel({ data, onSave, loading }) {
       .filter((m) => m.amount !== '' && m.amount != null)
       .map((m) => ({ amount: Number(m.amount), label: m.label || '' }))
 
+    const toNum = (v) => (v === '' || v == null ? null : Number(v))
+
     onSave({
-      current_age: Number(currentAge) || null,
-      target_retirement_age: Number(targetAge) || null,
-      desired_annual_income: Number(desiredIncome) || null,
-      monthly_contribution: Number(monthlyContrib) || null,
-      expected_return_pct: Number(returnPct) || null,
+      current_age: toNum(currentAge),
+      target_retirement_age: toNum(targetAge),
+      desired_annual_income: toNum(desiredIncome),
+      monthly_contribution: toNum(monthlyContrib),
+      expected_return_pct: toNum(returnPct),
       inflation_rate_pct: 2.5,
-      social_security_annual: Number(ssAnnual) || 0,
-      withdrawal_rate_pct: Number(withdrawalRate) || 4.0,
+      social_security_annual: toNum(ssAnnual) ?? 0,
+      withdrawal_rate_pct: toNum(withdrawalRate) ?? 4.0,
       milestones: parsedMilestones,
     })
   }
@@ -166,6 +168,8 @@ export default function RetirementPanel({ data, onSave, loading }) {
 
       <RetirementSummary nestEgg={nestEgg} targetYear={targetYear} />
 
+      {error && <div className={styles.errorMsg}>{error}</div>}
+
       <div className={styles.actions}>
         <button
           className={styles.btnPrimary}
@@ -183,4 +187,5 @@ RetirementPanel.propTypes = {
   data: PropTypes.object,
   onSave: PropTypes.func.isRequired,
   loading: PropTypes.bool,
+  error: PropTypes.string,
 }
