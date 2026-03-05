@@ -19,7 +19,7 @@
 
 .title {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
   margin: 0 0 16px;
 }
@@ -65,10 +65,10 @@
 
 .sectionLabel {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 400;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 2px;
 }
 
 @media (min-width: 768px) {
@@ -78,7 +78,7 @@
 /* sectionTotal color is data-driven (green / red) — set via inline style */
 .sectionTotal {
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 @media (min-width: 768px) {
@@ -118,7 +118,7 @@
 
 .groupTotal {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 400;
   color: var(--text-primary);
 }
 

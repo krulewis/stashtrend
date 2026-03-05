@@ -22,7 +22,7 @@
 
 .title {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
   margin: 0;
 }
@@ -43,7 +43,7 @@
 
 .totalAmt {
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: 400;
   margin-left: 4px;
 }
 
@@ -134,7 +134,7 @@
 
 .tableAmt {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 400;
   color: var(--text-primary);
 }
 

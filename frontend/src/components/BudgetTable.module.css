@@ -7,14 +7,14 @@
 
 .title {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
   margin: 0 0 var(--sp-4) 0;
 }
 
 .detailTitle {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-muted);
   margin: 24px 0 12px;
 }
@@ -36,7 +36,7 @@
 .summaryMonthHeader {
   padding: 6px 12px;
   color: var(--text-muted);
-  font-weight: 600;
+  font-weight: 500;
   font-size: 12px;
   text-align: right;
   white-space: nowrap;
@@ -45,7 +45,7 @@
 
 .summaryRowLabel {
   padding: 9px 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
   white-space: nowrap;
   min-width: 160px;
@@ -87,7 +87,7 @@
 .catHeader, .monthHeader {
   padding: 8px 12px;
   color: var(--text-muted);
-  font-weight: 600;
+  font-weight: 500;
   border-bottom: 1px solid var(--border);
   text-align: left;
   white-space: nowrap;
@@ -116,9 +116,9 @@
 .groupRow td {
   padding: 6px 12px;
   color: var(--text-secondary);
-  font-weight: 600;
+  font-weight: 500;
   font-size: 12px;
-  letter-spacing: 0.04em;
+  letter-spacing: 2px;
   text-transform: uppercase;
 }
 .groupToggle { display: inline-block; margin-right: 8px; font-size: 10px; }
@@ -164,16 +164,16 @@
 }
 
 /* Section header (Income / Expenses) */
-.sectionHeader { background: var(--bg-table-alt); }
+.sectionHeader { background: var(--bg-surface); }
 .sectionHeader td {
   padding: 8px 12px;
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: 500;
+  letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--accent);
 }
 
 /* Net colors (used in summary table) */
-.netPositive { color: var(--green); font-weight: 600; }
-.netNegative { color: var(--red);   font-weight: 600; }
+.netPositive { color: var(--green); font-weight: 400; }
+.netNegative { color: var(--red);   font-weight: 400; }
