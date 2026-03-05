@@ -117,6 +117,20 @@ JSX conditionals render separate text nodes; use a custom `el.textContent` funct
 **Fix:** When a card has a `change` value, display the delta as the hero (e.g., `+$5,000`) instead of the current net worth. Percentage and sublabel remain below.
 **Rule:** Comparison cards should lead with the comparison metric (the delta), not repeat the base value. The base value belongs on a single "current state" card.
 
+### JS Date Mutation Drift in Projection Loops
+**Where:** `retirementMath.js` — `generateProjectionSeries()`
+**Symptom:** Monthly projection series drifts by ±1 day over long periods (30+ years) when using `date.setMonth(date.getMonth() + 1)` on a shared Date object.
+**Root cause:** `setMonth()` mutates in place. Months with 31 days can roll forward (e.g., Jan 31 → Mar 3), accumulating drift.
+**Fix:** Construct a fresh Date each iteration: `new Date(startYear, startMonth + i, 1)` — always lands on the 1st.
+**Rule:** Never use `setMonth()`/`setDate()` in loops. Create new Date objects from integer arithmetic.
+
+### Division by Zero in Financial Formulas
+**Where:** `retirementMath.js` — `computeNestEgg()`
+**Symptom:** `Infinity` or `NaN` when withdrawal rate is 0.
+**Root cause:** Safe withdrawal rate formula divides by `withdrawalRatePct / 100`.
+**Fix:** Guard `if (withdrawalRatePct <= 0) return null`. Callers display "—" for null.
+**Rule:** Financial math functions must guard against zero denominators and return null (not throw) for invalid inputs. UI renders null as "—".
+
 ### Generic Conflict Messages Create Investigation Overhead
 **Where:** `GroupSnapshotControls.jsx` chip `title` attribute.
 **Symptom:** Tooltip said "Shares an account with a selected group" — user couldn't tell which group conflicted with which, making group definition problems impossible to self-diagnose.

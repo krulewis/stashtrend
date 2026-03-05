@@ -292,3 +292,22 @@ export const MOCK_APPLY_PARTIAL = { applied: 4, failed: 2, errors: [
   { category_id: 'cat_1', month: '2026-05-01', error: 'Timeout' },
   { category_id: 'cat_1', month: '2026-06-01', error: 'Timeout' },
 ]}
+
+// ── Retirement / Milestones ───────────────────────────────────────────────
+export const MOCK_RETIREMENT_EMPTY = { exists: false }
+
+export const MOCK_RETIREMENT = {
+  exists: true,
+  current_age: 35,
+  target_retirement_age: 65,
+  desired_annual_income: 80000,
+  monthly_contribution: 2000,
+  expected_return_pct: 7.0,
+  inflation_rate_pct: 2.5,
+  social_security_annual: 12000,
+  withdrawal_rate_pct: 4.0,
+  milestones: [
+    { label: 'Half-Mil', amount: 500000 },
+    { label: 'First Million', amount: 1000000 },
+  ],
+}
