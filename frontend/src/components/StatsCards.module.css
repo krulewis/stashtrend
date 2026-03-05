@@ -24,7 +24,7 @@
 }
 
 .card:hover {
-  border-color: rgba(77, 159, 255, 0.25);
+  border-color: var(--accent-border-hover);
 }
 
 @media (min-width: 768px) {
