@@ -29,7 +29,7 @@
 
 All colors in CSS module files MUST use CSS custom properties defined in `index.css`. Never use hardcoded hex values. The token system includes:
 
-- **Backgrounds:** `--bg-root` (#0A0F1E), `--bg-card` (#1C2333), `--bg-deep`, `--bg-sunken`, `--bg-hover`, `--bg-inset`, `--bg-raised` (#1E2D4A), `--bg-surface` (#111827), `--bg-table-active`
+- **Backgrounds:** `--bg-root` (#0A0F1E), `--bg-card` (#1C2333), `--bg-deep`, `--bg-sunken`, `--bg-hover`, `--bg-inset`, `--bg-raised` (#1E2D4A), `--bg-surface` (#111827), `--bg-table-active`, `--bg-glass` (rgba --bg-root at 90% for frosted glass), `--bg-frosted` (rgba --bg-root at 85% for frosted header glass)
 - **Borders:** `--border` (#1E2D4A), `--border-sub`, `--border-mid`, `--border-focus` (#4D9FFF), `--border-error`
 - **Text:** `--text-primary` (#F0F6FF), `--text-secondary` (#8BA8CC), `--text-muted` (#4A6080), `--text-faint` (#2B4060), `--text-bright`, `--text-subtle`
 - **Accent:** `--accent` (#4D9FFF), `--accent-hover`/`--accent-600` (#2B7FE0), `--accent-light`/`--accent-300` (#7DBFFF), `--accent-wash`/`--accent-200` (#99CCFF), `--accent-glow`
@@ -42,8 +42,17 @@ All colors in CSS module files MUST use CSS custom properties defined in `index.
 - **Radius (new):** `--radius-btn-lg` (10px), `--radius-feature` (14px), `--radius-pill` (9999px)
 - **Accent scale aliases:** `--accent-200` (→accent-wash), `--accent-300` (→accent-light), `--accent-600` (→accent-hover)
 - **Accent tint:** `--accent-tint` (rgba(77,159,255,0.12))
+- **Accent border hover:** `--accent-border-hover` (rgba(77,159,255,0.25)) — card hover glow
 
-**Recharts hardcoded hex:** Charts use raw hex because SVG attrs don't support CSS vars. Constants in `chartUtils.jsx`: `COLOR_ACCENT` (#4D9FFF), `COLOR_POSITIVE` (#2ECC8A), `COLOR_NEGATIVE` (#FF5A7A), `COLOR_AMBER` (#F5A623), `AXIS_TICK` fill (#4A6080), `GRID_STROKE` (#1E2D4A), `TOOLTIP_STYLE` bg (#1C2333). Backend `BUCKET_COLORS` in `app.py` must stay in sync.
+**Recharts hardcoded hex:** Charts use raw hex because SVG attrs don't support CSS vars. Constants in `chartUtils.jsx`: `COLOR_ACCENT` (#4D9FFF), `COLOR_POSITIVE` (#2ECC8A), `COLOR_NEGATIVE` (#FF5A7A), `COLOR_AMBER` (#F5A623), `AXIS_TICK` (`{ fill: '#4A6080', fontSize: 11 }`), `GRID_STROKE` (#1E2D4A), `TOOLTIP_STYLE` bg (#1C2333). Backend `BUCKET_COLORS` in `app.py` must stay in sync. All chart axis ticks must use `AXIS_TICK` (not hardcoded `#94a3b8`) — `BudgetChart` corrected in PR3.
+
+**Custom Recharts tick renderers:** When per-tick styling is needed (e.g. highlighting current month in cobalt), use a custom `tick={<ComponentFn />}` prop instead of `tickFormatter`. The component receives `{ x, y, payload }` and returns SVG `<text>`. Drop `tickFormatter` when using a custom tick component — the component handles both formatting and coloring. See `MonthTick` in `BudgetChart.jsx` as the reference implementation.
+
+**Frosted glass backgrounds (PR3):** Apply backdrop blur with `backdrop-filter: blur(16px)` on elements with `background: var(--bg-frosted)`. Use for floating headers or layered UI that sits atop content. Example: `App.module.css` `.header`.
+
+**AI pulse dot animation (PR3):** Add animated indicator dots to AI panels. Use `@keyframes aiPulse` (0%/100%: opacity 1, 50%: opacity 0.35) with 2s ease-in-out. Apply via `::before` pseudo-element on the flex container: `content: ''`, `width/height: 6px`, `border-radius: 50%`, `background: var(--accent)`, `flex-shrink: 0`. Example: `AIAnalysisPanel.module.css` `.badges::before`.
+
+**Cobalt glow pseudo-elements (PR3):** Create depth/emphasis with subtle radial gradient glows. Pattern: `::before` pseudo-element with `position: absolute`, `z-index: 0`, `pointer-events: none`, `background: radial-gradient(ellipse at center, var(--accent-tint) 0%, transparent 70%)`. Parent must have `position: relative`; children need `position: relative; z-index: 1` to stack above the glow. Sizing varies by context: use `inset` with negative offsets for bleed-out glows (NetWorthPage `.pageHeader::before`), or explicit pixel dimensions for full-page ambient glows (SetupPage `.root::before`).
 
 ## Frontend
 - **Named API exports:** All API calls go through named exports in `api.js` (e.g. `fetchGroups()`, `saveGroupsConfigs()`). Pages must never use raw `fetchJSON`/`postJSON` with URL strings — those are internal helpers.

@@ -95,12 +95,30 @@
 }
 
 .badge {
-  background: var(--border);
+  background: var(--accent-tint);
   color: var(--accent-wash);
   font-size: 12px;
   font-weight: 500;
   padding: 3px 10px;
-  border-radius: 100px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--accent-border-hover);
+}
+
+@keyframes aiPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+.badges::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  align-self: center;
+  animation: aiPulse 2s ease-in-out infinite;
+  flex-shrink: 0;
 }
 
 /* ── Config form ── */

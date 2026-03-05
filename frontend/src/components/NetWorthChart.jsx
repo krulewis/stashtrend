@@ -4,7 +4,7 @@ import { AreaChart, Area, ResponsiveContainer, Legend, ReferenceLine } from 'rec
 import styles from './NetWorthChart.module.css'
 import { useResponsive } from '../hooks/useResponsive.js'
 import RangeSelector from './RangeSelector.jsx'
-import { fmtFull, filterByRange, downsample, GRID_STROKE, COMMON_RANGES, sharedChartElements, TOOLTIP_STYLE, COLOR_ACCENT, COLOR_POSITIVE, COLOR_NEGATIVE } from './chartUtils.jsx'
+import { fmtFull, filterByRange, downsample, GRID_STROKE, COMMON_RANGES, sharedChartElements, TOOLTIP_STYLE, COLOR_ACCENT, COLOR_POSITIVE, COLOR_NEGATIVE, AXIS_TICK } from './chartUtils.jsx'
 
 const RANGES = [{ label: '1M', months: 1 }, ...COMMON_RANGES]
 
@@ -68,7 +68,7 @@ export default function NetWorthChart({ history, milestones }) {
           <AreaChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
             <defs>
               <linearGradient id="gradNW" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={COLOR_ACCENT} stopOpacity={0.3} />
+                <stop offset="5%" stopColor={COLOR_ACCENT} stopOpacity={0.18} />
                 <stop offset="95%" stopColor={COLOR_ACCENT} stopOpacity={0} />
               </linearGradient>
               <linearGradient id="gradAssets" x1="0" y1="0" x2="0" y2="1">
@@ -111,9 +111,9 @@ export default function NetWorthChart({ history, milestones }) {
               strokeWidth={2.5}
               fill="url(#gradNW)"
               dot={false}
-              activeDot={{ r: 5, fill: COLOR_ACCENT }}
+              activeDot={{ r: 4, fill: COLOR_ACCENT, stroke: COLOR_ACCENT, strokeWidth: 8, strokeOpacity: 0.3 }}
             />
-            {showBreakdown && <Legend iconType="line" wrapperStyle={{ color: '#94a3b8', fontSize: 13 }} />}
+            {showBreakdown && <Legend iconType="line" wrapperStyle={{ color: AXIS_TICK.fill, fontSize: 13 }} />}
             {milestones && milestones.map((m, i) => (
               <ReferenceLine
                 key={`milestone-${i}`}

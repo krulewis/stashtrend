@@ -18,6 +18,7 @@
   --bg-surface: #111827; /* Surface elevation tier */
   --bg-table-active: #1C233344; /* semi-transparent active/selected row */
   --bg-glass:  rgba(10,15,30,0.9); /* --bg-root at 90% for frosted glass */
+  --bg-frosted: rgba(10,15,30,0.85); /* frosted glass header — bg-root at 85% */
 
   /* ─── Border colours ─────────────────────────────────────────────────── */
   --border:       #1E2D4A;

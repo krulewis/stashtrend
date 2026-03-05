@@ -5,6 +5,20 @@
   justify-content: center;
   background: var(--bg-root);
   padding: 1.5rem;
+  position: relative;
+}
+
+.root::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 400px;
+  background: radial-gradient(ellipse at center, var(--accent-tint) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .card {
@@ -15,6 +29,8 @@
   max-width: 480px;
   width: 100%;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  position: relative;
+  z-index: 1;
 }
 
 .logo {

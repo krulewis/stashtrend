@@ -5,7 +5,32 @@ import {
 } from 'recharts'
 import { useResponsive } from '../hooks/useResponsive.js'
 import styles from './BudgetChart.module.css'
-import { GRID_STROKE, COLOR_ACCENT, COLOR_POSITIVE, COLOR_AMBER, fmtFull, fmtCompact, fmtBudgetMonth, TOOLTIP_STYLE } from './chartUtils.jsx'
+import { GRID_STROKE, COLOR_ACCENT, COLOR_POSITIVE, COLOR_AMBER, fmtFull, fmtCompact, fmtBudgetMonth, TOOLTIP_STYLE, AXIS_TICK } from './chartUtils.jsx'
+
+// MonthTick: custom XAxis tick that highlights the current month in cobalt.
+// Exception to no-new-components anti-goal: approved by user — purely a display
+// renderer with no state, no API calls, and no logic beyond date comparison.
+function MonthTick({ x, y, payload }) {
+  const now = new Date()
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+  const isCurrent = payload.value === currentMonth
+  return (
+    <text
+      x={x}
+      y={y + 10} /* offset below axis line */
+      textAnchor="middle"
+      fill={isCurrent ? COLOR_ACCENT : AXIS_TICK.fill}
+      fontSize={11}
+    >
+      {fmtBudgetMonth(payload.value)}
+    </text>
+  )
+}
+MonthTick.propTypes = {
+  x: PropTypes.number,
+  y: PropTypes.number,
+  payload: PropTypes.shape({ value: PropTypes.string }),
+}
 
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
@@ -48,16 +73,15 @@ export default function BudgetChart({ months, totalsByMonth, incomeTotalsByMonth
           <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
           <XAxis
             dataKey="month"
-            tickFormatter={fmtBudgetMonth}
-            tick={{ fill: '#94a3b8', fontSize: 12 }}
+            tick={<MonthTick />}
           />
           <YAxis
             tickFormatter={fmtCompact}
-            tick={{ fill: '#94a3b8', fontSize: 12 }}
+            tick={AXIS_TICK}
             width={52}
           />
           <Tooltip content={<CustomTooltip />} />
-          <Legend wrapperStyle={{ color: '#94a3b8', fontSize: 13 }} />
+          <Legend wrapperStyle={{ color: AXIS_TICK.fill, fontSize: 13 }} />
           {incomeTotalsByMonth && (
             <Bar dataKey="Income" fill={COLOR_AMBER} radius={[3, 3, 0, 0]} />
           )}
