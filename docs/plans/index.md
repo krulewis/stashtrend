@@ -17,11 +17,29 @@ Full requirements: `plans/investment-forecasting-requirements.md`
 |-------|-------|------|--------|
 | **0** | Sync holdings data from Monarch API (new `holdings` DB table + pipeline) | M | **Done** (PR #3) |
 | **1** | NW by account type + CAGR estimates on existing Net Worth page | M | **Done** (PR #4) |
-| **2** | NW milestones + retirement target tracker on Net Worth page | M | **In Progress** |
+| **2** | NW milestones + retirement target tracker on Net Worth page | M | **Done** (PR #5, merged) |
+| **2.1** | Fix retirement tracker to use investable capital, not total NW | S | **Next** |
 | **3** | New Investments page — account-level performance dashboard + holdings drill-down | L | Planned |
 | **4** | New Forecasting page — simple projections + retirement planner | L | Planned |
 | **5** | Monte Carlo simulation + AI narrative layer on Forecasting page | M | Planned |
 | **6** | Benchmark comparison vs S&P 500 (nice-to-have) | S | Planned |
+
+### Phase 2.1 — Retirement Tracker: Investable Capital Fix
+
+**Problem:** Phase 2 placed milestone markers on the NW Over Time chart and compares nest egg targets against total net worth. This is incorrect — total NW includes home equity, vehicles, and other illiquid assets that don't fund retirement. A user with $1M NW but $400K in retirement accounts isn't on track for a $2M nest egg target, even though the chart makes it look close.
+
+**Correct model:** Retirement readiness = **Retirement + Brokerage account balances** (investable/spendable capital). This is the sum that the 4% safe withdrawal rate applies to.
+
+**Changes needed:**
+1. **Move milestone ReferenceLines** from `NetWorthChart` → `TypeStackedChart` (or a new dedicated chart), plotted against the Retirement + Brokerage bucket sum
+2. **Nest egg / on-track calculation** should compare against current Retirement + Brokerage balance (available from `/api/networth/by-type` data), not total NW
+3. **RetirementSummary** should display current investable capital as the baseline metric
+4. **RetirementPanel** may need a `typeData` prop to access bucket balances for the computation
+5. **Projection series** (when wired in Phase 4) should project investable capital growth, not total NW
+
+**What stays the same:** retirement_settings table, form inputs, MilestoneEditor, save/load flow, computeNestEgg math, backend endpoints.
+
+**Size:** S — mostly moving where milestones render and what balance they compare against. No new endpoints, no new tables, no new components.
 
 ### Future / Deferred
 - FIRE number calculator (calculate financial independence number from expenses, show progress)

@@ -105,6 +105,20 @@ JSX conditionals render separate text nodes; use a custom `el.textContent` funct
 **Fix:** Apply `_sanitize_prompt_field()` at prompt construction time, not at save time. Both saved profile fields and overrides get sanitized.
 **Rule:** Input sanitization for AI prompts must happen at the point of prompt construction, not at the point of data storage.
 
+### Net Worth ≠ Retirement Capital (Phase 2.1 fix planned)
+**Where:** RetirementPanel + NetWorthChart milestone markers
+**Symptom:** Milestone lines on NW chart and nest egg on-track comparison use total net worth ($1.08M), which includes home equity, vehicles, and illiquid assets. A user appears close to a $1M milestone when their actual investable capital (Retirement + Brokerage) is only ~$975K.
+**Root cause:** Phase 2 conflated net worth with spendable retirement capital. The safe withdrawal rate (4% rule) only applies to investable assets, not total NW.
+**Fix:** Phase 2.1 — move milestones to TypeStackedChart (Retirement + Brokerage buckets), compare nest egg target against investable capital sum.
+**Rule:** Financial planning features must distinguish between total net worth and investable/spendable capital. Retirement readiness = liquid investment accounts only.
+
+### APScheduler Stub Missing `running` Property (Fixed)
+**Where:** `app.py` — `BackgroundScheduler` no-op stub (lines 27-33)
+**Symptom:** `AttributeError: 'BackgroundScheduler' object has no attribute 'running'` on startup when APScheduler is not installed.
+**Root cause:** The stub class used when APScheduler is absent didn't define the `running` property that `_startup()` checks.
+**Fix:** Added `running = False` class attribute and `self.running = True` in `start()`.
+**Rule:** When stubbing out an optional dependency, include ALL attributes/methods that production code references — not just the ones used in endpoints.
+
 ### desloppify False Positives for JSX Imports
 **Where:** `desloppify scan` on `frontend/` directory.
 **Symptom:** ~237 findings across `unused`, `orphaned`, and `test_coverage` detectors flagging JSX components as unused/untested.
