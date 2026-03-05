@@ -11,12 +11,14 @@ export default function RetirementSummary({ nestEgg, projectedAtRetirement, targ
           {nestEgg != null ? fmtFull(nestEgg) : '—'}
         </span>
       </div>
-      <div className={styles.row}>
-        <span className={styles.label}>Projected at retirement</span>
-        <span className={styles.value} data-testid="projected-value">
-          {projectedAtRetirement != null ? fmtFull(projectedAtRetirement) : '—'}
-        </span>
-      </div>
+      {projectedAtRetirement != null && (
+        <div className={styles.row}>
+          <span className={styles.label}>Projected at retirement</span>
+          <span className={styles.value} data-testid="projected-value">
+            {fmtFull(projectedAtRetirement)}
+          </span>
+        </div>
+      )}
       <div className={styles.row}>
         <span className={styles.label}>Target year</span>
         <span className={styles.value} data-testid="target-year">

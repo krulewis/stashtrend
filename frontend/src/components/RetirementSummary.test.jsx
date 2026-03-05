@@ -18,9 +18,9 @@ describe('RetirementSummary', () => {
     expect(screen.getByTestId('nest-egg-value').textContent).toContain('1,700,000')
   })
 
-  it('shows dash for projectedAtRetirement when null', () => {
+  it('hides projected row when projectedAtRetirement is null', () => {
     render(<RetirementSummary projectedAtRetirement={null} />)
-    expect(screen.getByTestId('projected-value').textContent).toBe('—')
+    expect(screen.queryByTestId('projected-value')).toBeNull()
   })
 
   it('shows formatted projectedAtRetirement when provided', () => {

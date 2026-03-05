@@ -12,6 +12,7 @@ import {
   fetchBuilderRegional, saveBuilderRegional, fetchRegionalFromAI,
   generateBudgetPlan, fetchBuilderPlans, fetchBuilderPlan,
   updateBuilderPlan, deleteBuilderPlan, applyBuilderPlan,
+  fetchRetirement, saveRetirement,
 } from './api.js'
 
 beforeEach(() => {
@@ -133,6 +134,7 @@ describe('GET endpoint contracts', () => {
     ['fetchBuilderRegional', () => fetchBuilderRegional(),      '/api/budget-builder/regional'],
     ['fetchBuilderPlans',    () => fetchBuilderPlans(),         '/api/budget-builder/plans'],
     ['fetchBuilderPlan',     () => fetchBuilderPlan(1),         '/api/budget-builder/plans/1'],
+    ['fetchRetirement',      () => fetchRetirement(),            '/api/retirement'],
   ])('%s calls GET %s', async (_name, invoke, expectedUrl) => {
     global.fetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) })
     await invoke()
@@ -157,6 +159,7 @@ describe('Mutating endpoint contracts', () => {
     ['updateBuilderPlan',   () => updateBuilderPlan(1, { name: 'X' }),  'PUT',  '/api/budget-builder/plans/1'],
     ['deleteBuilderPlan',   () => deleteBuilderPlan(1),                 'DELETE', '/api/budget-builder/plans/1'],
     ['applyBuilderPlan',    () => applyBuilderPlan(1),                  'POST',  '/api/budget-builder/plans/1/apply'],
+    ['saveRetirement',     () => saveRetirement({ current_age: 35 }),  'POST',  '/api/retirement'],
   ])('%s sends %s to %s', async (_name, invoke, method, expectedUrl) => {
     global.fetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) })
     await invoke()
