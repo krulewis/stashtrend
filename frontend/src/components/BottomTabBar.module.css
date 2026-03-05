@@ -31,7 +31,7 @@
   font-size: 10px;
   font-weight: 500;
   padding: var(--sp-2) var(--sp-1);
-  transition: color var(--ease-default);
+  transition: color var(--ease-quick);
 }
 
 .tabIcon {

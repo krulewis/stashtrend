@@ -12,7 +12,7 @@
 
 .sectionLabel {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 400;
   color: var(--text-secondary);
   display: flex;
   align-items: center;

@@ -21,7 +21,7 @@
 
 .title {
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 400;
   color: var(--text-primary);
   margin: 0;
 }
@@ -75,7 +75,7 @@
 
 .errorTitle {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--red);
   margin-bottom: 6px;
 }

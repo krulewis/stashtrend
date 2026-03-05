@@ -33,7 +33,7 @@
 
 .title {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
   margin: 0;
 }
@@ -61,7 +61,7 @@
 
 .cagrTitle {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
   margin: 0 0 8px 0;
   display: flex;

@@ -37,10 +37,10 @@
 
 .table th {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 2px;
 }
 
 .catHeader {
@@ -52,7 +52,7 @@
 }
 
 .groupRow td {
-  font-weight: 600;
+  font-weight: 500;
   font-size: 12px;
   color: var(--text-secondary);
   background: var(--bg-card);
@@ -101,7 +101,7 @@
 }
 
 .totalRow td {
-  font-weight: 700;
+  font-weight: 400;
   border-top: 2px solid var(--border);
   color: var(--text-primary);
 }
@@ -179,7 +179,7 @@
 
 .confirmTitle {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: 8px;
 }
 
