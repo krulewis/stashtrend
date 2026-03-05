@@ -17,7 +17,7 @@ Full requirements: `plans/investment-forecasting-requirements.md`
 |-------|-------|------|--------|
 | **0** | Sync holdings data from Monarch API (new `holdings` DB table + pipeline) | M | **Done** (PR #3) |
 | **1** | NW by account type + CAGR estimates on existing Net Worth page | M | **Done** (PR #4) |
-| **2** | NW milestones + retirement target tracker on Net Worth page | M | Planned |
+| **2** | NW milestones + retirement target tracker on Net Worth page | M | **In Progress** |
 | **3** | New Investments page — account-level performance dashboard + holdings drill-down | L | Planned |
 | **4** | New Forecasting page — simple projections + retirement planner | L | Planned |
 | **5** | Monte Carlo simulation + AI narrative layer on Forecasting page | M | Planned |

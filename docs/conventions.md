@@ -4,7 +4,9 @@
 - **snake_case/camelCase:** backend always snake_case; frontend destructures with alias
   - e.g. `const { groups_meta: groupsMeta } = data`
 - **Upsert pattern:** `ON CONFLICT(key) DO UPDATE SET value = excluded.value`
-- **Singleton tables:** Use `CHECK (id = 1)` for single-row config tables (e.g. `budget_builder_profile`, `budget_builder_regional`). Upsert with `INSERT ... ON CONFLICT(id) DO UPDATE SET ...`.
+- **Singleton tables:** Use `CHECK (id = 1)` for single-row config tables (e.g. `budget_builder_profile`, `budget_builder_regional`, `retirement_settings`). Upsert with `INSERT ... ON CONFLICT(id) DO UPDATE SET ...`.
+- **JSON text columns:** Store structured data (e.g. milestones) as JSON text. Deserialize with `json.loads()` on GET, serialize with `json.dumps()` on POST. Always handle `None`/empty → `[]` on read.
+- **Null-safe math functions:** Functions like `computeNestEgg()` return `null` for invalid inputs (e.g. division by zero when withdrawalRate ≤ 0) rather than throwing. Callers render "—" for null results.
 
 ## Design System — Dark Cobalt
 

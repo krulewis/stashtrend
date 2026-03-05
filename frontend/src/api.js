@@ -72,3 +72,7 @@ export const fetchBuilderPlan = (id) => fetchJSON(`/api/budget-builder/plans/${i
 export const updateBuilderPlan = (id, data) => mutateJSON(`/api/budget-builder/plans/${id}`, 'PUT', data)
 export const deleteBuilderPlan = (id) => mutateJSON(`/api/budget-builder/plans/${id}`, 'DELETE', undefined)
 export const applyBuilderPlan = (id) => postJSON(`/api/budget-builder/plans/${id}/apply`, {})
+
+// ── Retirement / Milestones ───────────────────────────────────────────────
+export const fetchRetirement = () => fetchJSON('/api/retirement')
+export const saveRetirement = (data) => postJSON('/api/retirement', data)

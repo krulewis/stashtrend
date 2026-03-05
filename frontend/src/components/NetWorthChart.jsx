@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import PropTypes from 'prop-types'
-import { AreaChart, Area, ResponsiveContainer, Legend } from 'recharts'
+import { AreaChart, Area, ResponsiveContainer, Legend, ReferenceLine } from 'recharts'
 import styles from './NetWorthChart.module.css'
 import { useResponsive } from '../hooks/useResponsive.js'
 import RangeSelector from './RangeSelector.jsx'
@@ -30,7 +30,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   )
 }
 
-export default function NetWorthChart({ history }) {
+export default function NetWorthChart({ history, milestones }) {
   const [range, setRange] = useState('1Y')
   const [showBreakdown, setShowBreakdown] = useState(false)
   const { isMobile } = useResponsive()
@@ -114,6 +114,15 @@ export default function NetWorthChart({ history }) {
               activeDot={{ r: 5, fill: COLOR_ACCENT }}
             />
             {showBreakdown && <Legend iconType="line" wrapperStyle={{ color: '#94a3b8', fontSize: 13 }} />}
+            {milestones && milestones.map((m) => (
+              <ReferenceLine
+                key={m.label || m.amount}
+                y={m.amount}
+                stroke="#F5A623"
+                strokeDasharray="4 3"
+                label={m.label || ''}
+              />
+            ))}
           </AreaChart>
         </ResponsiveContainer>
       )}
@@ -127,5 +136,9 @@ NetWorthChart.propTypes = {
     net_worth: PropTypes.number,
     assets: PropTypes.number,
     liabilities: PropTypes.number,
+  })),
+  milestones: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    amount: PropTypes.number,
   })),
 }

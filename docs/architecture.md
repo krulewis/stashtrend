@@ -23,6 +23,12 @@
   - CAGR: aggregate-balance approximation `(end/start)^(1/years) - 1` for 1Y/3Y/5Y. Null for <30 days non-zero history. UI tooltip: "Estimated CAGR — actual returns may differ."
   - **Dual-axis chart:** Left YAxis for positive buckets (stacked), Right YAxis for Debt (absolute values, minus-prefixed ticks). `NEGATIVE_BUCKETS` Set in TypeStackedChart.jsx. CustomTooltip negates values back for display.
   - **AccountsBreakdown:** Groups by `bucket` field (from API) instead of raw Monarch `type`. API adds `bucket` via `_get_bucket()`.
+- **NW Milestones + Retirement Tracker (Phase 2):** COMPLETE ✅
+  - Backend: `retirement_settings` singleton table (`CHECK (id = 1)`), `GET /api/retirement` + `POST /api/retirement` endpoints. Milestones stored as JSON text column, deserialized with `json.loads()` on GET. Validation: both ages required (positive int ≤120), target > current, withdrawal_rate ≤100, return_pct ≤50, milestones max 20 with positive amounts and labels ≤100 chars.
+  - Frontend utility: `retirementMath.js` — `computeNestEgg()` (safe withdrawal rate with division-by-zero guard → returns null), `generateProjectionSeries()` (compound growth, fresh `new Date(year, month+i, 1)` per iteration to prevent drift), `mergeHistoryWithProjection()` (Map-based date-keyed merge).
+  - Components: `RetirementPanel.jsx` (form container, useEffect hydration, onSave callback), `MilestoneEditor.jsx` (editable milestone rows, add/remove, max 20), `RetirementSummary.jsx` (nest egg, projected amount, on/off track badge with `color-mix()`).
+  - Integration: `NetWorthChart.jsx` renders `<ReferenceLine>` per milestone (amber dashed). `NetWorthPage.jsx` fetches retirement in `Promise.all` with `.catch(() => ({ exists: false }))` for graceful degradation.
+  - Tests: 16 backend + 47 frontend = 63 new tests.
 
 ## Design System — Dark Cobalt
 - **Logo:** SVG bar chart + trend arrow + "STASHTREND" wordmark at `frontend/src/assets/stashtrend-logo.svg`. Rendered as `<img>` in App.jsx and SetupPage.jsx. Header: 48px mobile / 64px desktop.

@@ -26,8 +26,9 @@ try:
 except ImportError:  # pragma: no cover
     class BackgroundScheduler:  # type: ignore[no-redef]
         """No-op stub used when APScheduler is not installed (e.g., test sandbox)."""
+        running = False
         def __init__(self, **kwargs): pass
-        def start(self): pass
+        def start(self): self.running = True
         def get_job(self, job_id): return None
         def add_job(self, *args, **kwargs): pass
         def remove_job(self, job_id): pass
@@ -155,6 +156,20 @@ CREATE TABLE IF NOT EXISTS budget_builder_plans (
     user_edited_at  TEXT,
     applied_at      TEXT,
     created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS retirement_settings (
+    id                      INTEGER PRIMARY KEY CHECK (id = 1),
+    current_age             INTEGER,
+    target_retirement_age   INTEGER,
+    desired_annual_income   REAL,
+    monthly_contribution    REAL,
+    expected_return_pct     REAL,
+    inflation_rate_pct      REAL    DEFAULT 2.5,
+    social_security_annual  REAL    DEFAULT 0.0,
+    withdrawal_rate_pct     REAL    DEFAULT 4.0,
+    milestones              TEXT,
+    updated_at              TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 """
 
@@ -2139,6 +2154,116 @@ def apply_builder_plan(plan_id):
         conn.commit()
 
     return jsonify({"applied": applied, "failed": failed, "errors": errors})
+
+
+# ===========================================================================
+# Retirement / Milestones
+# ===========================================================================
+
+@app.route("/api/retirement")
+def get_retirement():
+    conn = get_db()
+    row = conn.execute("SELECT * FROM retirement_settings WHERE id = 1").fetchone()
+    if not row:
+        return jsonify({"exists": False})
+    data = dict(row)
+    data["exists"] = True
+    data["milestones"] = json.loads(data["milestones"]) if data["milestones"] else []
+    return jsonify(data)
+
+
+@app.route("/api/retirement", methods=["POST"])
+def save_retirement():
+    body = request.get_json() or {}
+
+    # Finding #1: validate both ages present and are positive integers
+    current_age = body.get("current_age")
+    target_age = body.get("target_retirement_age")
+
+    if current_age is None or target_age is None:
+        return jsonify({"error": "current_age and target_retirement_age are required"}), 400
+    if not isinstance(current_age, int) or not isinstance(target_age, int):
+        return jsonify({"error": "current_age and target_retirement_age must be integers"}), 400
+    if current_age <= 0 or target_age <= 0:
+        return jsonify({"error": "current_age and target_retirement_age must be positive"}), 400
+
+    # Finding #11: upper bounds on age
+    if current_age > 120 or target_age > 120:
+        return jsonify({"error": "Age values cannot exceed 120"}), 400
+
+    if target_age <= current_age:
+        return jsonify({"error": "target_retirement_age must be greater than current_age"}), 400
+
+    # Finding #11: upper bounds on rate/amount fields
+    withdrawal_rate = body.get("withdrawal_rate_pct")
+    if withdrawal_rate is not None and withdrawal_rate > 100:
+        return jsonify({"error": "withdrawal_rate_pct cannot exceed 100"}), 400
+
+    expected_return = body.get("expected_return_pct")
+    if expected_return is not None and expected_return > 50:
+        return jsonify({"error": "expected_return_pct cannot exceed 50"}), 400
+
+    monthly_contribution = body.get("monthly_contribution")
+    if monthly_contribution is not None and monthly_contribution > 1_000_000:
+        return jsonify({"error": "monthly_contribution cannot exceed 1,000,000"}), 400
+
+    desired_income = body.get("desired_annual_income")
+    if desired_income is not None and desired_income > 10_000_000:
+        return jsonify({"error": "desired_annual_income cannot exceed 10,000,000"}), 400
+
+    # Finding #4: validate milestones
+    milestones_raw = body.get("milestones")
+    if milestones_raw is not None:
+        if not isinstance(milestones_raw, list):
+            return jsonify({"error": "milestones must be a list"}), 400
+        if len(milestones_raw) > 20:
+            return jsonify({"error": "milestones may not exceed 20 items"}), 400
+        for m in milestones_raw:
+            if not isinstance(m.get("amount"), (int, float)) or m["amount"] <= 0:
+                return jsonify({"error": "Each milestone amount must be a positive number"}), 400
+            label = m.get("label", "")
+            if len(str(label)) > 100:
+                return jsonify({"error": "Milestone label must be 100 characters or fewer"}), 400
+        milestones_json = json.dumps(milestones_raw)
+    else:
+        milestones_json = None
+
+    try:
+        conn = get_db()
+        conn.execute(
+            """INSERT INTO retirement_settings
+                   (id, current_age, target_retirement_age, desired_annual_income,
+                    monthly_contribution, expected_return_pct, inflation_rate_pct,
+                    social_security_annual, withdrawal_rate_pct, milestones)
+               VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(id) DO UPDATE SET
+                   current_age             = excluded.current_age,
+                   target_retirement_age   = excluded.target_retirement_age,
+                   desired_annual_income   = excluded.desired_annual_income,
+                   monthly_contribution    = excluded.monthly_contribution,
+                   expected_return_pct     = excluded.expected_return_pct,
+                   inflation_rate_pct      = excluded.inflation_rate_pct,
+                   social_security_annual  = excluded.social_security_annual,
+                   withdrawal_rate_pct     = excluded.withdrawal_rate_pct,
+                   milestones              = excluded.milestones,
+                   updated_at              = datetime('now')""",
+            (
+                current_age,
+                target_age,
+                desired_income,
+                monthly_contribution,
+                expected_return,
+                body.get("inflation_rate_pct", 2.5),
+                body.get("social_security_annual", 0.0),
+                withdrawal_rate if withdrawal_rate is not None else 4.0,
+                milestones_json,
+            ),
+        )
+        conn.commit()
+        return jsonify({"ok": True})
+    except Exception:
+        app.logger.exception("Failed to save retirement settings")
+        return jsonify({"error": "Failed to save retirement settings"}), 500
 
 
 # ===========================================================================

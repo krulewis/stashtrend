@@ -1,19 +1,22 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import styles from './NetWorthPage.module.css'
 import StatsCards from '../components/StatsCards.jsx'
 import NetWorthChart from '../components/NetWorthChart.jsx'
 import AccountsBreakdown from '../components/AccountsBreakdown.jsx'
 import TypeStackedChart from '../components/TypeStackedChart.jsx'
-import { fetchNetworthStats, fetchNetworthHistory, fetchAccountsSummary, fetchNetworthByType } from '../api.js'
+import RetirementPanel from '../components/RetirementPanel.jsx'
+import { fetchNetworthStats, fetchNetworthHistory, fetchAccountsSummary, fetchNetworthByType, fetchRetirement, saveRetirement } from '../api.js'
 
 export default function NetWorthPage() {
   const [stats,       setStats]       = useState(null)
   const [history,     setHistory]     = useState(null)
   const [accounts,    setAccounts]    = useState(null)
   const [typeData,    setTypeData]    = useState(null)
+  const [retirement,  setRetirement]  = useState(null)
   const [error,       setError]       = useState(null)
   const [lastUpdated, setLastUpdated] = useState(null)
   const [loading,     setLoading]     = useState(true)
+  const [retirementLoading, setRetirementLoading] = useState(false)
 
   function loadDashboardData() {
     setError(null)
@@ -23,17 +26,32 @@ export default function NetWorthPage() {
       fetchNetworthHistory(),
       fetchAccountsSummary(),
       fetchNetworthByType(),
+      fetchRetirement().catch(() => ({ exists: false })),
     ])
-      .then(([s, h, a, t]) => {
+      .then(([s, h, a, t, ret]) => {
         setStats(s)
         setHistory(h)
         setAccounts(a)
         setTypeData(t)
+        setRetirement(ret)
         setLastUpdated(new Date().toLocaleTimeString())
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
   }
+
+  const handleSaveRetirement = useCallback(async (data) => {
+    setRetirementLoading(true)
+    try {
+      await saveRetirement(data)
+      const updated = await fetchRetirement()
+      setRetirement(updated)
+    } catch (err) {
+      console.error('Failed to save retirement settings', err)
+    } finally {
+      setRetirementLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
     loadDashboardData()
@@ -75,9 +93,17 @@ export default function NetWorthPage() {
       {!loading && !error && (
         <>
           <StatsCards stats={stats} />
-          <NetWorthChart history={history} />
+          <NetWorthChart
+            history={history}
+            milestones={retirement?.milestones}
+          />
           <TypeStackedChart data={typeData} />
           <AccountsBreakdown accounts={accounts} />
+          <RetirementPanel
+            data={retirement}
+            onSave={handleSaveRetirement}
+            loading={retirementLoading}
+          />
         </>
       )}
     </div>

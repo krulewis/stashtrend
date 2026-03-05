@@ -22,3 +22,6 @@ export const CartesianGrid = () => null
 export const Tooltip      = () => null
 export const Legend       = () => null
 export const LabelList    = () => null
+export const ReferenceLine = ({ y, label }) => (
+  <div data-testid={y != null ? `reference-line-${y}` : 'reference-line'} data-label={label ?? ''} />
+)
