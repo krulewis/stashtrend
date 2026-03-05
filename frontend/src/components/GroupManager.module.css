@@ -46,8 +46,10 @@
 .btnNew {
   background: var(--accent);
   border: none;
-  color: white;
+  color: var(--bg-root);
   border-radius: 8px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
   padding: 8px 14px;
   font-size: 13px;
   font-weight: 600;
@@ -66,7 +68,7 @@
   border: 1px solid var(--border);
   margin-bottom: 6px;
   cursor: default;
-  transition: border-color 0.15s;
+  transition: border-color var(--ease-quick);
   min-height: 48px;
 }
 
@@ -156,8 +158,10 @@
 .btnNewLarge {
   background: var(--accent);
   border: none;
-  color: white;
-  border-radius: 8px;
+  color: var(--bg-root);
+  border-radius: var(--radius-btn-lg);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
   padding: 10px 20px;
   font-size: 14px;
   font-weight: 600;
@@ -208,9 +212,9 @@
 }
 
 .label {
-  font-size: 12px;
+  font-size: 9px;
   font-weight: 400;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 2px;
   margin-top: 12px;
@@ -229,18 +233,18 @@
 }
 
 .input {
-  background: var(--bg-root);
+  background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text-primary);
   font-size: 14px;
-  padding: 10px 12px;
+  padding: 11px 14px;
   width: 100%;
   outline: none;
   min-height: 44px;
 }
 
-.input:focus { border-color: var(--accent); }
+.input:focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 
 .colorRow {
   display: flex;
@@ -256,7 +260,7 @@
   border-radius: 6px;
   cursor: pointer;
   flex-shrink: 0;
-  transition: outline 0.1s;
+  transition: outline var(--ease-quick);
 }
 
 /* Account picker */
@@ -306,7 +310,7 @@
   cursor: pointer;
   user-select: none;
   border-top: 1px solid var(--bg-card);
-  transition: background 0.1s;
+  transition: background var(--ease-quick);
   min-height: 44px;
 }
 
@@ -365,14 +369,22 @@
 .btnSave {
   background: var(--accent);
   border: none;
-  color: white;
-  border-radius: 8px;
+  color: var(--bg-root);
+  border-radius: var(--radius-btn-lg);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
   padding: 10px 20px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: opacity var(--ease-default);
   min-height: 44px;
 }
 
 .btnSave:disabled { opacity: 0.5; }
+
+@media (forced-colors: active) {
+  .input:focus {
+    outline: 2px solid;
+  }
+}

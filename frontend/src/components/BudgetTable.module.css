@@ -152,7 +152,7 @@
   border-radius: 3px;
   pointer-events: none;
   z-index: 0;
-  transition: width 300ms ease;
+  transition: width var(--ease-smooth);
 }
 
 .barSafe { background: color-mix(in srgb, var(--green) 18%, transparent); }

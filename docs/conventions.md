@@ -14,6 +14,19 @@
 
 **Logo:** SVG bar chart with trend arrow + "STASHTREND" wordmark. Source: `frontend/src/assets/stashtrend-logo.svg`. Rendered as `<img>` in `App.jsx` and `SetupPage.jsx`.
 
+**Typography weight system (PR1):**
+- 400: values, headlines, form labels, data amounts
+- 500: section titles, table headers, card titles
+- 600: buttons, badges, status indicators only
+
+**Button standard (PR2):** All primary buttons use `color: var(--bg-root)` (dark text on cobalt), `text-transform: uppercase`, `letter-spacing: 1.5px`. Toggle buttons (`.rangeBtnActive`, `.saveConfirm`) get only the color change, not uppercase/letter-spacing.
+
+**Input focus standard (PR2):** `border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); outline: none;` with `@media (forced-colors: active) { outline: 2px solid; }` fallback. Exceptions: inline-edit inputs (`.cellInput`, `.saveInput`) use border-color only, no box-shadow.
+
+**Input styling:** `background: var(--bg-card)`, `border-radius: var(--radius-md)`, `padding: 11px 14px` for standard inputs. Compact inline inputs keep original padding.
+
+**Form labels:** `9px / weight 400 / uppercase / letter-spacing 2px / var(--text-muted)` eyebrow style.
+
 All colors in CSS module files MUST use CSS custom properties defined in `index.css`. Never use hardcoded hex values. The token system includes:
 
 - **Backgrounds:** `--bg-root` (#0A0F1E), `--bg-card` (#1C2333), `--bg-deep`, `--bg-sunken`, `--bg-hover`, `--bg-inset`, `--bg-raised` (#1E2D4A), `--bg-surface` (#111827), `--bg-table-active`

@@ -119,9 +119,11 @@
 
 .btnPrimary {
   background: var(--accent);
-  color: var(--white);
+  color: var(--bg-root);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
   padding: 8px 16px;
   font-size: 13px;
   font-weight: 600;
