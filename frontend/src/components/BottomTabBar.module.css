@@ -8,7 +8,9 @@
   left: 0;
   right: 0;
   min-height: 56px;
-  background: var(--bg-card);
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-top: 1px solid var(--border);
   z-index: 20;
   /* Account for iPhone home indicator (safe area inset) */
@@ -44,5 +46,5 @@
 }
 
 .tabItemActive {
-  color: var(--accent-light);
+  color: var(--accent);
 }

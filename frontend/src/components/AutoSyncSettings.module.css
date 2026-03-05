@@ -33,12 +33,12 @@
 }
 
 .intervalSelect {
-  background: var(--bg-root);
+  background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   color: var(--text-primary);
   font-size: 13px;
-  padding: 6px 10px;
+  padding: 11px 14px;
   cursor: pointer;
   min-width: 160px;
 }
@@ -49,12 +49,19 @@
 }
 
 .intervalSelect:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+  outline: none;
 }
 
 .settingsError {
   color: var(--color-negative);
   font-size: 13px;
   margin-top: 8px;
+}
+
+@media (forced-colors: active) {
+  .intervalSelect:focus {
+    outline: 2px solid;
+  }
 }

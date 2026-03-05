@@ -71,7 +71,7 @@
   color: var(--text-secondary);
   border-bottom: 1px solid var(--border-sub);
   cursor: pointer;
-  transition: background 0.1s;
+  transition: background var(--ease-quick);
   white-space: nowrap;
 }
 

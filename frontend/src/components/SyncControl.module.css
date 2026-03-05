@@ -126,7 +126,7 @@
   font-weight: 500;
   border: none;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--ease-quick);
   min-height: 36px;
   white-space: nowrap;
 }
@@ -145,7 +145,7 @@
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--ease-default);
   min-height: 44px;
 }
 

@@ -21,7 +21,7 @@
   cursor: pointer;
   min-height: 36px;
   white-space: nowrap;
-  transition: all 0.15s;
+  transition: all var(--ease-quick);
 }
 
 @media (min-width: 768px) {

@@ -71,26 +71,29 @@
 }
 
 .label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-secondary);
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 2px;
 }
 
 .input {
-  background: var(--bg-inset);
+  background: var(--bg-card);
   border: 1px solid var(--border-mid);
-  border-radius: 8px;
-  padding: 0.6rem 0.875rem;
-  font-size: 0.9rem;
+  border-radius: var(--radius-md);
+  padding: 11px 14px;
+  font-size: 13px;
   color: var(--text-bright);
   width: 100%;
   box-sizing: border-box;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color var(--ease-default);
 }
 
 .input:focus {
   border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
 }
 
 .error {
@@ -104,22 +107,30 @@
 
 .btn {
   background: var(--accent);
-  color: var(--white);
+  color: var(--bg-root);
   border: none;
-  border-radius: 8px;
-  padding: 0.65rem 1rem;
-  font-size: 0.9rem;
+  border-radius: var(--radius-btn-lg);
+  padding: 13px 28px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s, opacity 0.15s;
-  margin-top: 0.25rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  transition: background var(--ease-default), opacity var(--ease-default);
+  margin-top: 4px;
 }
 
 .btn:hover:not(:disabled) {
-  background: var(--accent-hover);
+  background: var(--accent-light);
 }
 
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+@media (forced-colors: active) {
+  .input:focus {
+    outline: 2px solid;
+  }
 }

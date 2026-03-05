@@ -20,24 +20,26 @@
   display: flex;
   align-items: center;
   gap: var(--sp-3);
-  padding: var(--sp-3) var(--sp-5);
+  padding: 7px 10px 7px 7px;
   color: var(--text-muted);
   text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.3px;
+  border-radius: 6px;
   border-left: 3px solid transparent;
   transition: color var(--ease-quick), background var(--ease-quick), border-color var(--ease-quick);
 }
 
 .navItem:hover {
   color: var(--text-secondary);
-  background: var(--bg-hover);
+  background: var(--bg-surface);
 }
 
 .navItemActive {
-  color: var(--accent-light);
+  color: var(--accent);
   border-left-color: var(--accent);
-  background: var(--bg-hover);
+  background: var(--bg-card);
 }
 
 .navIcon {
@@ -47,5 +49,5 @@
 }
 
 .navLabel {
-  font-size: 14px;
+  font-size: 11px;
 }
