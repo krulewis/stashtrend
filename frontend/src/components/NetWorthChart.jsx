@@ -4,7 +4,7 @@ import { AreaChart, Area, ResponsiveContainer, Legend, ReferenceLine } from 'rec
 import styles from './NetWorthChart.module.css'
 import { useResponsive } from '../hooks/useResponsive.js'
 import RangeSelector from './RangeSelector.jsx'
-import { fmtFull, filterByRange, downsample, GRID_STROKE, COMMON_RANGES, sharedChartElements, TOOLTIP_STYLE, COLOR_ACCENT, COLOR_POSITIVE, COLOR_NEGATIVE } from './chartUtils.jsx'
+import { fmtFull, filterByRange, downsample, GRID_STROKE, COMMON_RANGES, sharedChartElements, TOOLTIP_STYLE, COLOR_ACCENT, COLOR_POSITIVE, COLOR_NEGATIVE, AXIS_TICK } from './chartUtils.jsx'
 
 const RANGES = [{ label: '1M', months: 1 }, ...COMMON_RANGES]
 
@@ -113,7 +113,7 @@ export default function NetWorthChart({ history, milestones }) {
               dot={false}
               activeDot={{ r: 4, fill: COLOR_ACCENT, stroke: COLOR_ACCENT, strokeWidth: 8, strokeOpacity: 0.3 }}
             />
-            {showBreakdown && <Legend iconType="line" wrapperStyle={{ color: '#94a3b8', fontSize: 13 }} />}
+            {showBreakdown && <Legend iconType="line" wrapperStyle={{ color: AXIS_TICK.fill, fontSize: 13 }} />}
             {milestones && milestones.map((m, i) => (
               <ReferenceLine
                 key={`milestone-${i}`}

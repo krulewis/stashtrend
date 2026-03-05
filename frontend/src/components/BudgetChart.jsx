@@ -26,6 +26,11 @@ function MonthTick({ x, y, payload }) {
     </text>
   )
 }
+MonthTick.propTypes = {
+  x: PropTypes.number,
+  y: PropTypes.number,
+  payload: PropTypes.shape({ value: PropTypes.string }),
+}
 
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
