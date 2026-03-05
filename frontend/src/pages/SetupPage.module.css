@@ -81,7 +81,7 @@
 .input {
   background: var(--bg-card);
   border: 1px solid var(--border-mid);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 11px 14px;
   font-size: 13px;
   color: var(--text-bright);

@@ -47,7 +47,7 @@
   background: var(--accent);
   border: none;
   color: var(--bg-root);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   letter-spacing: 1.5px;
   text-transform: uppercase;
   padding: 8px 14px;
@@ -235,7 +235,7 @@
 .input {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   color: var(--text-primary);
   font-size: 14px;
   padding: 11px 14px;
