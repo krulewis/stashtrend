@@ -68,7 +68,7 @@ export default function NetWorthChart({ history, milestones }) {
           <AreaChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
             <defs>
               <linearGradient id="gradNW" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={COLOR_ACCENT} stopOpacity={0.3} />
+                <stop offset="5%" stopColor={COLOR_ACCENT} stopOpacity={0.18} />
                 <stop offset="95%" stopColor={COLOR_ACCENT} stopOpacity={0} />
               </linearGradient>
               <linearGradient id="gradAssets" x1="0" y1="0" x2="0" y2="1">
@@ -111,7 +111,7 @@ export default function NetWorthChart({ history, milestones }) {
               strokeWidth={2.5}
               fill="url(#gradNW)"
               dot={false}
-              activeDot={{ r: 5, fill: COLOR_ACCENT }}
+              activeDot={{ r: 4, fill: COLOR_ACCENT, stroke: COLOR_ACCENT, strokeWidth: 8, strokeOpacity: 0.3 }}
             />
             {showBreakdown && <Legend iconType="line" wrapperStyle={{ color: '#94a3b8', fontSize: 13 }} />}
             {milestones && milestones.map((m, i) => (

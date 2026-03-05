@@ -6,7 +6,7 @@
 
 ## Active
 - **UI/UX Improvements** — Comprehensive audit-driven redesign. Audit reports: `ui-ux-audit-pass1.md`, `ui-ux-audit-pass2.md`. 36 items across 4 phases. Completed: stats card deltas (XS), design token system (S), color consolidation (S), budget table progress bars (M), sidebar navigation with URL routing (M). Remaining: see audit docs for full backlog.
-- **Stashtrend Design Guide v1.0 Alignment** — 3-PR CSS update to match official design guide. Plans: `ui-update-requirements.md`, `ui-update-research.md`, `ui-update-architecture.md`, `ui-update-pr1-plan.md`. PR 1 (Tokens + Typography): **merged** (PR #6). PR 2 (Navigation + Interactive): in progress. PR 3 (Polish): planned.
+- **Stashtrend Design Guide v1.0 Alignment** — 3-PR CSS update to match official design guide. Plans: `ui-update-requirements.md`, `ui-update-research.md`, `ui-update-architecture.md`, `ui-update-pr1-plan.md`, `ui-update-pr3-plan.md`. PR 1 (Tokens + Typography): **merged** (PR #6). PR 2 (Navigation + Interactive): **merged** (PR #7). PR 3 (Polish): **implemented** (pending QA/review).
 
 ## Roadmap — Net Worth + Investments + Forecasting
 
