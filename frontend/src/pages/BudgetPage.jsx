@@ -40,7 +40,7 @@ export default function BudgetPage() {
     setLoading(true)
     setError(null)
     Promise.all([
-      fetchBudgetHistory(months),
+      fetchBudgetHistory(12),
       fetchCustomGroups(),
     ])
       .then(([data, groupsResult]) => {
@@ -50,8 +50,9 @@ export default function BudgetPage() {
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
   }, [isMobile]) // eslint-disable-line react-hooks/exhaustive-deps
-  // months intentionally excluded: mobile layout has no range selector;
-  // the fetch runs once per mount/isMobile-true transition.
+  // Always fetch 12 months for mobile — the MonthlySummaryView range selector
+  // slices client-side, so we need the full data set. months state is excluded
+  // because mobile has no exposed range control for the detail view.
 
   const incomeTotalsByMonth = useMemo(() => {
     if (isMobile || !budgetData?.categories) return null

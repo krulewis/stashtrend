@@ -63,7 +63,7 @@ export default function HorizontalSwipeContainer({
 
       {/* ViewIndicator — rendered inline; tightly coupled to scroll state */}
       <div role="tablist" className={styles.dots}>
-        {[0, 1].map(i => (
+        {childArray.map((_, i) => (
           <button
             key={i}
             role="tab"

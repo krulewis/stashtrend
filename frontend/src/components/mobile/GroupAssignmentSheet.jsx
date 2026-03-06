@@ -146,8 +146,8 @@ export default function GroupAssignmentSheet({
     const target = isCreatingNew ? newGroupName.trim() : selectedGroup
     if (!target) return
     onMove(target)
-    onClose()
-  }, [isCreatingNew, newGroupName, selectedGroup, onMove, onClose])
+    // onClose is NOT called here — the parent's onMove handler owns the close lifecycle.
+  }, [isCreatingNew, newGroupName, selectedGroup, onMove])
 
   // Allow submitting the new-group input with Enter.
   const handleNewGroupKeyDown = (e) => {

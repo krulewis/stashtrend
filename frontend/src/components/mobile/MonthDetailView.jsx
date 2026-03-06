@@ -58,6 +58,8 @@ export default function MonthDetailView({
   const sheetTriggerRef = useRef(null)
 
   function handleMoveRequest(categoryId) {
+    // Capture the element that triggered the sheet so we can return focus on close.
+    sheetTriggerRef.current = document.activeElement
     setSheetCategoryId(categoryId)
     setSheetOpen(true)
   }
@@ -74,6 +76,9 @@ export default function MonthDetailView({
   //   4. Group by effective group name.
   //   5. Sort within each group by sort_order (custom) then by category_name.
 
+  // During reorder mode, use draftGroups so drag/move changes are visible immediately.
+  const effectiveGroups = isReorderMode && draftGroups ? draftGroups : customGroups
+
   const groupedExpenses = useMemo(() => {
     if (!categories || !selectedMonth) return []
 
@@ -83,9 +88,9 @@ export default function MonthDetailView({
     )
 
     // Build a flat lookup: category_id -> { custom_group, sort_order }
-    // customGroups shape: { "Group Name": [{ category_id, sort_order }, ...] }
+    // effectiveGroups shape: { "Group Name": [{ category_id, sort_order }, ...] }
     const customLookup = {}
-    Object.entries(customGroups).forEach(([groupName, items]) => {
+    Object.entries(effectiveGroups).forEach(([groupName, items]) => {
       items.forEach(item => {
         customLookup[item.category_id] = {
           custom_group: groupName,
@@ -130,7 +135,7 @@ export default function MonthDetailView({
       groupName,
       categories: items,
     }))
-  }, [categories, customGroups, selectedMonth])
+  }, [categories, effectiveGroups, selectedMonth])
 
   // ── MonthSummaryHeader totals ────────────────────────────────────────────
   // Expense totals come from groupedExpenses (already filtered + flattened).
@@ -165,7 +170,7 @@ export default function MonthDetailView({
       totalIncomeActual:    incActual,
       totalIncomeBudgeted:  incBudgeted,
     }
-  }, [categories, customGroups, selectedMonth, groupedExpenses]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [categories, effectiveGroups, selectedMonth, groupedExpenses])
 
   // ── Derive sheet state from category data ────────────────────────────────
   const sheetCategory = useMemo(() => {

@@ -1324,7 +1324,6 @@ def set_budget_custom_groups():
 
     try:
         with get_db_connection() as conn:
-            conn.execute("BEGIN")
             conn.execute("DELETE FROM budget_custom_groups")
             conn.executemany(
                 "INSERT INTO budget_custom_groups (category_id, custom_group, sort_order) VALUES (?, ?, ?)",
