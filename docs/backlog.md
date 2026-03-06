@@ -30,3 +30,6 @@ Add a second chart inside the same tile on the budget tab showing monthly saving
 
 ### Mobile Budget Chart — Redesign
 The budget chart is unreadable on mobile. Rethink the design and how budget data is displayed on small screens.
+
+### Budget Item Ordering and Custom Groups
+Allow users to reorder budget items within the budget list via drag-and-drop or manual ordering controls. Also support grouping budget items into named custom groups, where each group displays a subtotal of its items' values.
