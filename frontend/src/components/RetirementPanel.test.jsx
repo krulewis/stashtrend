@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import RetirementPanel from './RetirementPanel.jsx'
-import { MOCK_RETIREMENT, MOCK_RETIREMENT_EMPTY } from '../test/fixtures.js'
+import { MOCK_RETIREMENT, MOCK_RETIREMENT_EMPTY, MOCK_TYPE_DATA } from '../test/fixtures.js'
 
 describe('RetirementPanel', () => {
   it('renders without crashing when data is null', () => {
@@ -28,6 +28,23 @@ describe('RetirementPanel', () => {
   it('renders RetirementSummary subcomponent', () => {
     render(<RetirementPanel data={MOCK_RETIREMENT} onSave={() => {}} />)
     expect(screen.getByTestId('retirement-summary')).toBeTruthy()
+  })
+
+  it('shows investable capital from typeData Retirement + Brokerage', () => {
+    render(<RetirementPanel data={MOCK_RETIREMENT} onSave={() => {}} typeData={MOCK_TYPE_DATA} />)
+    // Latest entry: Retirement=240000, Brokerage=60000 → 300000
+    expect(screen.getByTestId('investable-capital-value').textContent).toContain('300,000')
+  })
+
+  it('shows projected at retirement when typeData and return pct are provided', () => {
+    render(<RetirementPanel data={MOCK_RETIREMENT} onSave={() => {}} typeData={MOCK_TYPE_DATA} />)
+    // Should compute a projection value and render the projected-value row
+    expect(screen.getByTestId('projected-value')).toBeTruthy()
+  })
+
+  it('does not show investable capital when typeData is absent', () => {
+    render(<RetirementPanel data={MOCK_RETIREMENT} onSave={() => {}} />)
+    expect(screen.queryByTestId('investable-capital-value')).toBeNull()
   })
 
   it('advanced section hidden by default, visible after toggle', () => {

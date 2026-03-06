@@ -3,9 +3,9 @@ import PropTypes from 'prop-types'
 import styles from './RetirementPanel.module.css'
 import MilestoneEditor from './MilestoneEditor.jsx'
 import RetirementSummary from './RetirementSummary.jsx'
-import { computeNestEgg } from '../utils/retirementMath.js'
+import { computeNestEgg, generateProjectionSeries } from '../utils/retirementMath.js'
 
-export default function RetirementPanel({ data, onSave, loading, error }) {
+export default function RetirementPanel({ data, onSave, loading, error, typeData }) {
   const [currentAge, setCurrentAge] = useState('')
   const [targetAge, setTargetAge] = useState('')
   const [desiredIncome, setDesiredIncome] = useState('')
@@ -38,6 +38,28 @@ export default function RetirementPanel({ data, onSave, loading, error }) {
   const targetYear = currentAge && targetAge
     ? new Date().getFullYear() + (Number(targetAge) - Number(currentAge))
     : null
+
+  // Investable capital = Retirement + Brokerage buckets from latest type data point.
+  // This is the balance the 4% rule applies to — excludes home equity, vehicles, etc.
+  const investableCapital = (() => {
+    if (!typeData?.series?.length) return null
+    const latest = typeData.series[typeData.series.length - 1]
+    return (latest?.Retirement ?? 0) + (latest?.Brokerage ?? 0)
+  })()
+
+  // Project investable capital growth to retirement age.
+  const projectedAtRetirement = (() => {
+    if (investableCapital == null) return null
+    const years = Number(targetAge) - Number(currentAge)
+    if (!years || years <= 0 || !returnPct) return null
+    const series = generateProjectionSeries({
+      currentNetWorth: investableCapital,
+      monthlyContribution: Number(monthlyContrib) || 0,
+      annualReturnPct: Number(returnPct) || 0,
+      years,
+    })
+    return series[series.length - 1]?.projected_net_worth ?? null
+  })()
 
   function handleSave() {
     const parsedMilestones = milestones
@@ -166,7 +188,12 @@ export default function RetirementPanel({ data, onSave, loading, error }) {
 
       <MilestoneEditor milestones={milestones} onChange={setMilestones} />
 
-      <RetirementSummary nestEgg={nestEgg} targetYear={targetYear} />
+      <RetirementSummary
+        nestEgg={nestEgg}
+        projectedAtRetirement={projectedAtRetirement}
+        investableCapital={investableCapital}
+        targetYear={targetYear}
+      />
 
       {error && <div className={styles.errorMsg}>{error}</div>}
 
@@ -188,4 +215,7 @@ RetirementPanel.propTypes = {
   onSave: PropTypes.func.isRequired,
   loading: PropTypes.bool,
   error: PropTypes.string,
+  typeData: PropTypes.shape({
+    series: PropTypes.array,
+  }),
 }

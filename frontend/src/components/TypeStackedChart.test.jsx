@@ -12,6 +12,9 @@ vi.mock('recharts', () => ({
   YAxis: () => null,
   Tooltip: () => null,
   CartesianGrid: () => null,
+  ReferenceLine: ({ y, label }) => (
+    <div data-testid={`milestone-${y}`} data-label={label?.value ?? ''}></div>
+  ),
 }))
 
 // Mock hooks and sibling components
@@ -94,6 +97,26 @@ describe('TypeStackedChart', () => {
   it('calls downsample before rendering chart', () => {
     render(<TypeStackedChart data={MOCK_NETWORTH_BY_TYPE} />)
     expect(downsampleSpy).toHaveBeenCalled()
+  })
+
+  it('renders ReferenceLine for each milestone', () => {
+    const milestones = [
+      { label: 'Half-Mil', amount: 500000 },
+      { label: 'Million', amount: 1000000 },
+    ]
+    render(<TypeStackedChart data={MOCK_NETWORTH_BY_TYPE} milestones={milestones} />)
+    expect(screen.getByTestId('milestone-500000')).toBeInTheDocument()
+    expect(screen.getByTestId('milestone-1000000')).toBeInTheDocument()
+  })
+
+  it('renders no ReferenceLine when milestones is null', () => {
+    render(<TypeStackedChart data={MOCK_NETWORTH_BY_TYPE} milestones={null} />)
+    expect(screen.queryByTestId(/^milestone-/)).not.toBeInTheDocument()
+  })
+
+  it('renders no ReferenceLine when milestones is empty', () => {
+    render(<TypeStackedChart data={MOCK_NETWORTH_BY_TYPE} milestones={[]} />)
+    expect(screen.queryByTestId(/^milestone-/)).not.toBeInTheDocument()
   })
 
   it('renders column headers for CAGR periods', () => {

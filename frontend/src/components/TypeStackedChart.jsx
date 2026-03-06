@@ -7,7 +7,7 @@
  */
 import { useState } from 'react'
 import PropTypes from 'prop-types'
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts'
 import { useResponsive } from '../hooks/useResponsive.js'
 import RangeSelector from './RangeSelector.jsx'
 import {
@@ -59,7 +59,7 @@ CagrCell.propTypes = {
   value: PropTypes.number,
 }
 
-export default function TypeStackedChart({ data }) {
+export default function TypeStackedChart({ data, milestones }) {
   const [range, setRange] = useState('All')
   const { isMobile } = useResponsive()
 
@@ -154,6 +154,16 @@ export default function TypeStackedChart({ data }) {
             />
           ))}
           <Legend iconType="line" wrapperStyle={{ color: '#8BA8CC', fontSize: 12 }} />
+          {milestones && milestones.map((m, i) => (
+            <ReferenceLine
+              key={`milestone-${i}`}
+              yAxisId="left"
+              y={m.amount}
+              stroke="#F5A623"
+              strokeDasharray="4 3"
+              label={{ value: m.label || '', fill: '#F5A623', fontSize: 11 }}
+            />
+          ))}
         </AreaChart>
       </ResponsiveContainer>
 
@@ -205,4 +215,8 @@ TypeStackedChart.propTypes = {
     bucket_colors: PropTypes.object,
     bucket_order:  PropTypes.arrayOf(PropTypes.string),
   }),
+  milestones: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    amount: PropTypes.number,
+  })),
 }
