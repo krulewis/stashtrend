@@ -1322,6 +1322,12 @@ def set_budget_custom_groups():
     if len(rows_to_insert) > 500:
         return jsonify({"error": "Too many entries; maximum is 500"}), 400
 
+    seen_ids = set()
+    for cat_id, _, _ in rows_to_insert:
+        if cat_id in seen_ids:
+            return jsonify({"error": "Duplicate category_id found: a category can only belong to one group"}), 400
+        seen_ids.add(cat_id)
+
     try:
         with get_db_connection() as conn:
             conn.execute("DELETE FROM budget_custom_groups")

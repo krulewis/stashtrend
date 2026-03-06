@@ -95,6 +95,9 @@ export default function GroupAssignmentSheet({
       const target = triggerRef?.current ?? previousFocusRef.current
       target?.focus()
     }
+
+    // Cleanup: restore body scroll if the component unmounts while open.
+    return () => { document.body.style.overflow = '' }
   }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
   // Intentional: currentGroup is intentionally excluded — we only reset state
   // on open/close transitions, not on every currentGroup prop change.

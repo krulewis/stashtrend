@@ -170,7 +170,7 @@ export default function MonthDetailView({
       totalIncomeActual:    incActual,
       totalIncomeBudgeted:  incBudgeted,
     }
-  }, [categories, effectiveGroups, selectedMonth, groupedExpenses])
+  }, [categories, selectedMonth, groupedExpenses])
 
   // ── Derive sheet state from category data ────────────────────────────────
   const sheetCategory = useMemo(() => {
