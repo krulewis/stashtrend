@@ -1,0 +1,84 @@
+/* ─── MobileBudgetPage ────────────────────────────────────────────────────── */
+
+.page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-root);
+  overflow: hidden; /* scroll happens inside panes, not at page level */
+  /* Bottom padding for BottomTabBar safe area */
+  padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ── Loading state ── */
+.loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: var(--sp-3);
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: none; }
+}
+
+/* ── Error state ── */
+.errorBox {
+  margin: var(--sp-4);
+  padding: var(--sp-4);
+  background: var(--bg-card);
+  border: 1px solid var(--red);
+  border-radius: var(--radius-lg);
+}
+
+.errorTitle {
+  color: var(--red);
+  font-weight: 500;
+  margin-bottom: var(--sp-2);
+}
+
+.errorDetail {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-family: monospace;
+}
+
+/* ── Empty state ── */
+.emptyState {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.emptyTitle {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin: 0;
+}
+
+.emptySubtitle {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin: 0;
+}

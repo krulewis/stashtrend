@@ -1,0 +1,83 @@
+/* ── Scroll-snap container ─────────────────────────────────────────────── */
+
+.container {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  height: calc(100dvh - 60px - 56px - env(safe-area-inset-bottom, 0px));
+}
+
+.container::-webkit-scrollbar {
+  display: none; /* Chrome / Safari */
+}
+
+/* Reorder mode — prevent accidental swipe during drag */
+.containerLocked {
+  overflow-x: hidden;
+}
+
+/* ── Individual pane ───────────────────────────────────────────────────── */
+
+.pane {
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 0;
+  scroll-snap-align: start;
+  overflow-y: auto;
+}
+
+/* ── View indicator dots (ViewIndicator — rendered inline) ─────────────── */
+
+.dots {
+  position: fixed;
+  bottom: calc(56px + env(safe-area-inset-bottom, 0px) + var(--sp-3));
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: var(--sp-2);
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* 44×44px touch target; 8px visual dot rendered via ::before */
+.dot {
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  pointer-events: all;
+}
+
+.dot::before {
+  content: '';
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-faint);
+  transition: background var(--ease-quick);
+}
+
+.dotActive::before {
+  background: var(--accent);
+}
+
+/* ── Reduced motion ────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .container {
+    scroll-behavior: auto;
+  }
+
+  .dot::before {
+    transition: none;
+  }
+}

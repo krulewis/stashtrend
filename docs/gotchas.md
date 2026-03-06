@@ -145,6 +145,43 @@ JSX conditionals render separate text nodes; use a custom `el.textContent` funct
 **Fix:** Guard `if (withdrawalRatePct <= 0) return null`. Callers display "—" for null.
 **Rule:** Financial math functions must guard against zero denominators and return null (not throw) for invalid inputs. UI renders null as "—".
 
+### Agent Files Created Mid-Session Not Hot-Loaded
+**Where:** `~/.claude/agents/*.md` — custom agent definitions
+**Symptom:** Creating a new agent file (e.g., `frontend-designer.md`) during a session and immediately dispatching to it fails with "agent type not found."
+**Root cause:** The agent registry loads agent definitions at session start. New files aren't picked up until the next session.
+**Workaround:** Use `general-purpose` with the agent's prompt instructions inline for the current session. The agent will be available in subsequent sessions.
+**Rule:** Create agent definition files before the session that needs them, or accept the general-purpose fallback for the current session.
+
+### Patching get_db_connection in Endpoint Tests (Context Manager)
+**Where:** `backend/tests/test_custom_groups.py` and any future test for endpoints that use `get_db_connection()`.
+**Problem:** `get_db_connection()` is a `@contextlib.contextmanager`. Patching it with `patch("app.get_db_connection", return_value=db)` fails — `with get_db_connection() as conn` won't work because the patched value is not a context manager.
+**Fix:** Wrap the test DB in a factory that returns a context manager:
+```python
+@contextlib.contextmanager
+def _ctx():
+    yield db
+patch("app.get_db_connection", _ctx)
+```
+**Rule:** Endpoints that use `get_db()` can be patched with `patch("app.get_db", return_value=db)`. Endpoints that use `get_db_connection()` require patching with a context manager factory. Check the endpoint implementation before choosing the patch target.
+
+### BudgetGroup — CSS-Only Collapse, Items Always in DOM
+**Where:** `BudgetGroup.jsx` + `BudgetGroup.module.css`
+**Symptom:** Tests using `queryByText('Groceries')` / `not.toBeInTheDocument()` to assert the group is collapsed always fail — the text is found even when visually collapsed.
+**Root cause:** Collapse is implemented with `grid-template-rows: 0fr` (CSS-only). The category `BudgetLineItem` elements are always rendered in the DOM; only their visibility is controlled by CSS.
+**Fix:** Tests must check `aria-expanded` on the header button (or the presence/absence of an expanded CSS class) instead of DOM presence of category text. Use `header.querySelector('[role="status"]')` scoped to the header element to find the aggregate pill without ambiguity from per-category pills.
+**Rule:** When a collapse/expand is CSS-only, never test it with `not.toBeInTheDocument()`. Test `aria-expanded`, class names, or `aria-hidden` instead.
+
+### BudgetGroup — Multiple role="button" Elements From DnD Kit
+**Where:** `BudgetGroup.test.jsx` — any test calling `screen.getByRole('button')`.
+**Symptom:** "Found multiple elements with the role button" — DnD-kit's `SortableContext` adds `role="button"` to every sortable row, so the group header is not the only button in the tree.
+**Fix:** Query the group header by its unique `aria-controls` attribute:
+```js
+screen.getByRole('button', { name: (_, el) =>
+  el.getAttribute('aria-controls') === `group-${groupName}-content`
+})
+```
+**Rule:** In components that use DnD-kit, never use bare `getByRole('button')` — scope the query to the specific element via a unique attribute.
+
 ### Generic Conflict Messages Create Investigation Overhead
 **Where:** `GroupSnapshotControls.jsx` chip `title` attribute.
 **Symptom:** Tooltip said "Shares an account with a selected group" — user couldn't tell which group conflicted with which, making group definition problems impossible to self-diagnose.
