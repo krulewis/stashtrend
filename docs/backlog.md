@@ -5,6 +5,19 @@
 ### Replace MoM with YoY Savings
 Replace the Month-over-Month tile on the net worth page with a Year-over-Year savings tile showing the surplus of income minus expenses.
 
+### Net Worth by Type — Additional Scrollable Charts
+Add two additional scrollable chart views to the Net Worth by Type tile:
+
+**1. Real Estate Chart**
+- Home value displayed as a positive bar/series on the left axis
+- Mortgage displayed as a negative bar/series on the right axis
+- Table below the chart shows: Real Estate Value, Mortgage Value, and Equity (home value minus mortgage)
+
+**2. Net Worth Excluding Real Estate**
+- Shows net worth over time but excludes home value and mortgage from the calculation
+
+Both views should be scrollable within the existing Net Worth by Type tile (e.g. swipeable alongside the current chart).
+
 ---
 
 ## Budget Tab
