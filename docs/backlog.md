@@ -14,3 +14,6 @@ Add a second chart inside the same tile on the budget tab showing monthly saving
 - Scrollable with dot scroll indicators at the bottom
 - Time range options: 3 months, 6 months, 12 months
 - Displays three series per month: savings goal, budgeted savings, and actual amount saved
+
+### Mobile Budget Chart — Redesign
+The budget chart is unreadable on mobile. Rethink the design and how budget data is displayed on small screens.
