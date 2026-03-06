@@ -41,7 +41,7 @@ export default function BudgetPage() {
     setError(null)
     Promise.all([
       fetchBudgetHistory(12),
-      fetchCustomGroups(),
+      fetchCustomGroups().catch(() => ({ groups: {} })),
     ])
       .then(([data, groupsResult]) => {
         setBudgetData(data)
