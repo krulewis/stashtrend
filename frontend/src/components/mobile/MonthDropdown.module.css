@@ -1,0 +1,140 @@
+/* ── MonthDropdown ────────────────────────────────────────────────────────── */
+
+/* Relative parent so the panel can be positioned absolutely below the trigger. */
+.container {
+  position: relative;
+  width: 100%;
+}
+
+/* ── Trigger button ─────────────────────────────────────────────────────── */
+
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 44px;
+  padding: 0 var(--sp-4);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  /* Reset browser button defaults */
+  appearance: none;
+  -webkit-appearance: none;
+  text-align: left;
+  font-family: inherit;
+}
+
+/* Open state: cobalt border + glow (matches PR2 input focus convention). */
+.triggerOpen {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* ── Label (left side of trigger) ────────────────────────────────────────── */
+
+.label {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Chevron (right side of trigger) ─────────────────────────────────────── */
+
+.chevron {
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: transform var(--ease-default);
+  flex-shrink: 0;
+  margin-left: var(--sp-2);
+  display: inline-block;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
+  }
+}
+
+/* ── Dropdown panel ──────────────────────────────────────────────────────── */
+
+.panel {
+  position: absolute;
+  top: calc(100% - 1px); /* -1px to overlap trigger's bottom border */
+  left: 0;
+  right: 0;
+  z-index: 25;
+  max-height: 280px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--bg-card);
+  border: 1px solid var(--accent); /* matches open trigger border */
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  list-style: none;
+  /* Remove default ul/li browser styles */
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Option rows ──────────────────────────────────────────────────────────── */
+
+.option {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 var(--sp-4);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-primary);
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-sub);
+  /* Ensure text never wraps — month names fit on one line. */
+  white-space: nowrap;
+  /* Remove list-item bullet (redundant if list-style:none on parent, but defensive). */
+  list-style: none;
+}
+
+.option:last-child {
+  border-bottom: none;
+}
+
+.option:active {
+  background: var(--bg-hover);
+}
+
+/* Focus style for keyboard navigation. */
+.option:focus {
+  outline: none;
+  background: var(--bg-hover);
+}
+
+.option:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* ── Selected option ─────────────────────────────────────────────────────── */
+
+.optionSelected {
+  background: var(--accent-tint);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* Selected + active/focused should keep accent background. */
+.optionSelected:active,
+.optionSelected:focus {
+  background: var(--accent-tint);
+}

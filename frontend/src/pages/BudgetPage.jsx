@@ -3,17 +3,27 @@ import BudgetChart from '../components/BudgetChart.jsx'
 import BudgetTable from '../components/BudgetTable.jsx'
 import AIAnalysisPanel from '../components/AIAnalysisPanel.jsx'
 import styles from './BudgetPage.module.css'
-import { fetchBudgetHistory } from '../api.js'
+import { fetchBudgetHistory, fetchCustomGroups } from '../api.js'
+import { useResponsive } from '../hooks/useResponsive.js'
+import MobileBudgetPage from './MobileBudgetPage.jsx'
 
 const RANGE_OPTIONS = [3, 6, 12]
 
 export default function BudgetPage() {
-  const [months,       setMonths]       = useState(12)
-  const [budgetData,   setBudgetData]   = useState(null)
-  const [loading,      setLoading]      = useState(true)
-  const [error,        setError]        = useState(null)
+  const [months,           setMonths]           = useState(12)
+  const [budgetData,       setBudgetData]       = useState(null)
+  const [loading,          setLoading]          = useState(true)
+  const [error,            setError]            = useState(null)
+  const [customGroupsData, setCustomGroupsData] = useState({})
 
+  const { isMobile } = useResponsive()
+
+  // Desktop budget history fetch — skipped on mobile to avoid redundant network call.
+  // isMobile is intentionally excluded from deps: it is a guard, not a trigger.
+  // Adding it would cause a re-fetch on every window resize crossing 768px.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    if (isMobile) return
     setLoading(true)
     setError(null)
     fetchBudgetHistory(months)
@@ -22,8 +32,29 @@ export default function BudgetPage() {
       .finally(() => setLoading(false))
   }, [months])
 
+  // Mobile data fetch — fetches budgetData and customGroups together via Promise.all.
+  // Runs once when isMobile becomes true. Custom groups failure is non-fatal;
+  // budget history failure is shown via the error state.
+  useEffect(() => {
+    if (!isMobile) return
+    setLoading(true)
+    setError(null)
+    Promise.all([
+      fetchBudgetHistory(months),
+      fetchCustomGroups(),
+    ])
+      .then(([data, groupsResult]) => {
+        setBudgetData(data)
+        setCustomGroupsData(groupsResult.groups ?? {})
+      })
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [isMobile]) // eslint-disable-line react-hooks/exhaustive-deps
+  // months intentionally excluded: mobile layout has no range selector;
+  // the fetch runs once per mount/isMobile-true transition.
+
   const incomeTotalsByMonth = useMemo(() => {
-    if (!budgetData?.categories) return null
+    if (isMobile || !budgetData?.categories) return null
     const incomeCategories = budgetData.categories.filter(cat => cat.group_type === 'income')
     if (incomeCategories.length === 0) return null
     const totals = {}
@@ -33,7 +64,20 @@ export default function BudgetPage() {
       }
     }
     return totals
-  }, [budgetData])
+  }, [budgetData, isMobile])
+
+  // Mobile path — all hooks are called above; conditional return is safe here.
+  if (isMobile) {
+    return (
+      <MobileBudgetPage
+        budgetData={budgetData}
+        customGroups={customGroupsData}
+        loading={loading}
+        error={error}
+        onGroupsSaved={setCustomGroupsData}
+      />
+    )
+  }
 
   return (
     <div className={styles.page}>

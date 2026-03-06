@@ -1,0 +1,78 @@
+/* ─── BudgetPill — pill-shaped budget vs. actual indicator ──────────────── */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  min-width: 100px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ─── Size modifier — summary row (larger variant) ──────────────────────── */
+
+.summary {
+  height: 32px;
+  min-width: 120px;
+  padding: 0 var(--sp-4);
+  font-size: 14px;
+}
+
+/* ─── Zone color classes ─────────────────────────────────────────────────── */
+
+.safe {
+  background: color-mix(in srgb, var(--green) 18%, transparent);
+  color: var(--green);
+}
+
+.warning {
+  background: color-mix(in srgb, var(--amber) 18%, transparent);
+  color: var(--amber);
+}
+
+.over {
+  background: color-mix(in srgb, var(--red) 18%, transparent);
+  color: var(--red);
+}
+
+.noBudget {
+  background: var(--bg-raised);
+  color: var(--text-muted);
+}
+
+.noData {
+  background: var(--bg-raised);
+  color: var(--text-faint);
+}
+
+/* ─── Loading shimmer placeholder ────────────────────────────────────────── */
+
+@keyframes pillShimmer {
+  0%   { opacity: 0.4; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.4; }
+}
+
+.pillLoading {
+  display: inline-block;
+  width: 100px;
+  height: 28px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-raised);
+  animation: pillShimmer 1.5s ease-in-out infinite;
+}
+
+.pillLoadingSummary {
+  width: 120px;
+  height: 32px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pillLoading {
+    animation: none;
+  }
+}

@@ -1,0 +1,97 @@
+/* ─── BudgetLineItem — single budget category row ────────────────────────── */
+
+.row {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 var(--sp-4);
+  gap: var(--sp-3);
+  border-bottom: 1px solid var(--border-sub);
+  position: relative;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.row:active {
+  background: var(--bg-hover);
+}
+
+/* ─── Drag handle (reorder mode only) ───────────────────────────────────── */
+
+.dragHandle {
+  width: 24px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: grab;
+  touch-action: none;
+  flex-shrink: 0;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+/* ─── Category name ──────────────────────────────────────────────────────── */
+
+.categoryName {
+  flex: 1;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: calc(100% - 140px);
+}
+
+/* ─── Pill wrapper ───────────────────────────────────────────────────────── */
+
+.pill {
+  flex-shrink: 0;
+}
+
+/* ─── Move button (reorder mode only) ───────────────────────────────────── */
+
+.moveBtn {
+  margin-left: auto;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 16px;
+  padding: var(--sp-2);
+  min-width: 44px;
+  min-height: 44px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.moveBtn:active {
+  color: var(--accent);
+}
+
+/* ─── Dragging state ─────────────────────────────────────────────────────── */
+
+.dragging {
+  background: var(--bg-hover);
+  box-shadow: var(--shadow-md);
+  opacity: 0.9;
+  z-index: 10;
+  transform: scale(1.02);
+}
+
+/* ─── Reduced motion ─────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .dragging {
+    transition: none;
+    transform: none;
+  }
+}

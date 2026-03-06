@@ -4,7 +4,7 @@ import {
   fetchNetworthStats, fetchNetworthHistory, fetchNetworthByType, fetchAccountsSummary,
   fetchGroups, fetchGroupsHistory, fetchGroupsSnapshot, fetchGroupsConfigs,
   createGroup, updateGroup, saveGroupsConfigs,
-  fetchBudgetHistory,
+  fetchBudgetHistory, fetchCustomGroups, saveCustomGroups,
   fetchAiConfig, saveAiConfig, runAiAnalysis,
   fetchSyncHistory, fetchSyncLastStatus, fetchSyncStatus, startSync,
   fetchSettings, saveSettings, setupToken,
@@ -125,6 +125,7 @@ describe('GET endpoint contracts', () => {
     ['fetchGroupsSnapshot',  () => fetchGroupsSnapshot(),       '/api/groups/snapshot'],
     ['fetchGroupsConfigs',   () => fetchGroupsConfigs(),        '/api/groups/configs'],
     ['fetchBudgetHistory',   () => fetchBudgetHistory(6),       '/api/budgets/history?months=6'],
+    ['fetchCustomGroups',    () => fetchCustomGroups(),          '/api/budgets/custom-groups'],
     ['fetchAiConfig',        () => fetchAiConfig(),             '/api/ai/config'],
     ['fetchSyncHistory',     () => fetchSyncHistory(),          '/api/sync/history'],
     ['fetchSyncLastStatus',  () => fetchSyncLastStatus(),       '/api/sync/last-status'],
@@ -160,9 +161,81 @@ describe('Mutating endpoint contracts', () => {
     ['deleteBuilderPlan',   () => deleteBuilderPlan(1),                 'DELETE', '/api/budget-builder/plans/1'],
     ['applyBuilderPlan',    () => applyBuilderPlan(1),                  'POST',  '/api/budget-builder/plans/1/apply'],
     ['saveRetirement',     () => saveRetirement({ current_age: 35 }),  'POST',  '/api/retirement'],
+    ['saveCustomGroups',   () => saveCustomGroups({ groups: {} }),     'POST',  '/api/budgets/custom-groups'],
   ])('%s sends %s to %s', async (_name, invoke, method, expectedUrl) => {
     global.fetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) })
     await invoke()
     expect(global.fetch).toHaveBeenCalledWith(expectedUrl, expect.objectContaining({ method }))
+  })
+})
+
+// ===========================================================================
+// fetchCustomGroups — detailed behavior
+// ===========================================================================
+
+describe('fetchCustomGroups', () => {
+  it('returns the parsed groups response on success', async () => {
+    const mockData = { groups: { Food: [{ category_id: 'cat_1', sort_order: 0 }] } }
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockData),
+    })
+    const result = await fetchCustomGroups()
+    expect(result).toEqual(mockData)
+  })
+
+  it('throws when the server returns a non-ok status', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({ error: 'Internal server error' }),
+    })
+    await expect(fetchCustomGroups()).rejects.toThrow()
+  })
+})
+
+// ===========================================================================
+// saveCustomGroups — detailed behavior
+// ===========================================================================
+
+describe('saveCustomGroups', () => {
+  it('serializes the payload as JSON in the request body', async () => {
+    const payload = { groups: { Food: [{ category_id: 'cat_1', sort_order: 0 }] } }
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ status: 'ok', count: 1 }),
+    })
+    await saveCustomGroups(payload)
+    const [, options] = global.fetch.mock.calls[0]
+    expect(JSON.parse(options.body)).toEqual(payload)
+  })
+
+  it('sends Content-Type: application/json header', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ status: 'ok', count: 0 }),
+    })
+    await saveCustomGroups({ groups: {} })
+    const [, options] = global.fetch.mock.calls[0]
+    expect(options.headers['Content-Type']).toBe('application/json')
+  })
+
+  it('returns the parsed response on success', async () => {
+    const mockResponse = { status: 'ok', count: 3 }
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockResponse),
+    })
+    const result = await saveCustomGroups({ groups: {} })
+    expect(result).toEqual(mockResponse)
+  })
+
+  it('throws with the server error message on non-ok response', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: () => Promise.resolve({ error: 'Validation error' }),
+    })
+    await expect(saveCustomGroups({ groups: {} })).rejects.toThrow('Validation error')
   })
 })

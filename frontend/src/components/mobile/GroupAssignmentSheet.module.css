@@ -1,0 +1,234 @@
+/* ─── GroupAssignmentSheet ────────────────────────────────────────────────── */
+/* Bottom sheet implemented with the native <dialog> element.                  */
+/* showModal() provides focus trapping and ::backdrop for the scrim.           */
+
+/* ── <dialog> element override — anchor to bottom, slide-up animation ──────── */
+
+.sheet {
+  /* Override browser-default dialog centering */
+  position: fixed;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+
+  /* Pin to bottom */
+  top: auto;
+  bottom: 0;
+
+  /* Dimensions */
+  width: 100%;
+  max-height: 60vh;
+  border: none;
+  outline: none;
+
+  /* Visual */
+  background: var(--bg-card);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  box-shadow: var(--shadow-lg);
+
+  /* Slide-up: hidden off screen by default */
+  transform: translateY(100%);
+  transition: transform var(--ease-smooth);
+}
+
+/* Slide into view when open */
+.sheet[open] {
+  transform: translateY(0);
+}
+
+/* Scrim / backdrop */
+.sheet::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* ── Drag indicator bar ──────────────────────────────────────────────────── */
+
+.indicator {
+  width: 40px;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--text-faint);
+  margin: 12px auto 8px auto;
+  touch-action: none;
+}
+
+/* ── Sheet heading ───────────────────────────────────────────────────────── */
+
+.title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  padding: var(--sp-4);
+  margin: 0;
+  /* Allow focus (tabIndex=-1) without a visible focus ring */
+  outline: none;
+}
+
+/* ── Group radio list ────────────────────────────────────────────────────── */
+
+.groupList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+}
+
+.groupItem {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  height: 48px;
+  padding: 0 var(--sp-4);
+  cursor: pointer;
+  /* No user-select so tapping doesn't highlight text on mobile */
+  user-select: none;
+}
+
+.groupItem:active {
+  background: var(--bg-hover);
+}
+
+/* ── Radio circle ────────────────────────────────────────────────────────── */
+
+.radio {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid var(--text-muted);
+  /* Transition color when selecting */
+  transition: border-color var(--ease-default), background var(--ease-default);
+}
+
+.radioSelected {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+/* ── Group name text ─────────────────────────────────────────────────────── */
+
+.groupName {
+  font-size: 14px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.groupNameCurrent {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 400;
+  margin-left: var(--sp-2);
+}
+
+/* ── "Create new group" row / inline input ───────────────────────────────── */
+
+/* Wrapper li holds either the button row or the input */
+.createRowWrapper {
+  border-top: 1px solid var(--border-sub);
+}
+
+.createRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  height: 48px;
+  padding: 0 var(--sp-4);
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.createRow:active {
+  background: var(--bg-hover);
+}
+
+.createIcon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.createInput {
+  display: block;
+  width: calc(100% - var(--sp-8));
+  margin: var(--sp-2) var(--sp-4);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-focus);
+  border-radius: var(--radius-md);
+  padding: 11px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.createInput::placeholder {
+  color: var(--text-muted);
+}
+
+/* ── Action buttons ──────────────────────────────────────────────────────── */
+
+.buttons {
+  display: flex;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border-top: 1px solid var(--border);
+}
+
+.cancelBtn {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  padding: 10px 20px;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.cancelBtn:active {
+  background: var(--bg-hover);
+}
+
+.moveBtn {
+  flex: 1;
+  background: var(--accent);
+  color: var(--bg-root);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 10px 20px;
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+}
+
+.moveBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.moveBtn:not(:disabled):active {
+  background: var(--accent-hover);
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet {
+    transition: none;
+  }
+
+  .radio {
+    transition: none;
+  }
+}

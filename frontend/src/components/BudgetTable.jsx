@@ -2,8 +2,7 @@ import { useState } from 'react'
 import PropTypes from 'prop-types'
 import styles from './BudgetTable.module.css'
 import { fmtBudgetMonth, fmtDollar } from './chartUtils.jsx'
-
-const WARNING_THRESHOLD = 0.85
+import { WARNING_THRESHOLD } from '../utils/budgetUtils.js'
 
 function CellValue({ budgeted, actual, variance, isIncome }) {
   if (budgeted == null) return <span className={styles.empty}>—</span>

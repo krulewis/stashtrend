@@ -40,6 +40,8 @@ export const saveGroupsConfigs = (data) => mutateJSON('/api/groups/configs', 'PO
 
 // ── Budget ─────────────────────────────────────────────────────────────────
 export const fetchBudgetHistory = (months) => fetchJSON(`/api/budgets/history?months=${months}`)
+export const fetchCustomGroups  = () => fetchJSON('/api/budgets/custom-groups')
+export const saveCustomGroups   = (data) => postJSON('/api/budgets/custom-groups', data)
 
 // ── AI ─────────────────────────────────────────────────────────────────────
 export const fetchAiConfig = () => fetchJSON('/api/ai/config')
