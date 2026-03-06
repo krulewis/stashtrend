@@ -58,25 +58,4 @@ describe('NetWorthChart', () => {
     expect(screen.getByText('Net Worth Over Time')).toBeInTheDocument()
   })
 
-  // ── Milestone ReferenceLine tests ────────────────────────────────────────
-
-  it('renders ReferenceLine for each milestone', () => {
-    const milestones = [
-      { label: 'Half-Mil', amount: 500000 },
-      { label: 'Million', amount: 1000000 },
-    ]
-    render(<NetWorthChart history={MOCK_HISTORY} milestones={milestones} />)
-    expect(screen.getByTestId('reference-line-500000')).toBeInTheDocument()
-    expect(screen.getByTestId('reference-line-1000000')).toBeInTheDocument()
-  })
-
-  it('renders no ReferenceLine when milestones is null', () => {
-    render(<NetWorthChart history={MOCK_HISTORY} milestones={null} />)
-    expect(screen.queryByTestId(/reference-line/)).not.toBeInTheDocument()
-  })
-
-  it('renders no ReferenceLine when milestones is empty', () => {
-    render(<NetWorthChart history={MOCK_HISTORY} milestones={[]} />)
-    expect(screen.queryByTestId(/reference-line/)).not.toBeInTheDocument()
-  })
 })

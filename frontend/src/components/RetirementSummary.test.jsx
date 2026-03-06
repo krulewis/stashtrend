@@ -42,4 +42,14 @@ describe('RetirementSummary', () => {
     render(<RetirementSummary nestEgg={1700000} projectedAtRetirement={1000000} />)
     expect(screen.getByTestId('track-badge').textContent).toBe('Off Track')
   })
+
+  it('hides investable capital row when not provided', () => {
+    render(<RetirementSummary />)
+    expect(screen.queryByTestId('investable-capital-value')).toBeNull()
+  })
+
+  it('shows formatted investable capital when provided', () => {
+    render(<RetirementSummary investableCapital={300000} />)
+    expect(screen.getByTestId('investable-capital-value').textContent).toContain('300,000')
+  })
 })

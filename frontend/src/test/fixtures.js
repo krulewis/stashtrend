@@ -293,6 +293,28 @@ export const MOCK_APPLY_PARTIAL = { applied: 4, failed: 2, errors: [
   { category_id: 'cat_1', month: '2026-06-01', error: 'Timeout' },
 ]}
 
+// ── Type Data (Net Worth by bucket) ──────────────────────────────────────
+export const MOCK_TYPE_DATA = {
+  bucket_order: ['Retirement', 'Brokerage', 'Cash', 'Real Estate', 'Debt', 'Other'],
+  bucket_colors: {
+    Retirement: '#6366f1', Brokerage: '#22c55e', Cash: '#38bdf8',
+    'Real Estate': '#f59e0b', Debt: '#ef4444', Other: '#a78bfa',
+  },
+  series: [
+    { date: '2024-01-01', Retirement: 200000, Brokerage: 50000, Cash: 20000, 'Real Estate': 100000, Debt: -30000, Other: 5000 },
+    { date: '2024-06-01', Retirement: 220000, Brokerage: 55000, Cash: 22000, 'Real Estate': 105000, Debt: -28000, Other: 5000 },
+    { date: '2025-01-01', Retirement: 240000, Brokerage: 60000, Cash: 25000, 'Real Estate': 110000, Debt: -25000, Other: 5000 },
+  ],
+  cagr: {
+    Retirement: { '1y': 0.08, '3y': 0.07, '5y': null },
+    Brokerage:  { '1y': 0.10, '3y': null, '5y': null },
+    Cash:       { '1y': 0.04, '3y': null, '5y': null },
+    'Real Estate': { '1y': 0.05, '3y': null, '5y': null },
+    Debt:       { '1y': null, '3y': null, '5y': null },
+    Other:      { '1y': null, '3y': null, '5y': null },
+  },
+}
+
 // ── Retirement / Milestones ───────────────────────────────────────────────
 export const MOCK_RETIREMENT_EMPTY = { exists: false }
 

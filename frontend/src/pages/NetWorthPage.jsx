@@ -95,17 +95,15 @@ export default function NetWorthPage() {
       {!loading && !error && (
         <>
           <StatsCards stats={stats} />
-          <NetWorthChart
-            history={history}
-            milestones={retirement?.milestones}
-          />
-          <TypeStackedChart data={typeData} />
+          <NetWorthChart history={history} />
+          <TypeStackedChart data={typeData} milestones={retirement?.milestones} />
           <AccountsBreakdown accounts={accounts} />
           <RetirementPanel
             data={retirement}
             onSave={handleSaveRetirement}
             loading={retirementLoading}
             error={retirementError}
+            typeData={typeData}
           />
         </>
       )}

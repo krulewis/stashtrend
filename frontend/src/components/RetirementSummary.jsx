@@ -2,9 +2,17 @@ import PropTypes from 'prop-types'
 import styles from './RetirementSummary.module.css'
 import { fmtFull } from './chartUtils.jsx'
 
-export default function RetirementSummary({ nestEgg, projectedAtRetirement, targetYear }) {
+export default function RetirementSummary({ nestEgg, projectedAtRetirement, investableCapital, targetYear }) {
   return (
     <div className={styles.container} data-testid="retirement-summary">
+      {investableCapital != null && (
+        <div className={styles.row}>
+          <span className={styles.label}>Current investable capital</span>
+          <span className={styles.value} data-testid="investable-capital-value">
+            {fmtFull(investableCapital)}
+          </span>
+        </div>
+      )}
       <div className={styles.row}>
         <span className={styles.label}>Nest egg needed</span>
         <span className={styles.value} data-testid="nest-egg-value">
@@ -40,5 +48,6 @@ export default function RetirementSummary({ nestEgg, projectedAtRetirement, targ
 RetirementSummary.propTypes = {
   nestEgg: PropTypes.number,
   projectedAtRetirement: PropTypes.number,
+  investableCapital: PropTypes.number,
   targetYear: PropTypes.number,
 }
