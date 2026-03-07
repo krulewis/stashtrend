@@ -6,7 +6,7 @@
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none; /* Firefox */
-  height: calc(100dvh - 60px - 56px - env(safe-area-inset-bottom, 0px));
+  height: calc(100dvh - 60px - 28px - 56px - env(safe-area-inset-bottom, 0px));
 }
 
 .container::-webkit-scrollbar {
@@ -32,20 +32,23 @@
 
 .dots {
   position: fixed;
-  bottom: calc(56px + env(safe-area-inset-bottom, 0px) + var(--sp-3));
+  bottom: calc(56px + env(safe-area-inset-bottom, 0px));
   left: 0;
   right: 0;
+  height: 28px;
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: var(--sp-2);
   z-index: 5;
-  pointer-events: none;
+  background: var(--bg-root);
+  border-top: 1px solid var(--border);
 }
 
-/* 44×44px touch target; 8px visual dot rendered via ::before */
+/* 44×28px touch target; 8px visual dot rendered via ::before */
 .dot {
   width: 44px;
-  height: 44px;
+  height: 28px;
   border: none;
   background: transparent;
   cursor: pointer;
