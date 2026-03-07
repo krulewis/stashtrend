@@ -4,6 +4,7 @@ import { saveCustomGroups } from '../api.js'
 import HorizontalSwipeContainer from '../components/mobile/HorizontalSwipeContainer.jsx'
 import MonthDetailView from '../components/mobile/MonthDetailView.jsx'
 import MonthlySummaryView from '../components/mobile/MonthlySummaryView.jsx'
+import HeatmapView from '../components/mobile/HeatmapView.jsx'
 import styles from './MobileBudgetPage.module.css'
 
 export default function MobileBudgetPage({
@@ -14,7 +15,7 @@ export default function MobileBudgetPage({
   onGroupsSaved,
 }) {
   const [selectedMonth, setSelectedMonth] = useState(null)
-  const [activeView,    setActiveView]    = useState(0)   // 0 = detail, 1 = summary
+  const [activeView,    setActiveView]    = useState(0)   // 0 = heatmap (default landing view), 1 = detail, 2 = summary
   const [isReorderMode, setIsReorderMode] = useState(false)
   const [isSaving,      setIsSaving]      = useState(false)
 
@@ -84,7 +85,13 @@ export default function MobileBudgetPage({
         activeIndex={activeView}
         onIndexChange={setActiveView}
         isLocked={isReorderMode}
+        labels={['Heatmap view', 'Month detail view', 'Monthly summary view']}
       >
+        <HeatmapView
+          categories={budgetData.categories}
+          customGroups={customGroups}
+          months={monthsDesc}
+        />
         <MonthDetailView
           months={monthsDesc}
           categories={budgetData.categories}

@@ -61,3 +61,110 @@ export function getPillAriaLabel(actual, budgeted, zone) {
                : 'within budget'
   return `${fmt(actual)} of ${fmt(budgeted)} budget, ${pct}%, ${status}`
 }
+
+/**
+ * Format an ISO date string as a short month + 2-digit year label.
+ * Appends 'T00:00:00' before constructing the Date to prevent timezone
+ * shift (bare new Date('2026-01-01') can roll back to Dec in UTC-offset
+ * environments).
+ *
+ * @param {string} monthKey - ISO date string e.g. '2026-01-01'
+ * @returns {string} Formatted label e.g. 'Jan 26'
+ */
+export function formatMonthLabel(monthKey) {
+  return new Date(monthKey + 'T00:00:00').toLocaleDateString('en-US', {
+    month: 'short',
+    year:  '2-digit',
+  })
+}
+
+/**
+ * Group expense categories by their effective group name, applying optional
+ * custom group overrides. Returns groups sorted by minimum sort_order
+ * (alphabetical tiebreaker), with categories within each group sorted by
+ * sort_order then category_name.
+ *
+ * @param {Array<{
+ *   category_id: string,
+ *   category_name: string,
+ *   group_type: string,
+ *   group_name: string|null,
+ *   months: Record<string, { actual: number|null, budgeted: number|null }>
+ * }>} categories - Raw API category objects
+ * @param {Record<string, Array<{ category_id: string, sort_order: number }>>} customGroups
+ *   - Custom group assignments shaped { "Group Name": [{ category_id, sort_order }] }
+ * @returns {Array<{
+ *   groupName: string,
+ *   categories: Array<{
+ *     category_id: string,
+ *     category_name: string,
+ *     effectiveGroup: string,
+ *     sort_order: number,
+ *     months: Record<string, { actual: number|null, budgeted: number|null }>
+ *   }>
+ * }>}
+ */
+export function groupExpenses(categories, customGroups) {
+  if (!categories || categories.length === 0) return []
+
+  const resolvedGroups = customGroups ?? {}
+
+  // Step 1 — filter to expense categories only.
+  const expenseCategories = categories.filter(
+    cat => cat.group_type !== 'income' && cat.group_type !== 'transfer'
+  )
+
+  // Step 2 — build a flat lookup: category_id -> { custom_group, sort_order }
+  // customGroups shape: { "Group Name": [{ category_id, sort_order }, ...] }
+  const customLookup = {}
+  Object.entries(resolvedGroups).forEach(([groupName, items]) => {
+    items.forEach(item => {
+      customLookup[item.category_id] = {
+        custom_group: groupName,
+        sort_order:   item.sort_order ?? 0,
+      }
+    })
+  })
+
+  // Step 3 — resolve effectiveGroup and preserve full months object.
+  // Do NOT extract a single month's values — callers do that.
+  const flatCategories = expenseCategories.map(cat => {
+    const custom         = customLookup[cat.category_id]
+    const effectiveGroup = custom?.custom_group ?? cat.group_name ?? 'Other'
+    return {
+      category_id:   cat.category_id,
+      category_name: cat.category_name,
+      effectiveGroup,
+      sort_order:    custom?.sort_order ?? Infinity,  // uncustomised → end of list
+      months:        cat.months,
+    }
+  })
+
+  // Step 4 — group by effective group name.
+  const groupMap = {}
+  flatCategories.forEach(cat => {
+    const g = cat.effectiveGroup
+    if (!groupMap[g]) groupMap[g] = []
+    groupMap[g].push(cat)
+  })
+
+  // Step 5 — sort within each group by sort_order, then category_name.
+  Object.values(groupMap).forEach(items => {
+    items.sort((a, b) => {
+      if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order
+      return a.category_name.localeCompare(b.category_name)
+    })
+  })
+
+  // Step 6 — [SR-14] sort groups by minimum sort_order ascending,
+  // alphabetical groupName as tiebreaker (deterministic even when all Infinity).
+  const groupEntries = Object.entries(groupMap)
+  groupEntries.sort(([nameA, catsA], [nameB, catsB]) => {
+    const minA = Math.min(...catsA.map(c => c.sort_order))
+    const minB = Math.min(...catsB.map(c => c.sort_order))
+    if (minA !== minB) return minA - minB
+    return nameA.localeCompare(nameB)
+  })
+
+  return groupEntries.map(([groupName, cats]) => ({ groupName, categories: cats }))
+}
