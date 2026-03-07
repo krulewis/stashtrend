@@ -127,6 +127,8 @@ export default function HeatmapView({ categories, customGroups, months }) {
       const maxStart = Math.max(0, months.length - WINDOW_SIZE)
       return Math.min(prev, maxStart)
     })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Intentional: only re-clamp when the length changes, not on every array reference change.
   }, [months.length])
 
   const windowMonths = useMemo(

@@ -9,7 +9,7 @@
   display: grid;
   grid-template-columns: 110px repeat(6, 1fr);
   align-items: center;
-  padding: 0 var(--sp-3);
+  padding: 0 var(--sp-3); /* matches .groupHeaderRow padding to align grid columns */
   margin-bottom: var(--sp-2);
 }
 
