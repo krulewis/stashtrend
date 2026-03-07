@@ -4,7 +4,7 @@ import { groupExpenses, getBudgetZone, formatMonthLabel, formatGroupLabel } from
 import WindowPicker from './WindowPicker.jsx'
 import styles from './HeatmapView.module.css'
 
-const WINDOW_SIZE = 6
+const WINDOW_SIZE = 5
 
 const ZONE_CLASS_MAP = {
   safe:        styles.dotSafe,
@@ -169,7 +169,7 @@ export default function HeatmapView({ categories, customGroups, months }) {
         onWindowStartChange={setWindowStart}
       />
 
-      <div role="grid" aria-label="Budget heatmap, 6-month overview">
+      <div role="grid" aria-label="Budget heatmap, 5-month overview">
         <div className={styles.columnHeaders} role="row">
           <div className={styles.headerLabel} />
           {displayMonths.map(m => (

@@ -57,7 +57,7 @@ describe('HeatmapView', () => {
   it('renders column headers with role="columnheader"', () => {
     renderHeatmap()
     const headers = screen.getAllByRole('columnheader')
-    expect(headers).toHaveLength(6)
+    expect(headers).toHaveLength(5)
   })
 
   it('renders one row per expense group (excludes income)', () => {
@@ -100,14 +100,14 @@ describe('HeatmapView', () => {
     expect(screen.getByText('Groceries')).toBeInTheDocument()
   })
 
-  it('renders WindowPicker when months.length > 6', () => {
+  it('renders WindowPicker when months.length > 5', () => {
     renderHeatmap()
-    expect(screen.getByRole('combobox', { name: /select 6-month window/i })).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: /select 5-month window/i })).toBeInTheDocument()
   })
 
-  it('renders WindowPicker even when months.length <= 6', () => {
+  it('renders WindowPicker even when months.length <= 5', () => {
     renderHeatmap({ months: MONTHS_8.slice(0, 5) })
-    expect(screen.getByRole('combobox', { name: /select 6-month window/i })).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: /select 5-month window/i })).toBeInTheDocument()
   })
 
   it('dot has correct aria-label for safe zone category', () => {

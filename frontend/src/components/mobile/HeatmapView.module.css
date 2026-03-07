@@ -7,7 +7,7 @@
 
 .columnHeaders {
   display: grid;
-  grid-template-columns: 120px repeat(6, 1fr);
+  grid-template-columns: 140px repeat(5, 1fr);
   align-items: center;
   padding: 0 var(--sp-3); /* matches .groupHeaderRow padding to align grid columns */
   margin-bottom: var(--sp-2);
@@ -44,7 +44,7 @@
 
 .groupHeaderRow {
   display: grid;
-  grid-template-columns: 120px repeat(6, 1fr);
+  grid-template-columns: 140px repeat(5, 1fr);
   align-items: center;
   min-height: 44px;
   padding: 10px var(--sp-3);
@@ -101,7 +101,7 @@
 
 .categoryRow {
   display: grid;
-  grid-template-columns: 120px repeat(6, 1fr);
+  grid-template-columns: 140px repeat(5, 1fr);
   align-items: center;
   min-height: 36px;
   padding: 7px var(--sp-3);

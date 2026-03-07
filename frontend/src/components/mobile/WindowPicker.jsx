@@ -28,7 +28,7 @@ function formatRangeMonth(monthKey) {
 /**
  * WindowPicker
  *
- * Combobox trigger showing the current 6-month window range.
+ * Combobox trigger showing the current N-month window range.
  * Opens a month-grid panel (3 columns × 4 rows per year) for jump-to-any-month
  * navigation. Follows the ARIA combobox/listbox pattern.
  *
@@ -104,7 +104,7 @@ export default function WindowPicker({ months, windowStart, windowSize, onWindow
   /**
    * Handle month selection.
    *
-   * Finding 1 fix: The selected month should become the OLDEST in the 6-month window.
+   * Finding 1 fix: The selected month should become the OLDEST in the window.
    * months[] is sorted most-recent-first, so months[windowStart] is the newest and
    * months[windowStart + windowSize - 1] is the oldest.
    *
@@ -214,7 +214,7 @@ export default function WindowPicker({ months, windowStart, windowSize, onWindow
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         aria-controls={LISTBOX_ID}
-        aria-label="Select 6-month window"
+        aria-label="Select 5-month window"
         className={`${styles.trigger} ${isOpen ? styles.triggerOpen : ''}`}
         onClick={handleTriggerClick}
       >

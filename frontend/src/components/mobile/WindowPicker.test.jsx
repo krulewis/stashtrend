@@ -8,14 +8,14 @@ const MONTHS_8 = [
   '2025-11-01', '2025-10-01', '2025-09-01', '2025-08-01',
 ]
 
-// windowStart=2 means the window covers months[2..7]:
-//   months[2]='2026-01-01' (newest), months[7]='2025-08-01' (oldest)
-// selectedMonthKey = months[windowStart + windowSize - 1] = months[7] = '2025-08-01'
+// windowStart=2 means the window covers months[2..6]:
+//   months[2]='2026-01-01' (newest), months[6]='2025-09-01' (oldest)
+// selectedMonthKey = months[windowStart + windowSize - 1] = months[6] = '2025-09-01'
 function renderPicker(overrides = {}) {
   const defaults = {
     months: MONTHS_8,
     windowStart: 2,
-    windowSize: 6,
+    windowSize: 5,
     onWindowStartChange: vi.fn(),
   }
   const props = { ...defaults, ...overrides }
@@ -29,15 +29,15 @@ describe('WindowPicker', () => {
 
   it('renders trigger with role="combobox" and aria-label', () => {
     renderPicker()
-    expect(screen.getByRole('combobox', { name: /select 6-month window/i })).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: /select 5-month window/i })).toBeInTheDocument()
   })
 
   it('trigger shows the date range of the current window', () => {
     renderPicker()
-    // windowStart=2, windowSize=6:
-    //   oldest = months[7] = '2025-08-01' → "Aug 2025"
+    // windowStart=2, windowSize=5:
+    //   oldest = months[6] = '2025-09-01' → "Sep 2025"
     //   newest = months[2] = '2026-01-01' → "Jan 2026"
-    expect(screen.getByRole('combobox')).toHaveTextContent(/Aug 2025/)
+    expect(screen.getByRole('combobox')).toHaveTextContent(/Sep 2025/)
     expect(screen.getByRole('combobox')).toHaveTextContent(/Jan 2026/)
   })
 
@@ -61,25 +61,25 @@ describe('WindowPicker', () => {
   })
 
   it('applies aria-selected to the oldest month in the current window', () => {
-    // windowStart=2, windowSize=6: selectedMonthKey = months[7] = '2025-08-01' → Aug
+    // windowStart=2, windowSize=5: selectedMonthKey = months[6] = '2025-09-01' → Sep
     // Finding 1 fix: selection marks the OLDEST month, not months[windowStart]
     renderPicker()
     fireEvent.click(screen.getByRole('combobox'))
     const options = screen.getAllByRole('option')
     const selectedOptions = options.filter(o => o.getAttribute('aria-selected') === 'true')
     expect(selectedOptions).toHaveLength(1)
-    expect(selectedOptions[0]).toHaveTextContent('Aug')
+    expect(selectedOptions[0]).toHaveTextContent('Sep')
   })
 
   it('clicking an available month calls onWindowStartChange with correct index', () => {
     // Finding 1 fix: handleSelect computes newStart = Math.max(0, idx - (windowSize - 1))
     // Nov 2025 is at index 4 in MONTHS_8.
-    // newStart = Math.max(0, 4 - (6 - 1)) = Math.max(0, 4 - 5) = Math.max(0, -1) = 0
+    // newStart = Math.max(0, 4 - (5 - 1)) = Math.max(0, 4 - 4) = Math.max(0, 0) = 0
     // So onWindowStartChange(0) is expected.
     const onWindowStartChange = vi.fn()
     renderPicker({ windowStart: 0, onWindowStartChange })
     fireEvent.click(screen.getByRole('combobox'))
-    // windowStart=0 → oldest = months[5] = '2025-10-01' → grid opens on year 2025
+    // windowStart=0 → oldest = months[4] = '2025-11-01' → grid opens on year 2025
     const options = screen.getAllByRole('option')
     const novOption = options.find(o => o.textContent === 'Nov')
     fireEvent.click(novOption)
@@ -114,7 +114,7 @@ describe('WindowPicker', () => {
       months: ['2026-02-01', '2026-01-01', '2025-12-01',
                '2025-11-01', '2025-10-01', '2025-09-01'],
       windowStart: 0,
-      windowSize: 6,
+      windowSize: 5,
     })
     fireEvent.click(screen.getByRole('combobox'))
     // Grid opens on 2025. Jan–Aug 2025 are not in the months array → disabled.
