@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import PropTypes from 'prop-types'
-import { groupExpenses, getBudgetZone, formatMonthLabel } from '../../utils/budgetUtils.js'
+import { groupExpenses, getBudgetZone, formatMonthLabel, formatGroupLabel } from '../../utils/budgetUtils.js'
 import WindowPicker from './WindowPicker.jsx'
 import styles from './HeatmapView.module.css'
 
@@ -13,6 +13,14 @@ const ZONE_CLASS_MAP = {
   'no-budget': styles.dotMuted,
   'no-data':   styles.dotFaint,
 }
+
+const LEGEND_ITEMS = [
+  { zone: 'safe',      label: 'Under 85%',      dotClass: styles.dotSafe },
+  { zone: 'warning',   label: '85 \u2013 100%', dotClass: styles.dotWarning },
+  { zone: 'over',      label: 'Over 100%',      dotClass: styles.dotOver },
+  { zone: 'no-budget', label: 'No budget',      dotClass: styles.dotMuted },
+  { zone: 'no-data',   label: 'No data',        dotClass: styles.dotFaint },
+]
 
 function getDotAriaLabel(name, monthKey, actual, budgeted, zone) {
   const monthLabel = new Date(monthKey + 'T00:00:00').toLocaleDateString('en-US', {
@@ -46,7 +54,7 @@ function HeatmapGroupRow({ group, months }) {
   }), [group, months])
 
   return (
-    <div className={styles.groupCard}>
+    <div className={`${styles.groupCard} ${isExpanded ? styles.groupCardExpanded : ''}`}>
       <div className={styles.groupHeaderRow} role="row">
         <div
           role="rowheader"
@@ -66,7 +74,7 @@ function HeatmapGroupRow({ group, months }) {
                 aria-hidden="true">
             ›
           </span>
-          <span className={styles.groupName}>{group.groupName}</span>
+          <span className={styles.groupName}>{formatGroupLabel(group.groupName)}</span>
         </div>
         {groupZones.map(({ month, zone, actual, budgeted }) => (
           <div key={month} role="gridcell" className={styles.dotCell}>
@@ -87,7 +95,7 @@ function HeatmapGroupRow({ group, months }) {
           {group.categories.map(cat => (
             <div key={cat.category_id} className={styles.categoryRow} role="row">
               <div className={styles.categoryLabel} role="rowheader">
-                {cat.category_name}
+                {formatGroupLabel(cat.category_name, 12)}
               </div>
               {months.map(m => {
                 const actual = cat.months?.[m]?.actual ?? null
@@ -140,8 +148,8 @@ export default function HeatmapView({ categories, customGroups, months }) {
     [windowMonths]
   )
 
-  const canGoOlder = windowStart + WINDOW_SIZE < months.length
-  const canGoNewer = windowStart > 0
+  const now = new Date()
+  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
 
   const groupedData = useMemo(
     () => groupExpenses(categories, customGroups),
@@ -155,20 +163,31 @@ export default function HeatmapView({ categories, customGroups, months }) {
   return (
     <div className={styles.heatmap}>
       <WindowPicker
-        displayMonths={displayMonths}
-        canGoOlder={canGoOlder}
-        canGoNewer={canGoNewer}
-        onGoOlder={() => setWindowStart(w => w + 1)}
-        onGoNewer={() => setWindowStart(w => w - 1)}
-        hidden={months.length <= WINDOW_SIZE}
+        months={months}
+        windowStart={windowStart}
+        windowSize={WINDOW_SIZE}
+        onWindowStartChange={setWindowStart}
       />
 
       <div role="grid" aria-label="Budget heatmap, 6-month overview">
         <div className={styles.columnHeaders} role="row">
           <div className={styles.headerLabel} />
           {displayMonths.map(m => (
-            <span key={m} role="columnheader" className={styles.headerMonth}>
+            <span
+              key={m}
+              role="columnheader"
+              className={`${styles.headerMonth} ${m === currentMonthKey ? styles.headerMonthCurrent : ''}`}
+            >
               {formatMonthLabel(m)}
+            </span>
+          ))}
+        </div>
+
+        <div className={styles.legend} aria-label="Dot color legend" role="group">
+          {LEGEND_ITEMS.map(item => (
+            <span key={item.zone} className={styles.legendItem}>
+              <span className={`${styles.legendDot} ${item.dotClass}`} aria-hidden="true" />
+              <span className={styles.legendLabel}>{item.label}</span>
             </span>
           ))}
         </div>

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { getBudgetZone, getPillAriaLabel, WARNING_THRESHOLD,
-         groupExpenses, formatMonthLabel } from './budgetUtils.js'
+         groupExpenses, formatMonthLabel, formatGroupLabel } from './budgetUtils.js'
 
 // ===========================================================================
 // getBudgetZone
@@ -176,18 +176,75 @@ describe('getPillAriaLabel', () => {
 // ===========================================================================
 
 describe('formatMonthLabel', () => {
-  it('formats a January date as Jan 26', () => {
-    expect(formatMonthLabel('2026-01-01')).toBe('Jan 26')
+  it("formats a January date as Jan '26", () => {
+    expect(formatMonthLabel('2026-01-01')).toBe("Jan '26")
   })
 
-  it('formats a December date as Dec 25', () => {
-    expect(formatMonthLabel('2025-12-01')).toBe('Dec 25')
+  it("formats a December date as Dec '25", () => {
+    expect(formatMonthLabel('2025-12-01')).toBe("Dec '25")
   })
 
   it('does not shift to the previous month due to timezone', () => {
     // Bare new Date('2026-01-01') can roll back to Dec 31 in UTC-offset
     // environments. The T00:00:00 suffix prevents this.
-    expect(formatMonthLabel('2026-01-01')).not.toBe('Dec 25')
+    expect(formatMonthLabel('2026-01-01')).not.toBe("Dec '25")
+  })
+})
+
+// ===========================================================================
+// formatGroupLabel
+// ===========================================================================
+
+describe('formatGroupLabel', () => {
+  it('returns name unchanged when it fits within maxLen (default 14)', () => {
+    expect(formatGroupLabel('Housing')).toBe('Housing')
+  })
+
+  it('returns name unchanged when length equals maxLen exactly', () => {
+    // "Food & Dining" = 13 chars, fits within 14
+    expect(formatGroupLabel('Food & Dining')).toBe('Food & Dining')
+  })
+
+  it('uses shortmap for known long group names', () => {
+    expect(formatGroupLabel('Auto & Transportation')).toBe('Auto & Transit')
+    expect(formatGroupLabel('Gifts & Donations')).toBe('Gifts & Don.')
+    expect(formatGroupLabel('Bills & Utilities')).toBe('Bills & Utils')
+    expect(formatGroupLabel('Health & Wellness')).toBe('Health & Well.')
+  })
+
+  it('truncates at word boundary for multi-word names exceeding maxLen', () => {
+    // "Auto & Transport" = 16 chars > 14 (not in shortmap)
+    // Words: "Auto" (4) fits, "Auto &" (6) fits, "Auto & Transport" (16 > 14) stop
+    expect(formatGroupLabel('Auto & Transport')).toBe('Auto &')
+  })
+
+  it('returns only the first word when adding the second word would exceed maxLen', () => {
+    // "Entertainment" = 13 chars fits; "Entertainment Bill" = 18 chars
+    expect(formatGroupLabel('Entertainment Bill')).toBe('Entertainment')
+  })
+
+  it('hard-truncates with ellipsis when first word alone exceeds maxLen', () => {
+    const result = formatGroupLabel('Extraordinarily', 10)
+    expect(result).toHaveLength(10)
+    expect(result).toMatch(/…$/)
+  })
+
+  it('returns "Other" for null input', () => {
+    expect(formatGroupLabel(null)).toBe('Other')
+  })
+
+  it('returns "Other" for undefined input', () => {
+    // Finding 4: explicitly test undefined (falsy check covers it but test was missing)
+    expect(formatGroupLabel(undefined)).toBe('Other')
+  })
+
+  it('returns "Other" for empty string input', () => {
+    expect(formatGroupLabel('')).toBe('Other')
+  })
+
+  it('accepts a custom maxLen override', () => {
+    const result = formatGroupLabel('Auto & Transport', 12)
+    expect(result.length).toBeLessThanOrEqual(12)
   })
 })
 
