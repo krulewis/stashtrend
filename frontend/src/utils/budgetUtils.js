@@ -93,17 +93,18 @@ export function formatMonthLabel(monthKey) {
  * @param {number} maxLen - Maximum character count (default 14)
  * @returns {string}
  */
+/** Known abbreviations for long Monarch group names (design brief QA fix). */
+const GROUP_SHORT_MAP = {
+  'Auto & Transportation': 'Auto & Transit',
+  'Gifts & Donations':     'Gifts & Don.',
+  'Bills & Utilities':     'Bills & Utils',
+  'Health & Wellness':     'Health & Well.',
+}
+
 export function formatGroupLabel(name, maxLen = 14) {
   if (!name) return 'Other'
 
-  // Known abbreviations from design brief — checked before length test
-  const SHORT_MAP = {
-    'Auto & Transportation': 'Auto & Transit',
-    'Gifts & Donations':     'Gifts & Don.',
-    'Bills & Utilities':     'Bills & Utils',
-    'Health & Wellness':     'Health & Well.',
-  }
-  const shortcut = SHORT_MAP[name]
+  const shortcut = GROUP_SHORT_MAP[name]
   if (shortcut && shortcut.length <= maxLen) return shortcut
 
   if (name.length <= maxLen) return name
