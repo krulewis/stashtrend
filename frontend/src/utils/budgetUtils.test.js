@@ -176,11 +176,11 @@ describe('getPillAriaLabel', () => {
 // ===========================================================================
 
 describe('formatMonthLabel', () => {
-  it('formats a January date as Jan 26', () => {
+  it("formats a January date as Jan '26", () => {
     expect(formatMonthLabel('2026-01-01')).toBe("Jan '26")
   })
 
-  it('formats a December date as Dec 25', () => {
+  it("formats a December date as Dec '25", () => {
     expect(formatMonthLabel('2025-12-01')).toBe("Dec '25")
   })
 
