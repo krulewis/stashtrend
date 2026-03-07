@@ -35,7 +35,7 @@ function formatRangeMonth(monthKey) {
  * Props:
  *   months              — full sorted array of ISO date strings, most-recent-first
  *   windowStart         — current offset index into months[] (0 = most recent window)
- *   windowSize          — number of months in the window (always 6)
+ *   windowSize          — number of months in the window
  *   onWindowStartChange — called with new index when user selects a month
  */
 export default function WindowPicker({ months, windowStart, windowSize, onWindowStartChange }) {
@@ -214,7 +214,7 @@ export default function WindowPicker({ months, windowStart, windowSize, onWindow
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         aria-controls={LISTBOX_ID}
-        aria-label="Select 5-month window"
+        aria-label={`Select ${windowSize}-month window`}
         className={`${styles.trigger} ${isOpen ? styles.triggerOpen : ''}`}
         onClick={handleTriggerClick}
       >

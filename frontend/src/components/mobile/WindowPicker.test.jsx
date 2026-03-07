@@ -110,8 +110,8 @@ describe('WindowPicker', () => {
     // Finding 2 fix: aria-disabled="true" is present for disabled months;
     //               aria-disabled is absent (not "false") for enabled months.
     renderPicker({
-      // most-recent-first: Feb 2026 is newest, Sep 2025 is oldest
-      months: ['2026-02-01', '2026-01-01', '2025-12-01',
+      // most-recent-first: Jan 2026 is newest, Sep 2025 is oldest (5 months = windowSize)
+      months: ['2026-01-01', '2025-12-01',
                '2025-11-01', '2025-10-01', '2025-09-01'],
       windowStart: 0,
       windowSize: 5,

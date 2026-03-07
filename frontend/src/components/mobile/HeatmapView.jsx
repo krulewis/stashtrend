@@ -169,7 +169,7 @@ export default function HeatmapView({ categories, customGroups, months }) {
         onWindowStartChange={setWindowStart}
       />
 
-      <div role="grid" aria-label="Budget heatmap, 5-month overview">
+      <div role="grid" aria-label={`Budget heatmap, ${WINDOW_SIZE}-month overview`}>
         <div className={styles.columnHeaders} role="row">
           <div className={styles.headerLabel} />
           {displayMonths.map(m => (
