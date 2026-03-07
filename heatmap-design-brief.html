@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stashtrend Heatmap — Design Brief</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background:#0A0F1E;color:#F0F6FF;padding:24px 16px}
+:root{
+  --bg-root:#0A0F1E;--bg-card:#1C2333;--bg-surface:#111827;--bg-inset:#141c2e;
+  --border:#1E2D4A;--border-focus:#4D9FFF;
+  --text-primary:#F0F6FF;--text-secondary:#8BA8CC;--text-muted:#4A6080;--text-faint:#2B4060;
+  --accent:#4D9FFF;--accent-tint:rgba(77,159,255,0.12);
+  --positive:#2ECC8A;--warning:#F5A623;--negative:#FF5A7A;
+  --radius-sm:6px;--radius-md:8px;--radius-lg:12px;--radius-pill:9999px;
+  --shadow-lg:0 16px 48px rgba(0,0,0,0.6)
+}
+.eyebrow{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+h1{font-size:26px;font-weight:300;letter-spacing:-0.5px;margin-bottom:6px}
+h2{font-size:15px;font-weight:500;color:var(--text-primary);margin:28px 0 6px}
+p{font-size:13px;color:var(--text-secondary);line-height:1.7;margin-bottom:8px}
+code{font-family:monospace;color:var(--accent);font-size:11px}
+.divider{height:1px;background:var(--border);margin:28px 0}
+.tag{display:inline-block;padding:3px 10px;border-radius:var(--radius-pill);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;font-weight:500}
+.tag-red{background:rgba(255,90,122,0.12);color:var(--negative);border:1px solid rgba(255,90,122,0.2)}
+.tag-green{background:rgba(46,204,138,0.12);color:var(--positive);border:1px solid rgba(46,204,138,0.2)}
+
+/* PHONE */
+.phone-wrap{display:flex;justify-content:center;margin:28px 0}
+.phone{width:320px;max-width:100%;background:#080C18;border-radius:32px;border:2px solid #1E2D4A;overflow:hidden;box-shadow:var(--shadow-lg)}
+.phone-status{background:#080C18;padding:10px 18px 6px;display:flex;justify-content:space-between}
+.phone-status-time{font-size:12px;font-weight:500}
+.phone-status-icons{font-size:10px;color:var(--text-secondary)}
+.phone-appbar{background:#080C18;padding:6px 16px 10px;border-bottom:1px solid var(--border)}
+.phone-logo{font-size:8px;letter-spacing:3px;text-transform:uppercase;color:var(--accent)}
+
+/* PICKER */
+.picker-trigger{margin:10px 12px 0;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:7px 11px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.picker-label{font-size:11px;color:var(--text-secondary)}
+.picker-arrow{font-size:9px;color:var(--text-muted)}
+
+/* COL HEADERS */
+.col-headers{display:grid;grid-template-columns:100px repeat(6,1fr);padding:10px 12px 0}
+.col-h{font-size:9px;letter-spacing:0.5px;color:var(--text-muted);text-align:center}
+.col-h.now{color:var(--accent)}
+
+/* LEGEND */
+.legend{display:flex;gap:10px;align-items:center;padding:6px 12px 8px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:4px}
+.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.leg-label{font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted)}
+
+/* HEATMAP */
+.hm-scroll{overflow-y:auto;max-height:480px;padding:8px 12px 14px}
+
+/* GROUP CARDS */
+.gc{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:8px;overflow:hidden;transition:border-color 0.2s}
+.gc.open{border-left:2px solid var(--accent)}
+.gr{display:grid;grid-template-columns:100px repeat(6,1fr);align-items:center;padding:10px 11px;cursor:pointer;user-select:none}
+.glabel{display:flex;align-items:center;gap:5px}
+.chev{font-size:10px;color:var(--text-muted);width:10px;flex-shrink:0}
+.gname{font-size:13px;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dc{display:flex;justify-content:center;align-items:center}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.g{background:var(--positive)}.y{background:var(--warning)}.r{background:var(--negative)}.n{background:var(--text-muted);opacity:0.45}
+
+/* CHILD ROWS */
+.crows{border-top:1px solid var(--border)}
+.cr{display:grid;grid-template-columns:100px repeat(6,1fr);align-items:center;padding:7px 11px;background:var(--bg-inset);border-bottom:1px solid rgba(30,45,74,0.5)}
+.cr:last-child{border-bottom:none}
+.clabel{font-size:11px;color:var(--text-secondary);padding-left:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* BOTTOM TAB */
+.btab{background:#080C18;border-top:1px solid var(--border);padding:8px 0 14px;display:flex;justify-content:space-around}
+.ti{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ti-icon{font-size:14px}
+.ti-label{font-size:7px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted)}
+.ti-label.active{color:var(--accent)}
+
+/* CALLOUTS */
+.callouts{display:flex;flex-direction:column;gap:10px;margin-top:20px}
+.callout{display:flex;gap:10px;align-items:flex-start}
+.cnum{width:22px;height:22px;border-radius:50%;background:var(--accent-tint);border:1px solid rgba(77,159,255,0.3);color:var(--accent);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.ctext{font-size:12px;color:var(--text-secondary);line-height:1.6}
+.ctext strong{color:var(--text-primary);font-weight:500}
+
+/* SPEC BLOCKS */
+.spec{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:12px}
+.spec-label{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--text-faint);margin-bottom:10px}
+.spec-note{background:var(--bg-root);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px 12px;font-size:10px;color:var(--text-secondary);font-family:monospace;line-height:1.9;margin-top:12px}
+</style>
+</head>
+<body>
+
+<div class="eyebrow">Design Brief · Stashtrend Heatmap</div>
+<h1>Recommended UI Changes</h1>
+<p>Six targeted refinements. All tokens from <code>index.css</code> — no hardcoded hex.</p>
+<div style="display:flex;gap:8px;margin-top:10px;margin-bottom:4px">
+  <span class="tag tag-green">6 Changes</span>
+  <span class="tag tag-red">0 Rebuilds</span>
+</div>
+
+<div class="divider"></div>
+<div class="eyebrow">Annotated Mockup — Proposed State</div>
+<p>Click any group header to toggle expand/collapse.</p>
+
+<div class="phone-wrap">
+  <div class="phone">
+    <div class="phone-status">
+      <span class="phone-status-time">10:56</span>
+      <span class="phone-status-icons">▪▪▪ ◈ 27%</span>
+    </div>
+    <div class="phone-appbar">
+      <div class="phone-logo">Stashtrend</div>
+    </div>
+
+    <!-- CHANGE 6: Calendar picker replaces arrow nav -->
+    <div class="picker-trigger">
+      <span class="picker-label">Sep '25 – Feb '26</span>
+      <span class="picker-arrow">▾</span>
+    </div>
+
+    <!-- CHANGE 3: Single-line col headers, no arrow bar -->
+    <div class="col-headers">
+      <div></div>
+      <div class="col-h">Sep '25</div>
+      <div class="col-h">Oct '25</div>
+      <div class="col-h">Nov '25</div>
+      <div class="col-h">Dec '25</div>
+      <div class="col-h">Jan '26</div>
+      <div class="col-h now">Feb '26</div>
+    </div>
+
+    <!-- CHANGE 4: Persistent legend -->
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--positive)"></div><span class="leg-label">On budget</span></div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--warning)"></div><span class="leg-label">Near</span></div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--negative)"></div><span class="leg-label">Over</span></div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--text-muted);opacity:0.45"></div><span class="leg-label">No data</span></div>
+    </div>
+
+    <div class="hm-scroll">
+
+      <!-- Financial: collapsed -->
+      <div class="gc" id="g-fin">
+        <div class="gr" onclick="tog('fin')">
+          <div class="glabel"><span class="chev" id="cv-fin">›</span><span class="gname">Financial</span></div>
+          <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot r"></div></div>
+          <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot g"></div></div>
+          <div class="dc"><div class="dot g"></div></div><div class="dc"><div class="dot r"></div></div>
+        </div>
+      </div>
+
+      <!-- Food & Dining: expanded (CHANGE 5: accent left border + inset children) -->
+      <div class="gc open" id="g-food">
+        <div class="gr" onclick="tog('food')">
+          <div class="glabel"><span class="chev" id="cv-food">‹</span><span class="gname">Food & Dining</span></div>
+          <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot r"></div></div>
+          <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot r"></div></div>
+          <div class="dc"><div class="dot y"></div></div><div class="dc"><div class="dot y"></div></div>
+        </div>
+        <div class="crows" id="cr-food">
+          <div class="cr"><span class="clabel">Coffee Shops</span>
+            <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot r"></div></div>
+            <div class="dc"><div class="dot g"></div></div><div class="dc"><div class="dot g"></div></div>
+            <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot g"></div></div>
+          </div>
+          <div class="cr"><span class="clabel">Groceries</span>
+            <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot r"></div></div>
+            <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot y"></div></div>
+            <div class="dc"><div class="dot y"></div></div><div class="dc"><div class="dot y"></div></div>
+          </div>
+          <div class="cr"><span class="clabel">Lunch</span>
+            <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot g"></div></div>
+            <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot g"></div></div>
+            <div class="dc"><div class="dot n"></div></div><div class="dc"><div class="dot r"></div></div>
+          </div>
+          <div class="cr"><span class="clabel">Restaurants</span>
+            <div class="dc"><div class="dot g"></div></div><div class="dc"><div class="dot r"></div></div>
+            <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot r"></div></div>
+            <div class="dc"><div class="dot g"></div></div><div class="dc"><div class="dot r"></div></div>
+          </div>
+          <div class="cr"><span class="clabel">Takeout</span>
+            <div class="dc"><div class="dot y"></div></div><div class="dc"><div class="dot g"></div></div>
+            <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot r"></div></div>
+            <div class="dc"><div class="dot g"></div></div><div class="dc"><div class="dot r"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gifts & Don.: collapsed (CHANGE 1: smart label) -->
+      <div class="gc" id="g-gifts">
+        <div class="gr" onclick="tog('gifts')">
+          <div class="glabel"><span class="chev" id="cv-gifts">›</span><span class="gname">Gifts & Don.</span></div>
+          <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot r"></div></div>
+          <div class="dc"><div class="dot y"></div></div><div class="dc"><div class="dot r"></div></div>
+          <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot y"></div></div>
+        </div>
+      </div>
+
+      <!-- Health & Wellness: collapsed -->
+      <div class="gc" id="g-health">
+        <div class="gr" onclick="tog('health')">
+          <div class="glabel"><span class="chev" id="cv-health">›</span><span class="gname">Health & Wellness</span></div>
+          <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot r"></div></div>
+          <div class="dc"><div class="dot g"></div></div><div class="dc"><div class="dot g"></div></div>
+          <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot r"></div></div>
+        </div>
+      </div>
+
+      <!-- Housing: collapsed -->
+      <div class="gc" id="g-housing">
+        <div class="gr" onclick="tog('housing')">
+          <div class="glabel"><span class="chev" id="cv-housing">›</span><span class="gname">Housing</span></div>
+          <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot y"></div></div>
+          <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot y"></div></div>
+          <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot y"></div></div>
+        </div>
+      </div>
+
+      <!-- Auto & Transit: collapsed (CHANGE 1: smart label) -->
+      <div class="gc" id="g-auto">
+        <div class="gr" onclick="tog('auto')">
+          <div class="glabel"><span class="chev" id="cv-auto">›</span><span class="gname">Auto & Transit</span></div>
+          <div class="dc"><div class="dot y"></div></div><div class="dc"><div class="dot g"></div></div>
+          <div class="dc"><div class="dot g"></div></div><div class="dc"><div class="dot r"></div></div>
+          <div class="dc"><div class="dot y"></div></div><div class="dc"><div class="dot r"></div></div>
+        </div>
+      </div>
+
+    </div><!-- /hm-scroll -->
+
+    <div class="btab">
+      <div class="ti"><span class="ti-icon">📈</span><span class="ti-label">Net Worth</span></div>
+      <div class="ti"><span class="ti-icon">⬡</span><span class="ti-label">Accounts</span></div>
+      <div class="ti"><span class="ti-icon">💰</span><span class="ti-label active">Budgets</span></div>
+      <div class="ti"><span class="ti-icon">🏗</span><span class="ti-label">Builder</span></div>
+      <div class="ti"><span class="ti-icon">🔄</span><span class="ti-label">Sync</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ANNOTATED CHANGES -->
+<div class="eyebrow">Annotated Changes</div>
+<div class="callouts">
+  <div class="callout"><div class="cnum">1</div><div class="ctext"><strong>Smart label abbreviation</strong> — "Auto & Transportation" → "Auto & Transit", "Gifts & Donations" → "Gifts & Don." Add <code>formatGroupLabel(name, maxLen=14)</code> to <code>budgetUtils.js</code>. Never truncate mid-word.</div></div>
+  <div class="callout"><div class="cnum">2</div><div class="ctext"><strong>Smaller dots + row padding</strong> — 10px dots (down ~15%), row padding 10px vertical. Grid breathes in expanded groups.</div></div>
+  <div class="callout"><div class="cnum">3</div><div class="ctext"><strong>Single-line month headers, no arrow bar</strong> — "Sep '25" format, <code>var(--text-muted)</code>. Current month in <code>var(--accent)</code>. Matches <code>MonthTick</code> convention in <code>BudgetChart.jsx</code>.</div></div>
+  <div class="callout"><div class="cnum">4</div><div class="ctext"><strong>Persistent legend</strong> — Always visible below column headers. Four states: on budget / near / over / no data. 8px uppercase in <code>var(--text-muted)</code>.</div></div>
+  <div class="callout"><div class="cnum">5</div><div class="ctext"><strong>Expanded group accent</strong> — <code>border-left: 2px solid var(--accent)</code> on open group card. Child rows get <code>background: var(--bg-inset)</code>. Clear nesting, no extra chrome. See Food & Dining above.</div></div>
+  <div class="callout"><div class="cnum">6</div><div class="ctext"><strong>Calendar picker replaces arrow nav</strong> — Trigger shows active window "Sep '25 – Feb '26 ▾". Opens month grid on tap. On focus: <code>border-color: var(--border-focus); box-shadow: 0 0 0 1px var(--accent)</code>.</div></div>
+</div>
+
+<div class="divider"></div>
+
+<!-- SPEC DETAILS -->
+<div class="eyebrow">Implementation Specs</div>
+
+<div class="spec">
+  <div class="spec-label">Change 1 — Label utility · budgetUtils.js</div>
+  <p>Add alongside existing utilities. Import in heatmap component.</p>
+  <div class="spec-note">
+export function formatGroupLabel(name, maxLen = 14) {<br>
+&nbsp;&nbsp;const shorts = {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;'Auto & Transportation': 'Auto & Transit',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;'Gifts & Donations': 'Gifts & Don.',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;'Food & Dining': 'Food & Dining',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;'Health & Wellness': 'Health & Wellness',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;'Bills & Utilities': 'Bills & Utils',<br>
+&nbsp;&nbsp;};<br>
+&nbsp;&nbsp;if (shorts[name]) return shorts[name];<br>
+&nbsp;&nbsp;if (name.length &lt;= maxLen) return name;<br>
+&nbsp;&nbsp;const words = name.split(' ');<br>
+&nbsp;&nbsp;let result = '';<br>
+&nbsp;&nbsp;for (const w of words) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if ((result + ' ' + w).trim().length &gt; maxLen) break;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;result = (result + ' ' + w).trim();<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;return result + '.';<br>
+}
+  </div>
+</div>
+
+<div class="spec">
+  <div class="spec-label">Change 2 — Dot + row sizing · BudgetHeatmap.module.css</div>
+  <div class="spec-note">
+.dot { width: 10px; height: 10px; border-radius: var(--radius-pill); flex-shrink: 0; }<br>
+.groupRow { padding: 10px var(--sp-3); }<br>
+.childRow { padding: 7px var(--sp-3); }
+  </div>
+</div>
+
+<div class="spec">
+  <div class="spec-label">Change 3 — Month header format</div>
+  <div class="spec-note">
+// Use formatMonthLabel() from budgetUtils.js — already timezone-safe<br>
+// Output: 'Sep '25', 'Feb '26'<br>
+// Current month: color: var(--accent)<br>
+// All others: color: var(--text-muted)<br>
+// Remove the &lt;nav&gt; arrow bar component entirely
+  </div>
+</div>
+
+<div class="spec">
+  <div class="spec-label">Change 4 — Legend component</div>
+  <div class="spec-note">
+.legend { display:flex; gap:var(--sp-4); padding:var(--sp-2) var(--sp-3); border-bottom:1px solid var(--border); flex-wrap:wrap; }<br>
+.legendDot { width:7px; height:7px; border-radius:50%; }<br>
+.legendLabel { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  </div>
+</div>
+
+<div class="spec">
+  <div class="spec-label">Change 5 — Expanded group styles</div>
+  <div class="spec-note">
+.groupCard.expanded { border-left: 2px solid var(--accent); padding-left: calc(var(--sp-3) - 2px); }<br>
+.childRow { background: var(--bg-inset); }
+  </div>
+</div>
+
+<div class="spec">
+  <div class="spec-label">Change 6 — Picker trigger · input focus standard (PR2)</div>
+  <div class="spec-note">
+.pickerTrigger {<br>
+&nbsp;&nbsp;background: var(--bg-card);<br>
+&nbsp;&nbsp;border: 1px solid var(--border);<br>
+&nbsp;&nbsp;border-radius: var(--radius-md);<br>
+&nbsp;&nbsp;padding: var(--sp-2) var(--sp-3);<br>
+&nbsp;&nbsp;font-size: 12px; color: var(--text-secondary);<br>
+&nbsp;&nbsp;width: 100%;<br>
+}<br>
+.pickerTrigger:focus {<br>
+&nbsp;&nbsp;border-color: var(--border-focus);<br>
+&nbsp;&nbsp;box-shadow: 0 0 0 1px var(--accent);<br>
+&nbsp;&nbsp;outline: none;<br>
+}<br>
+@media (forced-colors: active) { .pickerTrigger:focus { outline: 2px solid; } }
+  </div>
+</div>
+
+<div class="divider"></div>
+<p style="text-align:center;font-size:11px;color:var(--text-muted);padding-bottom:16px">Stashtrend · Heatmap Design Brief · All tokens from index.css</p>
+
+<script>
+function tog(id) {
+  const card = document.getElementById('g-' + id);
+  const chev = document.getElementById('cv-' + id);
+  const rows = document.getElementById('cr-' + id);
+  const open = card.classList.contains('open');
+  if (open) {
+    card.classList.remove('open');
+    chev.textContent = '›';
+    if (rows) rows.style.display = 'none';
+  } else {
+    card.classList.add('open');
+    chev.textContent = '‹';
+    if (rows) rows.style.display = 'block';
+  }
+}
+['fin','gifts','health','housing','auto'].forEach(id => {
+  const r = document.getElementById('cr-' + id);
+  if (r) r.style.display = 'none';
+});
+</script>
+</body>
+</html>
