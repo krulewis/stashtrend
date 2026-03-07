@@ -103,9 +103,13 @@
     border-radius: 0 0 16px 16px; margin: 0 auto;
   }
   .phone-content {
-    padding: 8px 16px 24px;
+    padding: 8px 16px 0;
     min-height: 640px;
     display: flex; flex-direction: column;
+  }
+  .phone-scroll-area {
+    flex: 1; overflow-y: auto;
+    padding-bottom: 8px;
   }
 
   /* ─── Mockup Components ────────────────────────────────────────────────── */
@@ -229,7 +233,13 @@
   }
   .btn-primary:disabled, .btn-primary.disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* ─── View Indicator Dots ──────────────────────────────────────────────── */
+  /* ─── View Indicator Dots (fixed bottom bar) ──────────────────────────── */
+  .view-dots-bar {
+    height: 32px; flex-shrink: 0;
+    display: flex; justify-content: center; align-items: center; gap: 8px;
+    border-top: 1px solid var(--border-sub);
+    margin-top: auto;
+  }
   .view-dots {
     display: flex; justify-content: center; gap: 8px;
     padding: 16px 0 8px;
@@ -418,9 +428,10 @@
 <div class="section">
   <div class="section-title">1 &mdash; Full View Mockups</div>
   <div class="section-desc">
-    Two horizontally-swipeable views rendered at 375px mobile viewport width.
+    Three horizontally-swipeable views rendered at 375px mobile viewport width.
     View 1 (Month Detail) is the default landing view. View 2 (Monthly Summary)
-    is reached by swiping right. Dot indicators at the bottom show active view.
+    is reached by swiping right. Dot indicators live in a fixed bar at the bottom
+    that budget cards never scroll into.
   </div>
 
   <div class="mockup-row">
@@ -431,93 +442,96 @@
       <div class="phone-frame">
         <div class="phone-notch"></div>
         <div class="phone-content">
+          <div class="phone-scroll-area">
 
-          <!-- Month Dropdown -->
-          <div class="m-dropdown">
-            <span class="label">December 2025</span>
-            <span class="chevron">&#9662;</span>
-          </div>
-
-          <!-- Summary Header -->
-          <div class="m-summary-header">
-            <div class="m-summary-row">
-              <span class="sum-label">Total Expenses</span>
-              <span class="pill safe">$2,847 / $3,200</span>
+            <!-- Month Dropdown -->
+            <div class="m-dropdown">
+              <span class="label">December 2025</span>
+              <span class="chevron">&#9662;</span>
             </div>
-            <div class="m-summary-row">
-              <span class="sum-label">Total Income</span>
-              <span class="pill safe">$4,100 / $4,000</span>
-            </div>
-          </div>
 
-          <!-- Group 1: Expanded -->
-          <div class="m-group">
-            <div class="m-group-header">
-              <div class="left">
-                <span class="chevron-icon expanded">&#9656;</span>
-                <span class="group-name">Food &amp; Drink</span>
+            <!-- Summary Header -->
+            <div class="m-summary-header">
+              <div class="m-summary-row">
+                <span class="sum-label">Total Expenses</span>
+                <span class="pill safe">$2,847 / $3,200</span>
               </div>
-              <span class="pill warning">$1,023 / $1,100</span>
-            </div>
-            <div class="m-line-item">
-              <span class="cat-name">Groceries</span>
-              <span class="pill over">$523 / $500</span>
-            </div>
-            <div class="m-line-item">
-              <span class="cat-name">Restaurants</span>
-              <span class="pill safe">$198 / $200</span>
-            </div>
-            <div class="m-line-item">
-              <span class="cat-name">Coffee</span>
-              <span class="pill safe">$67 / $80</span>
-            </div>
-            <div class="m-line-item">
-              <span class="cat-name">Alcohol &amp; Bars</span>
-              <span class="pill safe">$235 / $320</span>
-            </div>
-          </div>
-
-          <!-- Group 2: Collapsed -->
-          <div class="m-group">
-            <div class="m-group-header">
-              <div class="left">
-                <span class="chevron-icon">&#9656;</span>
-                <span class="group-name">Housing</span>
+              <div class="m-summary-row">
+                <span class="sum-label">Total Income</span>
+                <span class="pill safe">$4,100 / $4,000</span>
               </div>
-              <span class="pill safe">$1,450 / $1,500</span>
             </div>
-          </div>
 
-          <!-- Group 3: Collapsed, over budget -->
-          <div class="m-group">
-            <div class="m-group-header">
-              <div class="left">
-                <span class="chevron-icon">&#9656;</span>
-                <span class="group-name">Entertainment</span>
+            <!-- Group 1: Expanded -->
+            <div class="m-group">
+              <div class="m-group-header">
+                <div class="left">
+                  <span class="chevron-icon expanded">&#9656;</span>
+                  <span class="group-name">Food &amp; Drink</span>
+                </div>
+                <span class="pill warning">$1,023 / $1,100</span>
               </div>
-              <span class="pill over">$374 / $300</span>
-            </div>
-          </div>
-
-          <!-- Group 4: Collapsed, no budget -->
-          <div class="m-group">
-            <div class="m-group-header">
-              <div class="left">
-                <span class="chevron-icon">&#9656;</span>
-                <span class="group-name">Transportation</span>
+              <div class="m-line-item">
+                <span class="cat-name">Groceries</span>
+                <span class="pill over">$523 / $500</span>
               </div>
-              <span class="pill no-budget">$89 / ---</span>
+              <div class="m-line-item">
+                <span class="cat-name">Restaurants</span>
+                <span class="pill safe">$198 / $200</span>
+              </div>
+              <div class="m-line-item">
+                <span class="cat-name">Coffee</span>
+                <span class="pill safe">$67 / $80</span>
+              </div>
+              <div class="m-line-item">
+                <span class="cat-name">Alcohol &amp; Bars</span>
+                <span class="pill safe">$235 / $320</span>
+              </div>
             </div>
-          </div>
 
-          <!-- Edit Groups Button -->
-          <div style="text-align: center; margin-top: 16px;">
-            <button class="btn-ghost">Edit Groups</button>
-          </div>
+            <!-- Group 2: Collapsed -->
+            <div class="m-group">
+              <div class="m-group-header">
+                <div class="left">
+                  <span class="chevron-icon">&#9656;</span>
+                  <span class="group-name">Housing</span>
+                </div>
+                <span class="pill safe">$1,450 / $1,500</span>
+              </div>
+            </div>
 
-          <!-- View Dots -->
-          <div class="view-dots">
+            <!-- Group 3: Collapsed, over budget -->
+            <div class="m-group">
+              <div class="m-group-header">
+                <div class="left">
+                  <span class="chevron-icon">&#9656;</span>
+                  <span class="group-name">Entertainment</span>
+                </div>
+                <span class="pill over">$374 / $300</span>
+              </div>
+            </div>
+
+            <!-- Group 4: Collapsed, no budget -->
+            <div class="m-group">
+              <div class="m-group-header">
+                <div class="left">
+                  <span class="chevron-icon">&#9656;</span>
+                  <span class="group-name">Transportation</span>
+                </div>
+                <span class="pill no-budget">$89 / ---</span>
+              </div>
+            </div>
+
+            <!-- Edit Groups Button -->
+            <div style="text-align: center; margin-top: 16px;">
+              <button class="btn-ghost">Edit Groups</button>
+            </div>
+
+          </div>
+          <!-- Fixed View Dots -->
+          <div class="view-dots-bar">
             <div class="dot active"></div>
+            <div class="dot"></div>
             <div class="dot"></div>
           </div>
         </div>
@@ -530,43 +544,43 @@
       <div class="phone-frame">
         <div class="phone-notch"></div>
         <div class="phone-content">
+          <div class="phone-scroll-area">
 
-          <!-- Range Dropdown -->
-          <div class="m-dropdown">
-            <span class="label">Show: 6 months</span>
-            <span class="chevron">&#9662;</span>
+            <!-- Range Dropdown -->
+            <div class="m-dropdown">
+              <span class="label">Show: 5 months</span>
+              <span class="chevron">&#9662;</span>
+            </div>
+
+            <div style="margin-top: 4px;">
+              <div class="sum-row">
+                <span class="month-label">Dec 2025</span>
+                <span class="pill lg safe">$2,847 / $3,200</span>
+              </div>
+              <div class="sum-row">
+                <span class="month-label">Nov 2025</span>
+                <span class="pill lg over">$3,412 / $3,200</span>
+              </div>
+              <div class="sum-row">
+                <span class="month-label">Oct 2025</span>
+                <span class="pill lg safe">$2,998 / $3,200</span>
+              </div>
+              <div class="sum-row">
+                <span class="month-label">Sep 2025</span>
+                <span class="pill lg warning">$3,180 / $3,200</span>
+              </div>
+              <div class="sum-row">
+                <span class="month-label">Aug 2025</span>
+                <span class="pill lg safe">$2,756 / $3,200</span>
+              </div>
+            </div>
+
           </div>
-
-          <div style="margin-top: 4px;">
-            <div class="sum-row">
-              <span class="month-label">Dec 2025</span>
-              <span class="pill lg safe">$2,847 / $3,200</span>
-            </div>
-            <div class="sum-row">
-              <span class="month-label">Nov 2025</span>
-              <span class="pill lg over">$3,412 / $3,200</span>
-            </div>
-            <div class="sum-row">
-              <span class="month-label">Oct 2025</span>
-              <span class="pill lg safe">$2,998 / $3,200</span>
-            </div>
-            <div class="sum-row">
-              <span class="month-label">Sep 2025</span>
-              <span class="pill lg warning">$3,180 / $3,200</span>
-            </div>
-            <div class="sum-row">
-              <span class="month-label">Aug 2025</span>
-              <span class="pill lg safe">$2,756 / $3,200</span>
-            </div>
-            <div class="sum-row">
-              <span class="month-label">Jul 2025</span>
-              <span class="pill lg safe">$3,050 / $3,200</span>
-            </div>
-          </div>
-
-          <div class="view-dots" style="margin-top: auto;">
+          <!-- Fixed View Dots -->
+          <div class="view-dots-bar">
             <div class="dot"></div>
             <div class="dot active"></div>
+            <div class="dot"></div>
           </div>
         </div>
       </div>
@@ -858,13 +872,20 @@
     <!-- ── View Indicator Dots ───────────────────────────────────────────── -->
     <div class="catalog-card">
       <h3>ViewIndicator Dots</h3>
-      <div class="state-label">View 1 Active &middot; View 2 Active</div>
+      <div class="state-label">View 1 Active &middot; View 2 Active &middot; View 3 Active</div>
       <div class="demo" style="gap: 32px;">
         <div style="display:flex; gap:8px;">
           <div class="dot active"></div>
           <div class="dot"></div>
+          <div class="dot"></div>
         </div>
         <div style="display:flex; gap:8px;">
+          <div class="dot"></div>
+          <div class="dot active"></div>
+          <div class="dot"></div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <div class="dot"></div>
           <div class="dot"></div>
           <div class="dot active"></div>
         </div>
