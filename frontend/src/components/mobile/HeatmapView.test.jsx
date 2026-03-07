@@ -105,7 +105,7 @@ describe('HeatmapView', () => {
     expect(screen.getByRole('combobox', { name: /select 6-month window/i })).toBeInTheDocument()
   })
 
-  it('does not render WindowPicker when months.length <= 6', () => {
+  it('renders WindowPicker even when months.length <= 6', () => {
     renderHeatmap({ months: MONTHS_8.slice(0, 5) })
     expect(screen.getByRole('combobox', { name: /select 6-month window/i })).toBeInTheDocument()
   })

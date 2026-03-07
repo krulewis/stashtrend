@@ -148,7 +148,8 @@ export default function HeatmapView({ categories, customGroups, months }) {
     [windowMonths]
   )
 
-  const currentMonthKey = new Date().toISOString().slice(0, 7) + '-01'
+  const now = new Date()
+  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
 
   const groupedData = useMemo(
     () => groupExpenses(categories, customGroups),
