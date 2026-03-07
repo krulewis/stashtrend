@@ -17,6 +17,7 @@ function renderContainer(props = {}) {
     <HorizontalSwipeContainer
       activeIndex={0}
       onIndexChange={vi.fn()}
+      labels={['Month detail view', 'Monthly summary view']}
       {...props}
     >
       <div data-testid="pane-0">Month Detail</div>
@@ -138,5 +139,56 @@ describe('HorizontalSwipeContainer', () => {
     const scrollContainer = container.querySelector('[class*="container"]')
     expect(scrollContainer).not.toBeNull()
     expect(scrollContainer.className).not.toMatch(/lock|locked/i)
+  })
+
+  // ── labels prop ────────────────────────────────────────────────────────────
+
+  it('uses labels[i] as aria-label on each dot tab when labels prop provided', () => {
+    render(
+      <HorizontalSwipeContainer
+        activeIndex={0}
+        onIndexChange={vi.fn()}
+        labels={['Heatmap view', 'Month detail view', 'Monthly summary view']}
+      >
+        <div>Pane 0</div>
+        <div>Pane 1</div>
+        <div>Pane 2</div>
+      </HorizontalSwipeContainer>
+    )
+    const tabs = screen.getAllByRole('tab')
+    expect(tabs[0].getAttribute('aria-label')).toBe('Heatmap view')
+    expect(tabs[1].getAttribute('aria-label')).toBe('Month detail view')
+    expect(tabs[2].getAttribute('aria-label')).toBe('Monthly summary view')
+  })
+
+  it('falls back to "View N" aria-label when labels prop is omitted', () => {
+    render(
+      <HorizontalSwipeContainer
+        activeIndex={0}
+        onIndexChange={vi.fn()}
+      >
+        <div>Pane 0</div>
+        <div>Pane 1</div>
+      </HorizontalSwipeContainer>
+    )
+    const tabs = screen.getAllByRole('tab')
+    expect(tabs[0].getAttribute('aria-label')).toBe('View 1')
+    expect(tabs[1].getAttribute('aria-label')).toBe('View 2')
+  })
+
+  it('falls back to "View N" for indices beyond labels array length', () => {
+    render(
+      <HorizontalSwipeContainer
+        activeIndex={0}
+        onIndexChange={vi.fn()}
+        labels={['Only one label']}
+      >
+        <div>Pane 0</div>
+        <div>Pane 1</div>
+      </HorizontalSwipeContainer>
+    )
+    const tabs = screen.getAllByRole('tab')
+    expect(tabs[0].getAttribute('aria-label')).toBe('Only one label')
+    expect(tabs[1].getAttribute('aria-label')).toBe('View 2')
   })
 })

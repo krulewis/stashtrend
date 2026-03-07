@@ -5,6 +5,7 @@ import BudgetGroup from './BudgetGroup.jsx'
 import BudgetPill from './BudgetPill.jsx'
 import GroupAssignmentSheet from './GroupAssignmentSheet.jsx'
 import styles from './MonthDetailView.module.css'
+import { groupExpenses } from '../../utils/budgetUtils.js'
 
 /**
  * MonthDetailView
@@ -79,63 +80,25 @@ export default function MonthDetailView({
   // During reorder mode, use draftGroups so drag/move changes are visible immediately.
   const effectiveGroups = isReorderMode && draftGroups ? draftGroups : customGroups
 
+  const grouped = useMemo(
+    () => groupExpenses(categories, effectiveGroups),
+    [categories, effectiveGroups]
+  )
+
   const groupedExpenses = useMemo(() => {
-    if (!categories || !selectedMonth) return []
-
-    // Step 1 — expense categories only.
-    const expenseCategories = categories.filter(
-      cat => cat.group_type !== 'income' && cat.group_type !== 'transfer'
-    )
-
-    // Build a flat lookup: category_id -> { custom_group, sort_order }
-    // effectiveGroups shape: { "Group Name": [{ category_id, sort_order }, ...] }
-    const customLookup = {}
-    Object.entries(effectiveGroups).forEach(([groupName, items]) => {
-      items.forEach(item => {
-        customLookup[item.category_id] = {
-          custom_group: groupName,
-          sort_order:   item.sort_order ?? 0,
-        }
-      })
-    })
-
-    // Step 2 & 3 — resolve group + extract month values.
-    const flatCategories = expenseCategories.map(cat => {
-      const custom         = customLookup[cat.category_id]
-      const effectiveGroup = custom?.custom_group ?? cat.group_name ?? 'Other'
-      const monthData      = cat.months?.[selectedMonth]
-      return {
-        category_id:   cat.category_id,
-        category_name: cat.category_name,
-        actual:        monthData?.actual   ?? null,
-        budgeted:      monthData?.budgeted ?? null,
-        effectiveGroup,
-        sort_order:    custom?.sort_order ?? Infinity,  // uncustomised → end of list
-      }
-    })
-
-    // Step 4 — group by effective group name.
-    const groupMap = {}
-    flatCategories.forEach(cat => {
-      const g = cat.effectiveGroup
-      if (!groupMap[g]) groupMap[g] = []
-      groupMap[g].push(cat)
-    })
-
-    // Step 5 — sort within each group.
-    Object.values(groupMap).forEach(items => {
-      items.sort((a, b) => {
-        if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order
-        return a.category_name.localeCompare(b.category_name)
-      })
-    })
-
-    // Convert to array of { groupName, categories[] } for rendering.
-    return Object.entries(groupMap).map(([groupName, items]) => ({
+    if (!grouped.length || !selectedMonth) return []
+    return grouped.map(({ groupName, categories: cats }) => ({
       groupName,
-      categories: items,
+      categories: cats.map(cat => ({
+        category_id:    cat.category_id,
+        category_name:  cat.category_name,
+        effectiveGroup: cat.effectiveGroup,
+        sort_order:     cat.sort_order,
+        actual:         cat.months?.[selectedMonth]?.actual   ?? null,
+        budgeted:       cat.months?.[selectedMonth]?.budgeted ?? null,
+      })),
     }))
-  }, [categories, effectiveGroups, selectedMonth])
+  }, [grouped, selectedMonth])
 
   // ── MonthSummaryHeader totals ────────────────────────────────────────────
   // Expense totals come from groupedExpenses (already filtered + flattened).

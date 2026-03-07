@@ -7,6 +7,7 @@ export default function HorizontalSwipeContainer({
   activeIndex,
   onIndexChange,
   isLocked,
+  labels,
 }) {
   const containerRef  = useRef(null)
   const isScrollingRef = useRef(false)
@@ -69,7 +70,7 @@ export default function HorizontalSwipeContainer({
             role="tab"
             id={`view-tab-${i}`}
             aria-selected={i === activeIndex}
-            aria-label={i === 0 ? 'Month detail view' : 'Monthly summary view'}
+            aria-label={labels?.[i] ?? `View ${i + 1}`}
             className={`${styles.dot} ${i === activeIndex ? styles.dotActive : ''}`}
             onClick={() => { onIndexChange(i) }}
             type="button"
@@ -85,6 +86,7 @@ HorizontalSwipeContainer.propTypes = {
   activeIndex:   PropTypes.number.isRequired,
   onIndexChange: PropTypes.func.isRequired,
   isLocked:      PropTypes.bool,
+  labels:        PropTypes.arrayOf(PropTypes.string),
 }
 
 HorizontalSwipeContainer.defaultProps = {

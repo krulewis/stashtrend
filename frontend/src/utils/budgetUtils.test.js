@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { getBudgetZone, getPillAriaLabel, WARNING_THRESHOLD } from './budgetUtils.js'
+import { getBudgetZone, getPillAriaLabel, WARNING_THRESHOLD,
+         groupExpenses, formatMonthLabel } from './budgetUtils.js'
 
 // ===========================================================================
 // getBudgetZone
@@ -167,5 +168,249 @@ describe('getPillAriaLabel', () => {
     const label = getPillAriaLabel(null, 500, 'safe')
     expect(label).toContain('0%')
     expect(label).toContain('$500')
+  })
+})
+
+// ===========================================================================
+// formatMonthLabel
+// ===========================================================================
+
+describe('formatMonthLabel', () => {
+  it('formats a January date as Jan 26', () => {
+    expect(formatMonthLabel('2026-01-01')).toBe('Jan 26')
+  })
+
+  it('formats a December date as Dec 25', () => {
+    expect(formatMonthLabel('2025-12-01')).toBe('Dec 25')
+  })
+
+  it('does not shift to the previous month due to timezone', () => {
+    // Bare new Date('2026-01-01') can roll back to Dec 31 in UTC-offset
+    // environments. The T00:00:00 suffix prevents this.
+    expect(formatMonthLabel('2026-01-01')).not.toBe('Dec 25')
+  })
+})
+
+// ===========================================================================
+// groupExpenses
+// ===========================================================================
+
+describe('groupExpenses', () => {
+  // ── Shared fixtures ────────────────────────────────────────────────────────
+
+  const cat1 = {
+    category_id:   'cat_1',
+    category_name: 'Groceries',
+    group_type:    'expense',
+    group_name:    'Food',
+    months:        { '2026-01-01': { actual: 100, budgeted: 500 } },
+  }
+  const cat2 = {
+    category_id:   'cat_2',
+    category_name: 'Restaurants',
+    group_type:    'expense',
+    group_name:    'Food',
+    months:        { '2026-01-01': { actual: 90, budgeted: 100 } },
+  }
+  const cat3 = {
+    category_id:   'cat_3',
+    category_name: 'Rent',
+    group_type:    'expense',
+    group_name:    'Housing',
+    months:        {},
+  }
+  const cat4 = {
+    category_id:   'cat_4',
+    category_name: 'Salary',
+    group_type:    'income',
+    group_name:    'Income',
+    months:        {},
+  }
+  const cat5 = {
+    category_id:   'cat_5',
+    category_name: 'CC Payment',
+    group_type:    'transfer',
+    group_name:    'Transfers',
+    months:        {},
+  }
+
+  const CUSTOM_GROUPS = {
+    'Dining':          [{ category_id: 'cat_2', sort_order: 0 }],
+    'Groceries Group': [{ category_id: 'cat_1', sort_order: 0 }],
+  }
+
+  // ── Guard / edge cases ────────────────────────────────────────────────────
+
+  it('returns empty array when categories is null', () => {
+    expect(groupExpenses(null, {})).toEqual([])
+  })
+
+  it('returns empty array when categories is empty', () => {
+    expect(groupExpenses([], {})).toEqual([])
+  })
+
+  it('returns empty array when all categories are income or transfer', () => {
+    expect(groupExpenses([cat4, cat5], {})).toEqual([])
+  })
+
+  it('handles customGroups being null gracefully (treats as no custom groups)', () => {
+    expect(() => groupExpenses([cat1], null)).not.toThrow()
+    const result = groupExpenses([cat1], null)
+    expect(result[0].groupName).toBe('Food')
+  })
+
+  // ── Filtering ─────────────────────────────────────────────────────────────
+
+  it('filters out income categories', () => {
+    const result = groupExpenses([cat1, cat4], {})
+    const allIds = result.flatMap(g => g.categories.map(c => c.category_id))
+    expect(allIds).not.toContain('cat_4')
+  })
+
+  it('filters out transfer categories', () => {
+    const result = groupExpenses([cat1, cat5], {})
+    const allIds = result.flatMap(g => g.categories.map(c => c.category_id))
+    expect(allIds).not.toContain('cat_5')
+  })
+
+  // ── Grouping ──────────────────────────────────────────────────────────────
+
+  it('groups expense categories by group_name when customGroups is empty', () => {
+    const result = groupExpenses([cat1, cat2, cat3], {})
+    const groupNames = result.map(g => g.groupName)
+    expect(groupNames).toContain('Food')
+    expect(groupNames).toContain('Housing')
+    const foodGroup = result.find(g => g.groupName === 'Food')
+    expect(foodGroup.categories.map(c => c.category_id)).toContain('cat_1')
+    expect(foodGroup.categories.map(c => c.category_id)).toContain('cat_2')
+  })
+
+  it('applies custom group override over group_name', () => {
+    const result = groupExpenses([cat1, cat2], CUSTOM_GROUPS)
+    const groupNames = result.map(g => g.groupName)
+    expect(groupNames).toContain('Dining')
+    expect(groupNames).toContain('Groceries Group')
+    expect(groupNames).not.toContain('Food')
+  })
+
+  it('falls back to "Other" when group_name is null and no custom group', () => {
+    const catNoGroup = {
+      category_id:   'cat_x',
+      category_name: 'Mystery',
+      group_type:    'expense',
+      group_name:    null,
+      months:        {},
+    }
+    const result = groupExpenses([catNoGroup], {})
+    expect(result[0].groupName).toBe('Other')
+  })
+
+  it('returns groupName matching the effectiveGroup key', () => {
+    const result = groupExpenses([cat1, cat2], CUSTOM_GROUPS)
+    result.forEach(group => {
+      group.categories.forEach(cat => {
+        expect(cat.effectiveGroup).toBe(group.groupName)
+      })
+    })
+  })
+
+  // ── Sorting within groups ─────────────────────────────────────────────────
+
+  it('sorts categories within a group by sort_order ascending', () => {
+    const customGroups = {
+      'Mixed': [
+        { category_id: 'cat_1', sort_order: 1 },
+        { category_id: 'cat_2', sort_order: 0 },
+      ],
+    }
+    const result = groupExpenses([cat1, cat2], customGroups)
+    const group  = result.find(g => g.groupName === 'Mixed')
+    expect(group.categories[0].category_id).toBe('cat_2')  // sort_order 0 first
+    expect(group.categories[1].category_id).toBe('cat_1')  // sort_order 1 second
+  })
+
+  it('sorts categories with equal sort_order by category_name (localeCompare)', () => {
+    // cat1 = 'Groceries', cat2 = 'Restaurants' — same sort_order → alphabetical
+    const customGroups = {
+      'Shared': [
+        { category_id: 'cat_1', sort_order: 0 },
+        { category_id: 'cat_2', sort_order: 0 },
+      ],
+    }
+    const result = groupExpenses([cat1, cat2], customGroups)
+    const group  = result.find(g => g.groupName === 'Shared')
+    // 'Groceries' < 'Restaurants' alphabetically
+    expect(group.categories[0].category_name).toBe('Groceries')
+    expect(group.categories[1].category_name).toBe('Restaurants')
+  })
+
+  it('places uncustomised categories (sort_order = Infinity) after customised ones', () => {
+    // cat1 is in customGroups (sort_order 0), cat3 is not (sort_order Infinity)
+    // Put them both in the same group by using only cat3's group_name
+    const catUncustomised = {
+      category_id:   'cat_u',
+      category_name: 'Uncustomised',
+      group_type:    'expense',
+      group_name:    'Mixed',
+      months:        {},
+    }
+    const catCustomised = {
+      category_id:   'cat_c',
+      category_name: 'Customised',
+      group_type:    'expense',
+      group_name:    'Other',  // would be 'Other' without custom override
+      months:        {},
+    }
+    const customGroups = {
+      'Mixed': [{ category_id: 'cat_c', sort_order: 0 }],
+    }
+    const result  = groupExpenses([catCustomised, catUncustomised], customGroups)
+    const mixedGrp = result.find(g => g.groupName === 'Mixed')
+    expect(mixedGrp.categories[0].category_id).toBe('cat_c')    // sort_order 0 first
+    expect(mixedGrp.categories[1].category_id).toBe('cat_u')    // Infinity second
+  })
+
+  // ── Group-level sorting [SR-14] ───────────────────────────────────────────
+
+  it('sorts groups by minimum sort_order ascending', () => {
+    // Group A: min sort_order 5, Group B: min sort_order 2 → B before A
+    const catA = {
+      category_id:   'cat_a',
+      category_name: 'Alpha',
+      group_type:    'expense',
+      group_name:    'Fallback',
+      months:        {},
+    }
+    const catB = {
+      category_id:   'cat_b',
+      category_name: 'Beta',
+      group_type:    'expense',
+      group_name:    'Fallback',
+      months:        {},
+    }
+    const customGroups = {
+      'Group A': [{ category_id: 'cat_a', sort_order: 5 }],
+      'Group B': [{ category_id: 'cat_b', sort_order: 2 }],
+    }
+    const result = groupExpenses([catA, catB], customGroups)
+    expect(result[0].groupName).toBe('Group B')
+    expect(result[1].groupName).toBe('Group A')
+  })
+
+  it('sorts groups alphabetically when all sort_orders are Infinity (no custom groups)', () => {
+    // cat1 → 'Food', cat3 → 'Housing' — F < H alphabetically
+    const result = groupExpenses([cat1, cat2, cat3], {})
+    const groupNames = result.map(g => g.groupName)
+    expect(groupNames.indexOf('Food')).toBeLessThan(groupNames.indexOf('Housing'))
+  })
+
+  // ── months object preservation [SR-12] ───────────────────────────────────
+
+  it('preserves the full months object on each returned category', () => {
+    const result = groupExpenses([cat1, cat2, cat3], {})
+    const foodGroup = result.find(g => g.groupName === 'Food')
+    const returnedCat1 = foodGroup.categories.find(c => c.category_id === 'cat_1')
+    // Deep equality — months data must match the original
+    expect(returnedCat1.months).toEqual(cat1.months)
   })
 })
