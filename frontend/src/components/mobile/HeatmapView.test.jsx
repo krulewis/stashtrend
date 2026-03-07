@@ -128,6 +128,25 @@ describe('HeatmapView', () => {
     expect(noDataDot).toBeInTheDocument()
   })
 
+  it('dot has correct aria-label for no-budget category', () => {
+    const noBudgetCategories = [
+      ...CATEGORIES,
+      {
+        category_id: 'c5', category_name: 'Misc', group_type: 'expense',
+        group_name: 'Other',
+        months: { '2026-02-01': { actual: 75, budgeted: null } },
+      },
+    ]
+    renderHeatmap({ categories: noBudgetCategories })
+    const groupHeaders = screen.getAllByRole('rowheader')
+      .filter(el => el.hasAttribute('aria-expanded'))
+    // Find the "Other" group and expand it
+    const otherHeader = groupHeaders.find(el => el.textContent.includes('Other'))
+    fireEvent.click(otherHeader)
+    const noBudgetDot = screen.getByLabelText(/Misc.*February 2026.*spent, no budget set/i)
+    expect(noBudgetDot).toBeInTheDocument()
+  })
+
   it('renders "No expense groups to display" when categories is empty', () => {
     renderHeatmap({ categories: [] })
     expect(screen.getByText(/No expense groups to display/i)).toBeInTheDocument()

@@ -32,6 +32,8 @@ function getDotAriaLabel(name, monthKey, actual, budgeted, zone) {
 
 function HeatmapGroupRow({ group, months }) {
   const [isExpanded, setIsExpanded] = useState(false)
+  // groupExpenses() guarantees unique groupName values (keyed by name in groupMap),
+  // so sanitized IDs will be unique for practical budget group names.
   const groupId = group.groupName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
 
   const groupZones = useMemo(() => months.map(m => {
