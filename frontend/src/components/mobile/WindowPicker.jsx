@@ -128,6 +128,7 @@ export default function WindowPicker({ months, windowStart, windowSize, onWindow
   // ── Click-outside ──────────────────────────────────────────────────────────
 
   useEffect(() => {
+    if (!isOpen) return
     function handleMouseDown(e) {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
         close()
@@ -135,7 +136,7 @@ export default function WindowPicker({ months, windowStart, windowSize, onWindow
     }
     document.addEventListener('mousedown', handleMouseDown)
     return () => document.removeEventListener('mousedown', handleMouseDown)
-  }, [close])
+  }, [isOpen, close])
 
   // ── Escape key ─────────────────────────────────────────────────────────────
 
@@ -162,22 +163,32 @@ export default function WindowPicker({ months, windowStart, windowSize, onWindow
     })
   }, [gridYear])
 
+  // Find the next enabled month in a direction, skipping disabled ones
+  const findNextEnabled = useCallback((fromIdx, step) => {
+    let idx = fromIdx + step
+    while (idx >= 0 && idx < gridMonths.length) {
+      if (!isMonthDisabled(gridMonths[idx])) return idx
+      idx += step
+    }
+    return fromIdx // stay put if no enabled month found
+  }, [gridMonths, isMonthDisabled])
+
   const handleGridKeyDown = (e) => {
     if (!isOpen || gridMonths.length === 0) return
     const currentIdx = focusedKey ? gridMonths.indexOf(focusedKey) : 0
 
     if (e.key === 'ArrowRight') {
       e.preventDefault()
-      setFocusedKey(gridMonths[Math.min(currentIdx + 1, gridMonths.length - 1)])
+      setFocusedKey(gridMonths[findNextEnabled(currentIdx, 1)])
     } else if (e.key === 'ArrowLeft') {
       e.preventDefault()
-      setFocusedKey(gridMonths[Math.max(currentIdx - 1, 0)])
+      setFocusedKey(gridMonths[findNextEnabled(currentIdx, -1)])
     } else if (e.key === 'ArrowDown') {
       e.preventDefault()
-      setFocusedKey(gridMonths[Math.min(currentIdx + 3, gridMonths.length - 1)])
+      setFocusedKey(gridMonths[findNextEnabled(currentIdx, 3)])
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
-      setFocusedKey(gridMonths[Math.max(currentIdx - 3, 0)])
+      setFocusedKey(gridMonths[findNextEnabled(currentIdx, -3)])
     } else if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
       if (focusedKey) handleSelect(focusedKey)
