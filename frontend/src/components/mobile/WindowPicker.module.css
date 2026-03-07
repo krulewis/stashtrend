@@ -1,52 +1,155 @@
-.picker {
+.container {
+  position: relative;
+  width: 100%;
+  margin-bottom: var(--sp-3);
+}
+
+/* ── Trigger ─────────────────────────────────────────────────────────── */
+
+.trigger {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   width: 100%;
   height: 44px;
-  margin-bottom: var(--sp-3);
+  padding: 0 var(--sp-3);
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 0 var(--sp-2);
+  cursor: pointer;
+  color: var(--text-primary);
 }
 
-.arrow {
+.triggerOpen {
+  border-color: var(--border-focus);
+}
+
+.trigger:active {
+  background: var(--bg-hover);
+}
+
+.triggerLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chevron {
+  font-size: 16px;
+  color: var(--text-muted);
   flex-shrink: 0;
-  width: 44px;
-  height: 44px;
+  transition: transform var(--ease-default);
+  display: inline-block;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+/* ── Panel ───────────────────────────────────────────────────────────── */
+
+.panel {
+  position: absolute;
+  top: calc(100% + var(--sp-2));
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--bg-card);
+  border: 1px solid var(--border-focus);
+  border-radius: var(--radius-md);
+  padding: var(--sp-3);
+  box-shadow: var(--shadow-md);
+}
+
+/* ── Year navigation ─────────────────────────────────────────────────── */
+
+.yearRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-3);
+}
+
+.yearLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.yearButton {
+  width: 32px;
+  height: 32px;
   border: none;
   background: transparent;
   color: var(--accent);
-  font-size: 20px;
+  font-size: 18px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
   border-radius: var(--radius-sm);
 }
 
-.arrow:disabled {
-  color: var(--text-muted);
+.yearButton:disabled {
+  color: var(--text-faint);
   cursor: default;
 }
 
-.arrow:not(:disabled):active {
+.yearButton:not(:disabled):active {
   background: var(--bg-hover);
 }
 
-.monthStrip {
-  flex: 1;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  overflow: hidden;
+/* ── Month grid ──────────────────────────────────────────────────────── */
+
+.monthGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
 }
 
-.monthLabel {
-  font-size: 11px;
+.monthOption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
   font-weight: 400;
-  color: var(--text-muted);
-  white-space: nowrap;
-  text-align: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background var(--ease-quick), color var(--ease-quick);
+}
+
+.monthOption:not(.monthOptionDisabled):active {
+  background: var(--bg-hover);
+}
+
+.monthOptionSelected {
+  background: var(--accent-tint);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.monthOptionDisabled {
+  color: var(--text-faint);
+  cursor: default;
+}
+
+.monthOptionFocused {
+  outline: 2px solid var(--border-focus);
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
+  }
+  .monthOption {
+    transition: none;
+  }
 }

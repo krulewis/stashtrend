@@ -69,13 +69,59 @@ export function getPillAriaLabel(actual, budgeted, zone) {
  * environments).
  *
  * @param {string} monthKey - ISO date string e.g. '2026-01-01'
- * @returns {string} Formatted label e.g. 'Jan 26'
+ * @returns {string} Formatted label e.g. "Sep '25"
  */
 export function formatMonthLabel(monthKey) {
-  return new Date(monthKey + 'T00:00:00').toLocaleDateString('en-US', {
-    month: 'short',
-    year:  '2-digit',
-  })
+  const d = new Date(monthKey + 'T00:00:00')
+  const month = d.toLocaleDateString('en-US', { month: 'short' })
+  const year  = d.toLocaleDateString('en-US', { year: '2-digit' })
+  return `${month} '${year}`
+}
+
+/**
+ * Abbreviate a budget group/category name to fit within maxLen characters.
+ * Strategy:
+ *   1. null/undefined/empty → return "Other"
+ *   2. name.length <= maxLen → return as-is (no-op)
+ *   3. Try word-boundary truncation: accumulate whole words (space-joined)
+ *      while total length stays within maxLen. If at least one word fits,
+ *      return the joined words (no trailing ellipsis — clean word boundary).
+ *   4. If the first word alone exceeds maxLen, truncate to maxLen-1 chars
+ *      and append the unicode ellipsis character "\u2026".
+ *
+ * @param {string|null|undefined} name - The group or category name to abbreviate
+ * @param {number} maxLen - Maximum character count (default 14)
+ * @returns {string}
+ */
+export function formatGroupLabel(name, maxLen = 14) {
+  if (!name) return 'Other'
+
+  // Known abbreviations from design brief — checked before length test
+  const SHORT_MAP = {
+    'Auto & Transportation': 'Auto & Transit',
+    'Gifts & Donations':     'Gifts & Don.',
+    'Bills & Utilities':     'Bills & Utils',
+    'Health & Wellness':     'Health & Well.',
+  }
+  const shortcut = SHORT_MAP[name]
+  if (shortcut && shortcut.length <= maxLen) return shortcut
+
+  if (name.length <= maxLen) return name
+
+  const words = name.split(' ')
+  let result = ''
+  for (const word of words) {
+    const candidate = result ? result + ' ' + word : word
+    if (candidate.length <= maxLen) {
+      result = candidate
+    } else {
+      break
+    }
+  }
+  if (result) return result
+
+  // First word alone exceeds maxLen — hard truncate
+  return name.slice(0, maxLen - 1) + '\u2026'
 }
 
 /**

@@ -102,12 +102,12 @@ describe('HeatmapView', () => {
 
   it('renders WindowPicker when months.length > 6', () => {
     renderHeatmap()
-    expect(screen.getByLabelText('Show older months')).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: /select 6-month window/i })).toBeInTheDocument()
   })
 
   it('does not render WindowPicker when months.length <= 6', () => {
     renderHeatmap({ months: MONTHS_8.slice(0, 5) })
-    expect(screen.queryByLabelText('Show older months')).not.toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: /select 6-month window/i })).toBeInTheDocument()
   })
 
   it('dot has correct aria-label for safe zone category', () => {
@@ -158,5 +158,25 @@ describe('HeatmapView', () => {
     // Total actual=190, total budgeted=600 -> ratio=0.317 -> 'safe' -> "within budget"
     const aggregateDot = screen.getByLabelText(/Food.*January 2026.*within budget/i)
     expect(aggregateDot).toBeInTheDocument()
+  })
+
+  it('renders the legend with 5 items', () => {
+    renderHeatmap()
+    const legend = screen.getByRole('group', { name: /dot color legend/i })
+    expect(legend).toBeInTheDocument()
+    expect(screen.getByText('Under 85%')).toBeInTheDocument()
+    expect(screen.getByText('85 \u2013 100%')).toBeInTheDocument()
+    expect(screen.getByText('Over 100%')).toBeInTheDocument()
+    expect(screen.getByText('No budget')).toBeInTheDocument()
+    expect(screen.getByText('No data')).toBeInTheDocument()
+  })
+
+  it('legend is always visible regardless of group expand state', () => {
+    renderHeatmap()
+    expect(screen.getByRole('group', { name: /dot color legend/i })).toBeInTheDocument()
+    const groupHeaders = screen.getAllByRole('rowheader')
+      .filter(el => el.hasAttribute('aria-expanded'))
+    fireEvent.click(groupHeaders[0])
+    expect(screen.getByRole('group', { name: /dot color legend/i })).toBeInTheDocument()
   })
 })

@@ -182,6 +182,20 @@ screen.getByRole('button', { name: (_, el) =>
 ```
 **Rule:** In components that use DnD-kit, never use bare `getByRole('button')` — scope the query to the specific element via a unique attribute.
 
+### formatMonthLabel Output Format Changed — Update Any Snapshot or String-Match Tests
+**Where:** `budgetUtils.js` → `formatMonthLabel()`, changed in heatmap refinements.
+**Symptom:** Tests that assert exact output like `toBe('Jan 26')` or snapshot tests that contain `'Dec 25'` fail after the change.
+**Root cause:** `formatMonthLabel` switched from a single combined `toLocaleDateString({ month: 'short', year: '2-digit' })` call (which produced `'Jan 26'`) to two separate calls concatenated with a straight apostrophe (which produces `"Jan '26"`). The two-call approach avoids locale-dependent formatting of combined month+year options.
+**Fix:** Replace any `'Jan 26'`-style expected values with `"Jan '26"`. The apostrophe is a straight single quote (`'`, U+0027), not a curly quote.
+**Rule:** Never use a single combined `toLocaleDateString({ month: 'short', year: '2-digit' })` call — combined format output varies by locale. Split into two calls: `{ month: 'short' }` + `{ year: '2-digit' }`, then concatenate with the apostrophe manually.
+
+### WindowPicker Test — months[] Must Be Most-Recent-First
+**Where:** `WindowPicker.test.jsx` — `aria-disabled` test case.
+**Symptom:** Test that checks disabled months in year 2025 actually opens the grid on year 2026 — no Jan/Sep options visible, assertions fail.
+**Root cause:** The plan's months array for that test was written oldest-first (`['2025-09-01'...'2026-02-01']`), but `WindowPicker` expects most-recent-first. `open()` sets `gridYear` to `oldestMonth`'s year — which is `windowSlice[windowSlice.length-1]`. With oldest-first ordering, `windowSlice[5]` is the newest date (2026), so the grid opens on 2026 instead of 2025.
+**Fix:** Reverse the array to most-recent-first: `['2026-02-01', '2026-01-01', '2025-12-01', '2025-11-01', '2025-10-01', '2025-09-01']`.
+**Rule:** All `months[]` arrays passed to `WindowPicker` (and used in its tests) must be sorted most-recent-first. The `open()` function derives `gridYear` from the oldest month in the current window, which is `windowSlice[windowSlice.length - 1]` — the last element of a most-recent-first slice is the furthest-past date.
+
 ### Generic Conflict Messages Create Investigation Overhead
 **Where:** `GroupSnapshotControls.jsx` chip `title` attribute.
 **Symptom:** Tooltip said "Shares an account with a selected group" — user couldn't tell which group conflicted with which, making group definition problems impossible to self-diagnose.
