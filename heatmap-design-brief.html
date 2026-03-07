@@ -28,7 +28,7 @@ code{font-family:monospace;color:var(--accent);font-size:11px}
 
 /* PHONE */
 .phone-wrap{display:flex;justify-content:center;margin:28px 0}
-.phone{width:320px;max-width:100%;background:#080C18;border-radius:32px;border:2px solid #1E2D4A;overflow:hidden;box-shadow:var(--shadow-lg)}
+.phone{width:320px;max-width:100%;background:#080C18;border-radius:32px;border:2px solid #1E2D4A;overflow:hidden;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;max-height:680px}
 .phone-status{background:#080C18;padding:10px 18px 6px;display:flex;justify-content:space-between}
 .phone-status-time{font-size:12px;font-weight:500}
 .phone-status-icons{font-size:10px;color:var(--text-secondary)}
@@ -41,7 +41,7 @@ code{font-family:monospace;color:var(--accent);font-size:11px}
 .picker-arrow{font-size:9px;color:var(--text-muted)}
 
 /* COL HEADERS */
-.col-headers{display:grid;grid-template-columns:100px repeat(6,1fr);padding:10px 12px 0}
+.col-headers{display:grid;grid-template-columns:100px repeat(5,1fr);padding:10px 12px 0}
 .col-h{font-size:9px;letter-spacing:0.5px;color:var(--text-muted);text-align:center}
 .col-h.now{color:var(--accent)}
 
@@ -57,7 +57,7 @@ code{font-family:monospace;color:var(--accent);font-size:11px}
 /* GROUP CARDS */
 .gc{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:8px;overflow:hidden;transition:border-color 0.2s}
 .gc.open{border-left:2px solid var(--accent)}
-.gr{display:grid;grid-template-columns:100px repeat(6,1fr);align-items:center;padding:10px 11px;cursor:pointer;user-select:none}
+.gr{display:grid;grid-template-columns:100px repeat(5,1fr);align-items:center;padding:10px 11px;cursor:pointer;user-select:none}
 .glabel{display:flex;align-items:center;gap:5px}
 .chev{font-size:10px;color:var(--text-muted);width:10px;flex-shrink:0}
 .gname{font-size:13px;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -67,9 +67,17 @@ code{font-family:monospace;color:var(--accent);font-size:11px}
 
 /* CHILD ROWS */
 .crows{border-top:1px solid var(--border)}
-.cr{display:grid;grid-template-columns:100px repeat(6,1fr);align-items:center;padding:7px 11px;background:var(--bg-inset);border-bottom:1px solid rgba(30,45,74,0.5)}
+.cr{display:grid;grid-template-columns:100px repeat(5,1fr);align-items:center;padding:7px 11px;background:var(--bg-inset);border-bottom:1px solid rgba(30,45,74,0.5)}
 .cr:last-child{border-bottom:none}
 .clabel{font-size:11px;color:var(--text-secondary);padding-left:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* VIEW DOTS BAR */
+.view-dots-bar{background:#080C18;border-top:1px solid var(--border);padding:8px 0;display:flex;justify-content:center;gap:6px;flex-shrink:0}
+.view-dots-bar .vdot{width:6px;height:6px;border-radius:50%;background:var(--text-muted);opacity:0.4}
+.view-dots-bar .vdot.active{background:var(--accent);opacity:1}
+
+/* PHONE SCROLL AREA */
+.phone-scroll-area{flex:1;overflow-y:auto;display:flex;flex-direction:column}
 
 /* BOTTOM TAB */
 .btab{background:#080C18;border-top:1px solid var(--border);padding:8px 0 14px;display:flex;justify-content:space-around}
@@ -115,16 +123,16 @@ code{font-family:monospace;color:var(--accent);font-size:11px}
       <div class="phone-logo">Stashtrend</div>
     </div>
 
+    <div class="phone-scroll-area">
     <!-- CHANGE 6: Calendar picker replaces arrow nav -->
     <div class="picker-trigger">
-      <span class="picker-label">Sep '25 – Feb '26</span>
+      <span class="picker-label">Show: 5 months · Oct '25 – Feb '26</span>
       <span class="picker-arrow">▾</span>
     </div>
 
     <!-- CHANGE 3: Single-line col headers, no arrow bar -->
     <div class="col-headers">
       <div></div>
-      <div class="col-h">Sep '25</div>
       <div class="col-h">Oct '25</div>
       <div class="col-h">Nov '25</div>
       <div class="col-h">Dec '25</div>
@@ -146,7 +154,7 @@ code{font-family:monospace;color:var(--accent);font-size:11px}
       <div class="gc" id="g-fin">
         <div class="gr" onclick="tog('fin')">
           <div class="glabel"><span class="chev" id="cv-fin">›</span><span class="gname">Financial</span></div>
-          <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot r"></div></div>
+          <div class="dc"><div class="dot r"></div></div>
           <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot g"></div></div>
           <div class="dc"><div class="dot g"></div></div><div class="dc"><div class="dot r"></div></div>
         </div>
@@ -156,33 +164,33 @@ code{font-family:monospace;color:var(--accent);font-size:11px}
       <div class="gc open" id="g-food">
         <div class="gr" onclick="tog('food')">
           <div class="glabel"><span class="chev" id="cv-food">‹</span><span class="gname">Food & Dining</span></div>
-          <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot r"></div></div>
+          <div class="dc"><div class="dot r"></div></div>
           <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot r"></div></div>
           <div class="dc"><div class="dot y"></div></div><div class="dc"><div class="dot y"></div></div>
         </div>
         <div class="crows" id="cr-food">
           <div class="cr"><span class="clabel">Coffee Shops</span>
-            <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot r"></div></div>
+            <div class="dc"><div class="dot r"></div></div>
             <div class="dc"><div class="dot g"></div></div><div class="dc"><div class="dot g"></div></div>
             <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot g"></div></div>
           </div>
           <div class="cr"><span class="clabel">Groceries</span>
-            <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot r"></div></div>
+            <div class="dc"><div class="dot r"></div></div>
             <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot y"></div></div>
             <div class="dc"><div class="dot y"></div></div><div class="dc"><div class="dot y"></div></div>
           </div>
           <div class="cr"><span class="clabel">Lunch</span>
-            <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot g"></div></div>
+            <div class="dc"><div class="dot g"></div></div>
             <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot g"></div></div>
             <div class="dc"><div class="dot n"></div></div><div class="dc"><div class="dot r"></div></div>
           </div>
           <div class="cr"><span class="clabel">Restaurants</span>
-            <div class="dc"><div class="dot g"></div></div><div class="dc"><div class="dot r"></div></div>
+            <div class="dc"><div class="dot r"></div></div>
             <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot r"></div></div>
             <div class="dc"><div class="dot g"></div></div><div class="dc"><div class="dot r"></div></div>
           </div>
           <div class="cr"><span class="clabel">Takeout</span>
-            <div class="dc"><div class="dot y"></div></div><div class="dc"><div class="dot g"></div></div>
+            <div class="dc"><div class="dot g"></div></div>
             <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot r"></div></div>
             <div class="dc"><div class="dot g"></div></div><div class="dc"><div class="dot r"></div></div>
           </div>
@@ -193,7 +201,7 @@ code{font-family:monospace;color:var(--accent);font-size:11px}
       <div class="gc" id="g-gifts">
         <div class="gr" onclick="tog('gifts')">
           <div class="glabel"><span class="chev" id="cv-gifts">›</span><span class="gname">Gifts & Don.</span></div>
-          <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot r"></div></div>
+          <div class="dc"><div class="dot r"></div></div>
           <div class="dc"><div class="dot y"></div></div><div class="dc"><div class="dot r"></div></div>
           <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot y"></div></div>
         </div>
@@ -203,7 +211,7 @@ code{font-family:monospace;color:var(--accent);font-size:11px}
       <div class="gc" id="g-health">
         <div class="gr" onclick="tog('health')">
           <div class="glabel"><span class="chev" id="cv-health">›</span><span class="gname">Health & Wellness</span></div>
-          <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot r"></div></div>
+          <div class="dc"><div class="dot r"></div></div>
           <div class="dc"><div class="dot g"></div></div><div class="dc"><div class="dot g"></div></div>
           <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot r"></div></div>
         </div>
@@ -213,7 +221,7 @@ code{font-family:monospace;color:var(--accent);font-size:11px}
       <div class="gc" id="g-housing">
         <div class="gr" onclick="tog('housing')">
           <div class="glabel"><span class="chev" id="cv-housing">›</span><span class="gname">Housing</span></div>
-          <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot y"></div></div>
+          <div class="dc"><div class="dot y"></div></div>
           <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot y"></div></div>
           <div class="dc"><div class="dot r"></div></div><div class="dc"><div class="dot y"></div></div>
         </div>
@@ -223,13 +231,21 @@ code{font-family:monospace;color:var(--accent);font-size:11px}
       <div class="gc" id="g-auto">
         <div class="gr" onclick="tog('auto')">
           <div class="glabel"><span class="chev" id="cv-auto">›</span><span class="gname">Auto & Transit</span></div>
-          <div class="dc"><div class="dot y"></div></div><div class="dc"><div class="dot g"></div></div>
+          <div class="dc"><div class="dot g"></div></div>
           <div class="dc"><div class="dot g"></div></div><div class="dc"><div class="dot r"></div></div>
           <div class="dc"><div class="dot y"></div></div><div class="dc"><div class="dot r"></div></div>
         </div>
       </div>
 
     </div><!-- /hm-scroll -->
+    </div><!-- /phone-scroll-area -->
+
+    <!-- Fixed view dots bar — outside scroll area -->
+    <div class="view-dots-bar">
+      <div class="vdot active"></div>
+      <div class="vdot"></div>
+      <div class="vdot"></div>
+    </div>
 
     <div class="btab">
       <div class="ti"><span class="ti-icon">📈</span><span class="ti-label">Net Worth</span></div>
