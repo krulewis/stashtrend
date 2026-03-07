@@ -80,10 +80,10 @@ export default function MonthDetailView({
   // During reorder mode, use draftGroups so drag/move changes are visible immediately.
   const effectiveGroups = isReorderMode && draftGroups ? draftGroups : customGroups
 
-  const grouped = useMemo(() => {
-    if (!categories) return []
-    return groupExpenses(categories, effectiveGroups)
-  }, [categories, effectiveGroups])
+  const grouped = useMemo(
+    () => groupExpenses(categories, effectiveGroups),
+    [categories, effectiveGroups]
+  )
 
   const groupedExpenses = useMemo(() => {
     if (!grouped.length || !selectedMonth) return []

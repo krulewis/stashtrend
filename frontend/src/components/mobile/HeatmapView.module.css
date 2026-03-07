@@ -8,6 +8,7 @@
 .columnHeaders {
   display: grid;
   grid-template-columns: 110px repeat(6, 1fr);
+  align-items: center;
   margin-bottom: var(--sp-2);
 }
 

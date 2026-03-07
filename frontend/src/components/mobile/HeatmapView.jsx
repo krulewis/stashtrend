@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import PropTypes from 'prop-types'
 import { groupExpenses, getBudgetZone, formatMonthLabel } from '../../utils/budgetUtils.js'
 import WindowPicker from './WindowPicker.jsx'
@@ -32,16 +32,16 @@ function getDotAriaLabel(name, monthKey, actual, budgeted, zone) {
 
 function HeatmapGroupRow({ group, months }) {
   const [isExpanded, setIsExpanded] = useState(false)
-  const groupId = group.groupName.toLowerCase().replace(/\s+/g, '-')
+  const groupId = group.groupName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
 
-  const groupZones = months.map(m => {
+  const groupZones = useMemo(() => months.map(m => {
     const groupActual = group.categories.reduce(
       (s, c) => s + (c.months?.[m]?.actual ?? 0), 0)
     const groupBudgeted = group.categories.reduce(
       (s, c) => s + (c.months?.[m]?.budgeted ?? 0), 0)
     const zone = getBudgetZone(groupActual, groupBudgeted)
     return { month: m, zone, actual: groupActual, budgeted: groupBudgeted }
-  })
+  }), [group, months])
 
   return (
     <div className={styles.groupCard}>
@@ -118,6 +118,14 @@ HeatmapGroupRow.propTypes = {
 
 export default function HeatmapView({ categories, customGroups, months }) {
   const [windowStart, setWindowStart] = useState(0)
+
+  // Clamp windowStart if months array shrinks (e.g., during re-fetch).
+  useEffect(() => {
+    setWindowStart(prev => {
+      const maxStart = Math.max(0, months.length - WINDOW_SIZE)
+      return Math.min(prev, maxStart)
+    })
+  }, [months.length])
 
   const windowMonths = useMemo(
     () => months.slice(windowStart, windowStart + WINDOW_SIZE),
