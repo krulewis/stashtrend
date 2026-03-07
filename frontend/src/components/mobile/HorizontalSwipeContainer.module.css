@@ -42,10 +42,10 @@
   pointer-events: none;
 }
 
-/* 44×14px touch target; 8px visual dot rendered via ::before */
+/* 44×44px touch target; 8px visual dot rendered via ::before */
 .dot {
   width: 44px;
-  height: 14px;
+  height: 44px;
   border: none;
   background: transparent;
   cursor: pointer;
