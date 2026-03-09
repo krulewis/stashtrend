@@ -17,17 +17,17 @@ Full requirements: `plans/investment-forecasting-requirements.md`
 
 ### Build Order (foundation-first, ship incrementally)
 
-| Phase | Scope | Size | Status |
-|-------|-------|------|--------|
-| **0** | Sync holdings data from Monarch API (new `holdings` DB table + pipeline) | M | **Done** (PR #3) |
-| **1** | NW by account type + CAGR estimates on existing Net Worth page | M | **Done** (PR #4) |
-| **2** | NW milestones + retirement target tracker on Net Worth page | M | **Done** (PR #5, merged) |
-| **2.1** | Fix retirement tracker to use investable capital, not total NW | S | **Next** |
-| **B** | Backend decomposition — split `app.py` into route blueprints + service modules | M | **Roadmap** |
-| **3** | New Investments page — account-level performance dashboard + holdings drill-down | L | **Planning in progress** |
-| **4** | New Forecasting page — simple projections + retirement planner | L | **Planning in progress** (step 3b/7) |
-| **5** | Monte Carlo simulation + AI narrative layer on Forecasting page | M | **Planning in progress** (step 3b/7) |
-| **6** | Benchmark comparison vs S&P 500 (nice-to-have) | S | **Planning in progress** (steps 3–6 need re-run) |
+| Phase | Scope | Size | Depends On | Status |
+|-------|-------|------|------------|--------|
+| **0** | Sync holdings data from Monarch API (new `holdings` DB table + pipeline) | M | — | **Done** (PR #3) |
+| **1** | NW by account type + CAGR estimates on existing Net Worth page | M | 0 | **Done** (PR #4) |
+| **2** | NW milestones + retirement target tracker on Net Worth page | M | 1 | **Done** (PR #5, merged) |
+| **2.1** | Fix retirement tracker to use investable capital, not total NW | S | 2 | **Next** |
+| **B** | Backend decomposition — split `app.py` into route blueprints + service modules | M | — | **Roadmap** |
+| **3** | New Investments page — account-level performance dashboard + holdings drill-down | L | 0, B | **Planning in progress** |
+| **4** | New Forecasting page — simple projections + retirement planner | L | 1, 2, B | **Planning in progress** |
+| **5** | Monte Carlo simulation + AI narrative layer on Forecasting page | M | 4 | **Planning in progress** |
+| **6** | Benchmark comparison vs S&P 500 (nice-to-have) | S | 3 | **Planning in progress** |
 
 ### Planning Pipeline Status (Fresh-Context Agents)
 
