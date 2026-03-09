@@ -6,158 +6,261 @@
 
 ---
 
-## 1. Existing Codebase Patterns
+## Problem Summary
 
-### Charting Infrastructure
-- **Library:** Recharts 2.x (`AreaChart`, `LineChart`, `ComposedChart` available)
-- **Shared utilities:** `frontend/src/components/chartUtils.jsx` provides:
-  - `fmtCompact`, `fmtFull`, `fmtPct` — currency/percentage formatters
-  - `filterByRange(data, months)` — time-range filtering by YYYY-MM-DD
-  - `downsample(data, maxPoints=200)` — downsampling for performance
-  - `sharedChartElements()` — returns grid, axes, tooltip as reusable array
-  - `COMMON_RANGES` — `[3M, 6M, 1Y, 2Y, All]`
-  - Design tokens: `COLOR_ACCENT (#4D9FFF)`, `COLOR_POSITIVE (#2ECC8A)`, `COLOR_NEGATIVE (#FF5A7A)`, `COLOR_AMBER (#F5A623)`, `AXIS_TICK`, `GRID_STROKE`, `TOOLTIP_STYLE`
-- **Chart components:**
-  - `NetWorthChart.jsx` — single AreaChart with optional asset/liability breakdown, uses `sharedChartElements()`
-  - `TypeStackedChart.jsx` — stacked AreaChart with dual Y-axis (positive/negative buckets), CAGR sidebar, ReferenceLine milestones
-  - `GroupsTimeChart.jsx` — multi-series line chart for account groups
-  - `BudgetChart.jsx` — bar chart for budget data
-- **RangeSelector** — reusable time-range toggle component, used by all time-series charts
-- **Pattern for adding a line:** Use `<Area>` or `<Line>` component inside the chart. For overlay, a `<Line>` with dashed stroke would differentiate from area fills.
+Phase 6 adds an S&P 500 benchmark overlay to the Investments page (Phase 3) so users can compare their portfolio and individual account returns against the market. A secondary stretch goal is a target asset allocation comparison. The architect needs to decide: (1) which external data source to use, (2) how to store and serve it, (3) how to integrate the overlay into Phase 3's chart, and (4) what the actual Phase 3 component names will be to anchor the implementation plan.
+
+---
+
+## Codebase Context
+
+### Phase 3 Status: Planned but Not Yet Built
+
+Phase 3 (the Investments page) is **Planned** in `docs/plans/index.md` — it has not been implemented. There is:
+- No `/investments` route in `frontend/src/App.jsx`
+- No `InvestmentsPage.jsx` in `frontend/src/pages/`
+- No `InvestmentPerformanceChart.jsx` in `frontend/src/components/`
+- No `/api/investments/*` endpoints in `backend/app.py`
+- No `investments` nav item in `frontend/src/nav.js`
+
+The Phase 3 implementation plan (`docs/plans/phase3-impl-plan.md`) defines the planned component names:
+- Page: `frontend/src/pages/InvestmentsPage.jsx` (with URL params for drill-down at `/investments/:accountId`)
+- Chart: `frontend/src/components/InvestmentPerformanceChart.jsx`
+- API functions in `frontend/src/api.js`: `fetchInvestmentsSummary`, `fetchInvestmentHoldings`, `fetchInvestmentsPerformance`, `fetchInvestmentContributions`
+- Backend endpoints: `GET /api/investments/summary`, `GET /api/investments/<account_id>/holdings`, `GET /api/investments/performance`, `GET /api/investments/contributions`
+
+Phase 6 implementation cannot begin until Phase 3 is complete. The file names above are planned, not final.
+
+### The `security_prices` Table Does NOT Exist
+
+The Phase 6 architecture document asserts that `security_prices` was "already created in Phase 0." This is incorrect. Phase 0 created only the `holdings` table. The `security_prices` table was explicitly deferred: the Phase 0 final plan (`docs/plans/phase0-holdings-sync-final-plan.md`) notes "Deferred: closing_price, price change fields… These belong in Phase 5 (security_prices table)." Phase 5 architecture (`docs/plans/phase5-architecture.md`) then explicitly chose NOT to create it: "The security_prices table was never built (Phase 0 made it optional)."
+
+Phase 6 must create the `security_prices` table itself, as part of `DASHBOARD_DDL` in `backend/app.py`.
+
+### Existing Account/Holdings Data
+
+The `holdings` table (from Phase 0, `pipeline/monarch_pipeline/schema.py`) contains:
+- `id`, `account_id`, `security_id`, `security_name`, `ticker`, `security_type`
+- `quantity`, `basis`, `total_value`, `current_price`
+- `is_manual`, `last_synced_at`, `synced_at`
+
+The `account_history` table contains daily balance snapshots: `(account_id, date, balance)`.
+
+The `accounts` table contains: `id`, `name`, `type`, `subtype`, `is_asset`, `include_in_net_worth`, `is_hidden`, `current_balance`.
+
+CAGR calculations already exist in `_compute_bucket_cagr()` in `backend/app.py` (lines 757–811): the function takes a `{date: balance}` dict, computes 1Y/3Y/5Y CAGR using `(end/start)^(1/years) - 1` with edge case handling for < 30 data points. This pattern is directly reusable for portfolio return calculations.
+
+### Existing Charting Patterns
+
+All time-series charts use Recharts 2.x. The pattern for adding a benchmark overlay line to Phase 3's chart is:
+
+```jsx
+// Inside an existing AreaChart or ComposedChart
+{showBenchmark && benchmarkData && (
+  <Line
+    type="monotone"
+    dataKey="benchmark_return_pct"
+    name="S&P 500"
+    stroke={COLOR_AMBER}
+    strokeWidth={1.5}
+    strokeDasharray="6 3"
+    dot={false}
+  />
+)}
+```
+
+Shared chart utilities live in `frontend/src/components/chartUtils.jsx`:
+- `filterByRange(data, months)` — YYYY-MM-DD date filter
+- `downsample(data, maxPoints=200)` — performance downsampling
+- `COMMON_RANGES` — `[{label: '3M', months: 3}, {label: '6M', months: 6}, {label: '1Y', months: 12}, {label: '2Y', months: 24}, {label: 'All', months: null}]`
+- `COLOR_AMBER = '#F5A623'` — unused by existing chart series, appropriate for benchmark line
+- `COLOR_ACCENT`, `COLOR_POSITIVE`, `COLOR_NEGATIVE` — taken by portfolio/return display
+- `TOOLTIP_STYLE`, `AXIS_TICK`, `GRID_STROKE` — shared across all charts
+
+`NetWorthChart.jsx` has a precedent for the toggle pattern (the "Show assets / liabilities" checkbox), and `TypeStackedChart.jsx` demonstrates multi-series charts with milestones and CAGR tables.
+
+`RangeSelector.jsx` is a reusable component accepting `{ranges, activeRange, onSelect}` props.
 
 ### Backend API Patterns
-- **Framework:** Flask, single `app.py` file (monolith)
-- **Database:** SQLite via `get_db_connection()` context manager
-- **API style:** REST JSON endpoints at `/api/<resource>/<action>`
-- **Existing endpoints relevant to investments:**
-  - `GET /api/networth/history` — returns `[{date, net_worth, assets, liabilities}]`
-  - `GET /api/networth/by-type` — returns `{series, cagr, bucket_colors, bucket_order}`
-  - `GET /api/retirement` / `POST /api/retirement` — settings CRUD
-- **Holdings sync:** `fetch_holdings()` already runs during sync, upserting into `holdings` table
-- **No existing investment performance endpoints** — Phase 3 will create these; Phase 6 extends them
+
+- All endpoints are in the single-file `backend/app.py` (2,442 lines)
+- Route pattern: `@app.route("/api/<domain>/<action>")` with `def function_name():`
+- Database: `conn = get_db()` → SQLite3 → `finally: conn.close()`
+- Rate limiting: `_check_ai_rate_limit(endpoint)` — applies to compute-heavy endpoints
+- Error handling: `try/except` blocks returning `jsonify({"error": "..."})`, `app.logger.exception()`
+- Settings key-value store: `get_setting(conn, key, default)` / `set_setting(conn, key, value)` for feature flags or config
+
+The sync worker (`_run_sync_worker`, lines 395–540) loops over `ordered_entities(entities)` with `elif entity == "holdings":` branches. The benchmark sync helper should NOT be added as an entity (per the staff review finding #2) — it should be a separate function called after the entity loop.
 
 ### Frontend API Layer
-- `frontend/src/api.js` — centralized `fetchJSON()` / `postJSON()` helpers
-- Pattern: `export const fetchX = () => fetchJSON('/api/x')` one-liner exports
-- Phase 6 will add `fetchBenchmarkData()` following this pattern
 
-### Database Schema (existing relevant tables)
-- `holdings` — per-position data (account_id, ticker, quantity, cost_basis, current_value, etc.)
-- `security_prices` — ticker/date/price history (created in Phase 0)
-- `account_history` — daily account-level balance snapshots
-- `retirement_settings` — stores retirement config (will store target allocation too, or a new table)
+`frontend/src/api.js` pattern:
+```js
+export const fetchBenchmarkComparison = (accountId = 'all', range = '1y') =>
+  fetchJSON(`/api/benchmark/comparison?account_id=${accountId}&range=${range}`)
+```
+Named exports only — no raw `fetchJSON` calls in page components.
 
 ### Design System
-- Dark theme throughout — backgrounds `#0B1120` to `#1C2333`, text `#F0F6FF`
-- CSS Modules for component styling (`.module.css` files)
-- No global CSS token file found — tokens are hardcoded in `chartUtils.jsx` and component CSS
-- Responsive via `useResponsive()` hook (returns `{isMobile}`)
+
+Dark theme. CSS tokens from `index.css`. Key tokens relevant to Phase 6:
+- `var(--accent)` / `COLOR_ACCENT #4D9FFF` — currently used for cobalt accent (do not use for benchmark)
+- `var(--color-warning)` / `COLOR_AMBER #F5A623` — available for benchmark line (currently used for milestone ReferenceLines and warning states only)
+- `var(--bg-card) #1C2333` — card backgrounds
+- `var(--text-secondary) #8BA8CC` — labels
+
+Recharts cannot use CSS variables in SVG attrs — use the `chartUtils.jsx` constants directly.
 
 ---
 
-## 2. S&P 500 Data Sources (Free)
+## Options Evaluated
 
-### Option A: Yahoo Finance (yfinance Python package)
-- **Ticker:** `^GSPC`
-- **Method:** `pip install yfinance` → `yf.download("^GSPC", start="2000-01-01")`
-- **Rate limits:** Unofficial API; no guaranteed SLA. Rate limits are generous for personal use (several hundred requests/day)
-- **Data quality:** Daily OHLCV, adjusted close, goes back to 1927
-- **Pros:** Dead simple, well-maintained Python package, excellent data quality
-- **Cons:** Unofficial API — Yahoo could change/break it. No API key needed. Occasionally throttles heavy usage.
-- **Latency:** ~1-2 seconds for a full history download
-- **License:** Data is from Yahoo Finance; personal use is fine
+### Option 1: yfinance Python Package → SQLite Cache (Existing Architecture Decision)
 
-### Option B: FRED (Federal Reserve Economic Data)
-- **API:** `https://api.stlouisfed.org/fred/series/observations?series_id=SP500`
-- **Rate limits:** Free API key required, 120 requests/minute
-- **Data quality:** Daily close, sourced from S&P Dow Jones Indices. Some gaps on non-trading days.
-- **Pros:** Official government API, stable, well-documented
-- **Cons:** Requires free API key registration. Only goes back to ~2010 for the SP500 series (older data uses different series IDs). No OHLCV — just close.
+**Description:** Install `yfinance>=1.0` via `requirements.txt`. Lazily import inside `sync_benchmark_data()`. Download `^GSPC` or `SPY` incremental daily data. Cache in `security_prices` table. Frontend reads from cache; never hits Yahoo directly.
 
-### Option C: Alpha Vantage
-- **API:** REST endpoint with free tier
-- **Rate limits:** 25 requests/day on free tier (very restrictive)
-- **Data quality:** Good OHLCV data
-- **Pros:** Official API with key
-- **Cons:** 25 requests/day is too low for reliable daily updates. Paid tiers start at $50/mo.
+**Pros:**
+- Zero API key required
+- Simple Python API: `yf.Ticker("SPY").history(start=last_date)`
+- Widely documented; large community
+- Incremental fetch minimizes data transfer
 
-### Option D: Static CSV + Periodic Update
-- **Method:** Download S&P 500 CSV once, store in DB, update daily during sync
-- **Pros:** No external API dependency at runtime; fast queries
-- **Cons:** Need a mechanism to keep it updated
+**Cons:**
+- Yahoo Finance changed its policy in 2024-2025. Historical data downloads for `^GSPC` (the direct S&P 500 index) are now reported to require a paid Yahoo Finance subscription on some accounts. The `yfinance` GitHub issue tracker (#2340) documents this failure mode.
+- `SPY` ETF may still work as a proxy ticker, but this is unreliable across user accounts and time.
+- `yfinance` pulls in `pandas` and `numpy` as heavy transitive dependencies. The Docker image currently has no data science dependencies (only `flask`, `flask-cors`, `apscheduler`, `anthropic`, `openai`, `keyring`). Adding `yfinance` would add ~150-300MB to the Docker image via pandas/numpy.
+- yfinance is an unofficial API with no SLA. It has broken multiple times as Yahoo changes their endpoints.
 
-### Recommendation: Yahoo Finance (yfinance) → SQLite cache
-- Use `yfinance` to fetch S&P 500 data
-- Store in `security_prices` table (already exists from Phase 0) with ticker `^GSPC`
-- Fetch incrementally during sync (only fetch new dates since last stored date)
-- Cache in DB means the frontend never waits on an external API
-- Fallback: if yfinance fails during sync, silently skip — stale benchmark data is better than no data
+**Effort estimate:** Low for the Python code; Medium when accounting for Docker image size and the reliability risks.
+
+**Compatibility:** Fits existing patterns if lazy-imported. Risk: may not work for users without Yahoo Finance Gold accounts for the `^GSPC` symbol.
 
 ---
 
-## 3. Performance Return Calculations
+### Option 2: FRED API (Federal Reserve Economic Data)
 
-### Simple Return
-```
-return_pct = (end_value / start_value - 1) * 100
-```
-Works for S&P 500 (no cash flows). Also works for account comparison when you want a naive view.
+**Description:** Use the `fredapi` Python package or direct HTTP calls to `https://api.stlouisfed.org/fred/series/observations?series_id=SP500`. Cache in `security_prices`. Requires a free API key (registered at fred.stlouisfed.org).
 
-### Time-Weighted Rate of Return (TWRR)
-For accounts with contributions/withdrawals, TWRR is the industry standard:
-```
-TWRR = [(1 + r1) * (1 + r2) * ... * (1 + rn)] - 1
-```
-Where each `ri` is the return for a sub-period between cash flows. Requires knowing the account value immediately before and after each cash flow.
+**Pros:**
+- Official government API — reliable, well-documented, stable
+- No paid subscription required (free API key)
+- The `fredapi` package is lightweight (no pandas/numpy required — returns standard Python dicts)
+- FRED has SLA and is run by the Federal Reserve Bank of St. Louis — it will not be broken by commercial policy changes
 
-**Simplification for Phase 6:** Since we have daily `account_history` snapshots and can detect contributions from transactions, we can approximate TWRR by computing daily returns and chaining them. This is "modified Dietz" approximation and is accurate enough for a personal dashboard.
+**Cons:**
+- Requires user to register for a free API key and store it in the app settings — adds setup friction
+- FRED's SP500 series only covers **the last 10 years** due to a licensing agreement with S&P Dow Jones Indices. Users with accounts older than 10 years will have a gap in their benchmark comparison.
+- The series ID is `SP500` (not `^GSPC`) — different format
+- Direct HTTP using `urllib` or `requests` without a wrapper adds slightly more code; the `fredapi` package wraps it cleanly but adds a dependency
 
-**Simpler alternative:** If Phase 3 doesn't implement TWRR, Phase 6 can use simple return as a v1 and note the caveat. The S&P 500 comparison is still directionally useful even with simple returns.
+**Effort estimate:** Low-Medium (API key setup UI adds frontend complexity; library is simple).
 
-### Normalization for Comparison
-Both series normalized to 0% at the start of the selected time range:
-```python
-normalized = [(price / prices[0] - 1) * 100 for price in prices]
-```
+**Compatibility:** Fits existing patterns for settings/API keys (the AI provider already uses stored keys). The 10-year limit is a material constraint.
 
 ---
 
-## 4. Phase 3 Dependency Analysis
+### Option 3: SPY ETF via Direct HTTP (No Package)
 
-Phase 6 depends on Phase 3 creating:
-1. **Investments page** with routing (`/investments` route in App.jsx)
-2. **Account performance chart** — the chart we'll overlay the S&P 500 line onto
-3. **Account selection mechanism** — ability to select individual accounts or "All"
-4. **Performance data endpoint** — e.g., `GET /api/investments/performance?account_id=X&range=1Y`
+**Description:** Call Yahoo Finance's unofficial JSON API directly for `SPY` (an ETF that tracks the S&P 500), without the `yfinance` package. Use Python's standard `urllib.request` or the existing `requests` library (not currently in requirements). Cache in `security_prices`. No API key, no heavy dependencies.
 
-**What Phase 6 adds on top of Phase 3:**
-- New backend endpoint: `GET /api/benchmark/sp500?start=YYYY-MM-DD&end=YYYY-MM-DD`
-- S&P 500 data sync step in the sync pipeline
-- Frontend: benchmark toggle + overlay line on the existing performance chart
-- Frontend: optional target allocation section
+**Pros:**
+- No pandas/numpy dependency — keeps Docker image lean
+- No API key required
+- `SPY` as an ETF differs from `^GSPC` only negligibly for benchmarking purposes (SPY includes dividend reinvestment; `^GSPC` is price-only)
+- Data goes back to 1993 (SPY inception), covering any realistic user account history
+- Avoids the `yfinance` abstraction layer, giving direct control over request format and retry logic
 
-**Risk:** If Phase 3's chart implementation differs significantly from what's assumed here, the frontend overlay approach may need adjustment. However, since all charts in the codebase use Recharts with consistent patterns, the overlay pattern (adding a `<Line>` to an existing chart) is straightforward regardless of Phase 3's specific implementation.
+**Cons:**
+- Relies on Yahoo Finance's unofficial API endpoint — same reliability risk as yfinance, just without the packaging
+- The specific endpoint format (`https://query1.finance.yahoo.com/v8/finance/chart/SPY?interval=1d&range=max`) is undocumented and can change
+- Dividend-adjusted `adjclose` vs unadjusted `close` must be handled manually — `yfinance` handles this automatically
+- Historical access restrictions may affect direct API calls the same as they affect yfinance
+
+**Effort estimate:** Medium (more code to write, test, and maintain than using a library).
+
+**Compatibility:** Fits the pattern of avoiding external API keys. Same reliability risk as Option 1.
 
 ---
 
-## 5. Target Allocation Feature Research
+### Option 4: Stagger with SPY Fallback (Hybrid Recommended)
 
-### Storage
-- New table `target_allocation` or add columns to an existing settings table
-- Schema: `{id, asset_class TEXT, target_pct REAL, created_at TEXT}`
-- Asset classes: Stocks, Bonds, Cash, Other (matches holdings `type` field from Phase 0)
+**Description:** Try `yfinance` with `SPY` as the primary ticker. If the fetch fails (exception or empty response), fall back to FRED with a stored API key (optional — only used if user has configured it). If both fail, use existing cached data with a staleness indicator. Benchmark sync never fails the main Monarch sync.
 
-### Actual Allocation Calculation
-- Aggregate `holdings.current_value` grouped by `holdings.type`
-- Compute percentage of total for each type
-- Compare against target percentages
+**Pros:**
+- Best reliability: multiple fallback layers
+- `SPY` via yfinance works for most users today; FRED is the quality backup
+- Graceful degradation matches the existing pattern in the sync pipeline
 
-### Visualization
-- Side-by-side donut/bar charts: Target vs Actual
-- Drift indicator: highlight when |actual - target| > threshold
-- Common UX pattern in investment dashboards
+**Cons:**
+- More complex implementation — two code paths for data ingestion
+- Slightly harder to test (mocking two fetch paths)
 
-### Complexity Assessment
-This is genuinely a separate sub-feature from the S&P 500 overlay. Given the S-sizing of Phase 6, recommend:
-- **Core deliverable:** S&P 500 performance overlay (US-1, US-2)
-- **Stretch:** Target allocation comparison (US-3) — can be deferred to a future PR if Phase 6 runs long
+**Effort estimate:** Medium.
+
+**Compatibility:** High — follows the pattern of try/except with fallback that already exists in the sync pipeline.
+
+---
+
+## Recommendation
+
+Use **Option 1 (yfinance with SPY ticker)** as the starting implementation, with the following constraints addressed:
+
+1. Use `SPY` ticker (not `^GSPC`) as the primary target — SPY's historical data is still accessible without a Yahoo Finance Gold subscription, and SPY tracks the S&P 500 closely enough for personal finance benchmarking.
+2. Lazy-import `yfinance` inside `sync_benchmark_data()` to avoid startup overhead.
+3. Wrap all yfinance calls in `try/except` — if fetch fails for any reason, log a warning and use existing cached data. The sync job does not fail.
+4. Document the known Yahoo Finance policy risk in the PR and consider upgrading to Option 4 (hybrid with FRED fallback) in a follow-on if users report failures.
+
+If the `yfinance` situation remains unstable (the GitHub issues as of early 2026 are unresolved), **Option 2 (FRED)** is the most reliable alternative, at the cost of requiring a one-time API key registration.
+
+**Do not implement both simultaneously** — keep it simple for v1.
+
+---
+
+## Open Questions
+
+1. **Will Phase 3 use `InvestmentPerformanceChart.jsx` as the exact filename?** The Phase 3 implementation plan uses this name, but the plan is not yet final. Phase 6's integration point depends on this. Resolution: confirm when Phase 3 is implemented.
+
+2. **Does Phase 3's performance chart use `ComposedChart` or `AreaChart`?** Adding a `<Line>` to an existing `<AreaChart>` in Recharts requires switching to `<ComposedChart>` (which supports both Area and Line types in the same chart). The Phase 3 plan does not explicitly state which Recharts chart type it uses. Resolution: check Phase 3 implementation.
+
+3. **Is the `security_prices` table schema already defined anywhere?** It is not — it must be designed as part of Phase 6. The Phase 6 architecture document proposes columns `(ticker TEXT, date TEXT, price REAL, PRIMARY KEY (ticker, date))`. This should be sufficient for daily close prices.
+
+4. **What is the Phase 3 account selector's interface?** Phase 6 must re-use whatever account selection mechanism Phase 3 creates. If Phase 3 uses a state variable like `selectedAccountId` (where `"all"` means all investment accounts), Phase 6 needs to pass that value to `fetchBenchmarkComparison`.
+
+5. **yfinance reliability in 2026:** The Yahoo Finance policy change on historical data downloads is ongoing. At writing, SPY historical data via `yfinance` appears to still work for many users, but `^GSPC` does not. The architect should decide whether to launch with `SPY` (slightly impure, very pragmatic) or invest in FRED integration from day one.
+
+6. **Docker image size:** `yfinance` requires `pandas` and `numpy`. These add ~150-300MB to the Docker build. If the project follows a "lean image" principle, this may be unacceptable. Direct HTTP calls (Option 3) or FRED (Option 2 via `fredapi`, which has no pandas dependency) avoid this. The current `Dockerfile.backend` should be reviewed before committing to yfinance.
+
+---
+
+## Summary of Codebase Findings
+
+| Area | Finding |
+|------|---------|
+| Phase 3 components | Not yet built; planned names are `InvestmentsPage.jsx`, `InvestmentPerformanceChart.jsx` |
+| `security_prices` table | Does NOT exist — must be created in Phase 6 as part of `DASHBOARD_DDL` |
+| `holdings` table | Exists with ticker, quantity, basis, total_value, current_price |
+| `account_history` | Exists with daily balance snapshots per account |
+| CAGR calculation | `_compute_bucket_cagr()` in `app.py` is reusable pattern |
+| Chart library | Recharts 2.x; all charts use `chartUtils.jsx` constants |
+| Adding a benchmark line | Requires switching Phase 3 chart to `ComposedChart` if it uses `AreaChart` |
+| yfinance | Listed in architecture doc; has known reliability issues with `^GSPC` in 2025-2026 |
+| FRED API | 10-year data limit; reliable; requires free API key |
+| Docker impact | yfinance adds pandas/numpy; ~150-300MB image size increase |
+| Benchmark toggle precedent | `NetWorthChart.jsx` has a checkbox toggle ("Show assets / liabilities") as UX model |
+
+---
+
+## Relevant File Paths
+
+- `/home/user/stashtrend/backend/app.py` — all backend endpoints, DASHBOARD_DDL, `_compute_bucket_cagr()`, sync worker
+- `/home/user/stashtrend/pipeline/monarch_pipeline/schema.py` — pipeline DDL (holdings, account_history)
+- `/home/user/stashtrend/pipeline/monarch_pipeline/storage.py` — `upsert_holdings()` as pattern for `upsert_benchmark_prices()`
+- `/home/user/stashtrend/frontend/src/components/chartUtils.jsx` — `COLOR_AMBER`, `filterByRange`, `downsample`, `TOOLTIP_STYLE`
+- `/home/user/stashtrend/frontend/src/components/NetWorthChart.jsx` — benchmark toggle UX precedent (checkbox)
+- `/home/user/stashtrend/frontend/src/components/TypeStackedChart.jsx` — multi-series chart with CAGR sidebar
+- `/home/user/stashtrend/frontend/src/api.js` — API function export pattern
+- `/home/user/stashtrend/frontend/src/nav.js` — nav items (needs `/investments` added by Phase 3)
+- `/home/user/stashtrend/frontend/src/App.jsx` — routes (needs `/investments` route added by Phase 3)
+- `/home/user/stashtrend/backend/requirements.txt` — yfinance would be added here
+- `/home/user/stashtrend/docs/plans/phase3-impl-plan.md` — Phase 3 planned file names and endpoints
+- `/home/user/stashtrend/docs/plans/phase5-architecture.md` — confirms `security_prices` was never built
