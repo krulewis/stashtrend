@@ -172,18 +172,20 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 
 **Update memory AS YOU GO, not at the end.** Mandatory update at step 5 of workflow.
 
-`monarch-dashboard/MEMORY.md` is the index. Details live in `monarch-dashboard/docs/`:
+`MEMORY.md` is the index (create at repo root if it doesn't exist). Details live in `docs/`:
 
 | Trigger | Update |
 |---------|--------|
-| User shares a fact / preference | → `monarch-dashboard/MEMORY.md` → User Preferences |
-| A convention or pattern is established | → `monarch-dashboard/docs/conventions.md` |
-| A bug is fixed or pitfall discovered | → `monarch-dashboard/docs/gotchas.md` |
-| Architecture changes | → `monarch-dashboard/docs/architecture.md` + `MEMORY.md` Project section |
-| Test count changes | → `monarch-dashboard/MEMORY.md` Project section |
-| Plan completed or added | → `monarch-dashboard/docs/plans/index.md` |
+| User shares a fact / preference | → `MEMORY.md` → User Preferences |
+| A convention or pattern is established | → `docs/conventions.md` |
+| A bug is fixed or pitfall discovered | → `docs/gotchas.md` |
+| Architecture changes | → `docs/architecture.md` + `MEMORY.md` Project section |
+| Test count changes | → `MEMORY.md` Project section |
+| Plan completed or added | → `docs/plans/index.md` |
 
-**Auto memory** (auto-loaded each session): `.claude/projects/-Users-kellyl--Documents-Cowork-Projects-Personal-Finance/memory/MEMORY.md` — keep as a short pointer/fast-recall index only; full details always go in `monarch-dashboard/docs/`.
+**Auto memory** (auto-loaded each session): `.claude/projects/-Users-kellyl--Documents-Cowork-Projects-Personal-Finance/memory/MEMORY.md` — keep as a short pointer/fast-recall index only; full details always go in `docs/`.
+
+**Project structure:** Frontend code is in `frontend/src/`, backend in `backend/`. There is NO `monarch-dashboard/` directory — that was the old name.
 
 **Skip:** Quick factual questions, trivial tasks with no new info.
 
@@ -194,11 +196,11 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 ## Project-Specific Workflow Details
 
 **Step 5 — Memory/docs paths:**
-- `monarch-dashboard/MEMORY.md` (test counts, architecture changes)
-- `monarch-dashboard/docs/conventions.md` (new patterns)
-- `monarch-dashboard/docs/gotchas.md` (bugs found, pitfalls)
-- `monarch-dashboard/docs/architecture.md` (new features, structural changes)
-- `monarch-dashboard/docs/plans/index.md` (completed/active plans)
+- `MEMORY.md` (test counts, architecture changes)
+- `docs/conventions.md` (new patterns)
+- `docs/gotchas.md` (bugs found, pitfalls)
+- `docs/architecture.md` (new features, structural changes)
+- `docs/plans/index.md` (completed/active plans)
 
 **Step 7 — App URLs:** `http://localhost` (Docker) or `http://localhost:5173` (local dev)
 
