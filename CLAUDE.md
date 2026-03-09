@@ -110,6 +110,7 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 | 4. Implement | `implementer` |
 | 5. Update docs | `docs-updater` |
 | 7. UI QA | `playwright-qa` |
+| 8b. Automated review | `/code-review --comment` (inline) |
 | 9. PR review | `staff-reviewer` |
 | 9. PR fixes | `implementer` / `debugger` |
 | 10. Cost analysis | `/tokencostscope` (inline) |
@@ -131,8 +132,9 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 6. **Run all automated tests** — failures → return to step 4
 7. **Playwright UI QA** — dispatch to `playwright-qa` agent. Exercise the feature in the running app, take a screenshot — issues → return to step 4
 8. **Commit to feature branch** — push and create PR against main via `gh pr create`
+8b. **Automated review** — run `/code-review --comment` on the PR. This posts a multi-agent Sonnet+Haiku review (bug scan, CLAUDE.md compliance, git blame context, confidence-scored findings) directly to the PR as a comment. Cheap first-pass filter before the Opus review loop.
 9. **PR Review Loop** — repeat until clean:
-   i. Dispatch to `staff-reviewer` agent with **fresh context**. Only inputs: PR diff (`gh pr diff`) + project CLAUDE.md
+   i. Dispatch to `staff-reviewer` agent with **fresh context**. Only inputs: PR diff (`gh pr diff`) + project CLAUDE.md + any `/code-review` findings already posted on the PR
    ii. Reviews for bugs, logic errors, edge cases, security, style → numbered findings list
    iii. Dispatch fixes to `implementer` or `debugger` agent as appropriate. Commit, push, re-run tests.
    iv. Dispatch to **new** `staff-reviewer` agent (fresh context) → repeat from (i)
@@ -157,6 +159,7 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 [ ] Memory/docs updated before QA
 [ ] Playwright QA — screenshot taken
 [ ] Cost analysis — actual vs estimate compared, calibration updated
+[ ] Automated review — `/code-review --comment` posted to PR
 [ ] PR review loop clean — no comments on final pass
 [ ] User approved merge to main
 ```
