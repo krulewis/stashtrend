@@ -26,7 +26,22 @@ Full requirements: `plans/investment-forecasting-requirements.md`
 | **3** | New Investments page — account-level performance dashboard + holdings drill-down | L | Planned |
 | **4** | New Forecasting page — simple projections + retirement planner | L | Planned |
 | **5** | Monte Carlo simulation + AI narrative layer on Forecasting page | M | Planned |
-| **6** | Benchmark comparison vs S&P 500 (nice-to-have) | S | Planned |
+| **6** | Benchmark comparison vs S&P 500 (nice-to-have) | S | **Planned** (full pipeline complete) |
+
+### Phase 6 — Benchmark Comparison vs S&P 500 (Planning Complete)
+
+Planning artifacts in `plans/`:
+- `phase6-requirements.md` — detailed requirements (user stories, acceptance criteria, edge cases)
+- `phase6-research.md` — codebase patterns, S&P 500 data source evaluation, calculation approaches
+- `phase6-architecture.md` — 6 architecture decisions with rationale and rejected alternatives
+- `phase6-design-spec.md` — UI design: benchmark toggle, chart overlay, summary cards, target allocation panel
+- `phase6-impl-plan.md` — initial file-level implementation plan (7 groups, parallelism tags)
+- `phase6-review.md` — staff review: 11 findings (1 high, 4 medium, 6 low)
+- `phase6-impl-plan-final.md` — corrected final plan addressing all 11 findings
+
+**Key decisions:** Direct Yahoo Finance HTTP (no yfinance/pandas dep), benchmark NOT a sync entity (standalone helper), O(n) date alignment, localStorage toggle persistence, [99.9-100.1] allocation validation tolerance. Target allocation is stretch goal.
+
+**Prerequisite:** Phase 3 must be complete before implementation begins.
 
 ### Phase 2.1 — Retirement Tracker: Investable Capital Fix
 
