@@ -50,9 +50,11 @@ pipeline/build/
 *.swp
 *.swo
 
-# Claude Code internal state (keep agents/ tracked for portability)
+# Claude Code internal state (keep agents/, hooks/, settings tracked for portability)
 .claude/*
 !.claude/agents/
+!.claude/hooks/
+!.claude/settings.json
 MEMORY.md
 CLAUDE.local.md
 .dual-graph/
