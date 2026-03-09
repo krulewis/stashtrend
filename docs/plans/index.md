@@ -23,57 +23,78 @@ Full requirements: `plans/investment-forecasting-requirements.md`
 | **1** | NW by account type + CAGR estimates on existing Net Worth page | M | **Done** (PR #4) |
 | **2** | NW milestones + retirement target tracker on Net Worth page | M | **Done** (PR #5, merged) |
 | **2.1** | Fix retirement tracker to use investable capital, not total NW | S | **Next** |
-| **3** | New Investments page — account-level performance dashboard + holdings drill-down | L | **Planning complete** |
-| **4** | New Forecasting page — simple projections + retirement planner | L | **Planning complete** |
-| **5** | Monte Carlo simulation + AI narrative layer on Forecasting page | M | Planned |
-| **6** | Benchmark comparison vs S&P 500 (nice-to-have) | S | **Planned** (full pipeline complete) |
+| **3** | New Investments page — account-level performance dashboard + holdings drill-down | L | **Planning in progress** (step 3b/7) |
+| **4** | New Forecasting page — simple projections + retirement planner | L | **Planning in progress** (step 3b/7) |
+| **5** | Monte Carlo simulation + AI narrative layer on Forecasting page | M | **Planning in progress** (step 3b/7) |
+| **6** | Benchmark comparison vs S&P 500 (nice-to-have) | S | **Planning in progress** (steps 3–6 need re-run) |
 
-### Phase 3 — New Investments Page (Planning Complete)
+### Planning Pipeline Status (Fresh-Context Agents)
 
-Planning artifacts in `plans/`:
-- `phase3-requirements.md` — detailed requirements (6 user stories, acceptance criteria, 10 edge cases)
+All planning uses fresh-context agents per CLAUDE.md — each step gets only written artifacts from prior steps, no accumulated context.
+
+| Step | Description | Phase 3 | Phase 4 | Phase 5 | Phase 6 |
+|------|-------------|---------|---------|---------|---------|
+| 1. PM | Requirements | Done | Done | Done | Done |
+| 2. Research | Codebase exploration | Done | Done | Done | Done |
+| 3. Architect | Architecture decisions | Done | Done | Done | **Needs re-run** |
+| 3b. Designer | UI/UX design spec | **In flight** | Done | Done | **Needs re-run** |
+| 4. Engineer | Initial impl plan | -- | -- | -- | **Needs re-run** |
+| 5. Staff Review | Pressure-test plan | -- | -- | -- | **Needs re-run** |
+| 6. Engineer | Final corrected plan | -- | -- | -- | *Has stale version* |
+
+**Note on Phase 6:** The old accumulated-context orchestrator completed all 7 steps, but intermediate artifacts (steps 3–5) were deleted to avoid biasing fresh-context agents. Only `phase6-requirements.md`, `phase6-research.md`, and `phase6-impl-plan-final.md` remain on disk. Steps 3–6 should be re-run with fresh context for consistency. The stale final plan can serve as a reference but shouldn't be used directly.
+
+### Phase 3 — New Investments Page
+
+**Fresh-context artifacts in `plans/`:**
+- `phase3-requirements.md` — detailed requirements (5 user stories, acceptance criteria, edge cases)
 - `phase3-research.md` — codebase exploration: holdings schema, page patterns, charting, design tokens, CAGR, navigation
-- `phase3-architecture.md` — 9 architecture decisions with rationale and rejected alternatives
-- `phase3-design-spec.md` — UI design: account dashboard, donut chart, holdings table, drill-down, responsive behavior
-- `phase3-impl-plan.md` — initial file-level implementation plan (7 groups, parallelism tags)
-- `phase3-review.md` — staff review: 13 findings (2 critical, 3 high, 3 medium, 3 low + 2 informational)
-- `phase3-impl-plan-final.md` — corrected final plan addressing all 13 findings
+- `phase3-architecture.md` — 8 architecture decisions with rationale and rejected alternatives
 
-**Key decisions:** Four new backend endpoints (`/api/investments/summary`, `/<account_id>/holdings`, `/performance`, `/contributions`), URL-based drill-down (`/investments/:accountId`), shared `AllocationChart` donut component, `_get_investment_account_ids()` helper derived from BUCKET_MAP (DRY), pre-formatted recharts data from backend, contribution detection via `category_group` transfer filter, client-side sort/filter for holdings table.
+**Remaining (paused):** design-spec (in-flight), impl-plan, review, final plan
+
+**Key decisions:** Three API endpoints (`/api/investments/summary`, `/<id>/holdings`, `/performance`), URL-based drill-down (`/investments/:accountId`), ComposedChart for performance+contributions, per-account CAGR server-side, contribution detection via `category_group` transfer filter, server-side security_type normalization, client-side sort/filter for holdings.
 
 **Prerequisites:** Phase 0 (holdings sync — done, PR #3).
 
-**Scope:** 18 new files, 4 modified files, ~245 backend lines + ~1,835 frontend lines. Groups A+B independent (parallelizable), C depends on B, D+E parallel after C, F depends on D+E.
+### Phase 4 — New Forecasting Page
 
-### Phase 4 — New Forecasting Page (Planning Complete)
-
-Planning artifacts in `plans/`:
+**Fresh-context artifacts in `plans/`:**
 - `phase4-requirements.md` — detailed requirements (7 user stories, acceptance criteria, 13 edge cases)
 - `phase4-research.md` — codebase exploration: retirement tracker, CAGR, investable capital, page patterns, charting, design tokens
-- `phase4-architecture.md` — 9 architecture decisions with rationale and rejected alternatives
+- `phase4-architecture.md` — 12 architecture decisions with rationale and rejected alternatives
 - `phase4-design-spec.md` — UI design: projection chart, interactive sliders, summary cards, gap analysis, responsive behavior
-- `phase4-impl-plan.md` — initial file-level implementation plan (6 groups, parallelism tags)
-- `phase4-review.md` — staff review: 12 findings (2 high, 5 medium, 5 low)
-- `phase4-impl-plan-final.md` — corrected final plan addressing all 12 findings
 
-**Key decisions:** Frontend-only projection math (reuses `retirementMath.js`), no new backend endpoints, LineChart with 4 lines (historical solid + 3 dashed scenarios), balance-weighted blended CAGR as default return rate, `useMemo` for instant slider feedback, disable "Save as defaults" when no retirement settings exist.
+**Remaining (paused):** impl-plan, review, final plan
+
+**Key decisions:** Frontend-only projection math (reuses `retirementMath.js`), no new backend endpoints, LineChart with 4 lines (historical solid + 3 dashed scenarios), balance-weighted blended CAGR as default return rate, `useMemo` for instant slider feedback, `SliderInput` reusable component, `getInvestableCapital()` extracted from RetirementPanel.
 
 **Prerequisites:** Phase 1 (CAGR — done), Phase 2 (Retirement tracker — done). Phase 2.1 (investable capital fix) ideally lands first but not blocking.
 
-**Scope:** 12 new files, 5–7 modified files, 0 backend changes. Groups A–E independent (parallelizable), Group F depends on all.
+### Phase 5 — Monte Carlo Simulation + AI Narrative
 
-### Phase 6 — Benchmark Comparison vs S&P 500 (Planning Complete)
+**Fresh-context artifacts in `plans/`:**
+- `phase5-requirements.md` — detailed requirements (user stories, acceptance criteria, 13 edge cases)
+- `phase5-research.md` — codebase exploration: `_call_ai()`, AIAnalysisPanel, account_history volatility, charting patterns
+- `phase5-architecture.md` — 10 architecture decisions with rationale and rejected alternatives
+- `phase5-design-spec.md` — UI design: view toggle, probability bands, ProbabilityBadge, ForecastAIPanel
 
-Planning artifacts in `plans/`:
-- `phase6-requirements.md` — detailed requirements (user stories, acceptance criteria, edge cases)
-- `phase6-research.md` — codebase patterns, S&P 500 data source evaluation, calculation approaches
-- `phase6-architecture.md` — 6 architecture decisions with rationale and rejected alternatives
-- `phase6-design-spec.md` — UI design: benchmark toggle, chart overlay, summary cards, target allocation panel
-- `phase6-impl-plan.md` — initial file-level implementation plan (7 groups, parallelism tags)
-- `phase6-review.md` — staff review: 11 findings (1 high, 4 medium, 6 low)
-- `phase6-impl-plan-final.md` — corrected final plan addressing all 11 findings
+**Remaining (paused):** impl-plan, review, final plan
 
-**Key decisions:** Direct Yahoo Finance HTTP (no yfinance/pandas dep), benchmark NOT a sync entity (standalone helper), O(n) date alignment, localStorage toggle persistence, [99.9-100.1] allocation validation tolerance. Target allocation is stretch goal.
+**Key decisions:** Backend Python NumPy GBM (5K sims), portfolio-level volatility from `account_history` (not `security_prices` — table doesn't exist), in-memory cache with `threading.Lock`, ForecastAIPanel reuses `AIAnalysisPanel.module.css`, p50 median replaces simple projection in Advanced view.
+
+**Prerequisites:** Phase 4 (Forecasting page must exist).
+
+### Phase 6 — Benchmark Comparison vs S&P 500
+
+**Fresh-context artifacts in `plans/`:**
+- `phase6-requirements.md` — detailed requirements (4 user stories, acceptance criteria, edge cases)
+- `phase6-research.md` — codebase patterns, S&P 500 data source evaluation (critical: Yahoo `^GSPC` access now problematic, SPY or FRED recommended)
+
+**Stale (accumulated context, kept as reference only):**
+- `phase6-impl-plan-final.md` — from old orchestrator, references deleted intermediate artifacts
+
+**Remaining (paused):** architecture, design-spec, impl-plan, review, final plan (all need fresh-context re-run)
 
 **Prerequisite:** Phase 3 must be complete before implementation begins.
 
