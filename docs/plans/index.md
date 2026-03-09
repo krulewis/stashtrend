@@ -23,10 +23,27 @@ Full requirements: `plans/investment-forecasting-requirements.md`
 | **1** | NW by account type + CAGR estimates on existing Net Worth page | M | **Done** (PR #4) |
 | **2** | NW milestones + retirement target tracker on Net Worth page | M | **Done** (PR #5, merged) |
 | **2.1** | Fix retirement tracker to use investable capital, not total NW | S | **Next** |
-| **3** | New Investments page — account-level performance dashboard + holdings drill-down | L | Planned |
+| **3** | New Investments page — account-level performance dashboard + holdings drill-down | L | **Planning complete** |
 | **4** | New Forecasting page — simple projections + retirement planner | L | **Planning complete** |
 | **5** | Monte Carlo simulation + AI narrative layer on Forecasting page | M | Planned |
 | **6** | Benchmark comparison vs S&P 500 (nice-to-have) | S | **Planned** (full pipeline complete) |
+
+### Phase 3 — New Investments Page (Planning Complete)
+
+Planning artifacts in `plans/`:
+- `phase3-requirements.md` — detailed requirements (6 user stories, acceptance criteria, 10 edge cases)
+- `phase3-research.md` — codebase exploration: holdings schema, page patterns, charting, design tokens, CAGR, navigation
+- `phase3-architecture.md` — 9 architecture decisions with rationale and rejected alternatives
+- `phase3-design-spec.md` — UI design: account dashboard, donut chart, holdings table, drill-down, responsive behavior
+- `phase3-impl-plan.md` — initial file-level implementation plan (7 groups, parallelism tags)
+- `phase3-review.md` — staff review: 13 findings (2 critical, 3 high, 3 medium, 3 low + 2 informational)
+- `phase3-impl-plan-final.md` — corrected final plan addressing all 13 findings
+
+**Key decisions:** Four new backend endpoints (`/api/investments/summary`, `/<account_id>/holdings`, `/performance`, `/contributions`), URL-based drill-down (`/investments/:accountId`), shared `AllocationChart` donut component, `_get_investment_account_ids()` helper derived from BUCKET_MAP (DRY), pre-formatted recharts data from backend, contribution detection via `category_group` transfer filter, client-side sort/filter for holdings table.
+
+**Prerequisites:** Phase 0 (holdings sync — done, PR #3).
+
+**Scope:** 18 new files, 4 modified files, ~245 backend lines + ~1,835 frontend lines. Groups A+B independent (parallelizable), C depends on B, D+E parallel after C, F depends on D+E.
 
 ### Phase 4 — New Forecasting Page (Planning Complete)
 
