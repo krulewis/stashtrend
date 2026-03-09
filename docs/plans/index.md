@@ -37,7 +37,7 @@ All planning uses fresh-context agents per CLAUDE.md — each step gets only wri
 | 1. PM | Requirements | Done | Done | Done | Done |
 | 2. Research | Codebase exploration | Done | Done | Done | Done |
 | 3. Architect | Architecture decisions | Done | Done | Done | **Needs re-run** |
-| 3b. Designer | UI/UX design spec | **In flight** | Done | Done | **Needs re-run** |
+| 3b. Designer | UI/UX design spec | Done | Done | Done | **Needs re-run** |
 | 4. Engineer | Initial impl plan | -- | -- | -- | **Needs re-run** |
 | 5. Staff Review | Pressure-test plan | -- | -- | -- | **Needs re-run** |
 | 6. Engineer | Final corrected plan | -- | -- | -- | *Has stale version* |
@@ -51,7 +51,9 @@ All planning uses fresh-context agents per CLAUDE.md — each step gets only wri
 - `phase3-research.md` — codebase exploration: holdings schema, page patterns, charting, design tokens, CAGR, navigation
 - `phase3-architecture.md` — 8 architecture decisions with rationale and rejected alternatives
 
-**Remaining (paused):** design-spec (in-flight), impl-plan, review, final plan
+- `phase3-design-spec.md` — UI design: 7 components, account dashboard, donut chart, holdings table, drill-down, responsive behavior
+
+**Remaining (paused):** impl-plan, review, final plan
 
 **Key decisions:** Three API endpoints (`/api/investments/summary`, `/<id>/holdings`, `/performance`), URL-based drill-down (`/investments/:accountId`), ComposedChart for performance+contributions, per-account CAGR server-side, contribution detection via `category_group` transfer filter, server-side security_type normalization, client-side sort/filter for holdings.
 
