@@ -24,9 +24,26 @@ Full requirements: `plans/investment-forecasting-requirements.md`
 | **2** | NW milestones + retirement target tracker on Net Worth page | M | **Done** (PR #5, merged) |
 | **2.1** | Fix retirement tracker to use investable capital, not total NW | S | **Next** |
 | **3** | New Investments page — account-level performance dashboard + holdings drill-down | L | Planned |
-| **4** | New Forecasting page — simple projections + retirement planner | L | Planned |
+| **4** | New Forecasting page — simple projections + retirement planner | L | **Planning complete** |
 | **5** | Monte Carlo simulation + AI narrative layer on Forecasting page | M | Planned |
 | **6** | Benchmark comparison vs S&P 500 (nice-to-have) | S | **Planned** (full pipeline complete) |
+
+### Phase 4 — New Forecasting Page (Planning Complete)
+
+Planning artifacts in `plans/`:
+- `phase4-requirements.md` — detailed requirements (7 user stories, acceptance criteria, 13 edge cases)
+- `phase4-research.md` — codebase exploration: retirement tracker, CAGR, investable capital, page patterns, charting, design tokens
+- `phase4-architecture.md` — 9 architecture decisions with rationale and rejected alternatives
+- `phase4-design-spec.md` — UI design: projection chart, interactive sliders, summary cards, gap analysis, responsive behavior
+- `phase4-impl-plan.md` — initial file-level implementation plan (6 groups, parallelism tags)
+- `phase4-review.md` — staff review: 12 findings (2 high, 5 medium, 5 low)
+- `phase4-impl-plan-final.md` — corrected final plan addressing all 12 findings
+
+**Key decisions:** Frontend-only projection math (reuses `retirementMath.js`), no new backend endpoints, LineChart with 4 lines (historical solid + 3 dashed scenarios), balance-weighted blended CAGR as default return rate, `useMemo` for instant slider feedback, disable "Save as defaults" when no retirement settings exist.
+
+**Prerequisites:** Phase 1 (CAGR — done), Phase 2 (Retirement tracker — done). Phase 2.1 (investable capital fix) ideally lands first but not blocking.
+
+**Scope:** 12 new files, 5–7 modified files, 0 backend changes. Groups A–E independent (parallelizable), Group F depends on all.
 
 ### Phase 6 — Benchmark Comparison vs S&P 500 (Planning Complete)
 
