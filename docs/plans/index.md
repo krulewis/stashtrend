@@ -3,13 +3,18 @@
 ## Completed
 - `IMPLEMENTATION_PLAN.md` (parent dir) — Phases 1–7 distribution plan (monorepo consolidation → Docker Compose). All phases complete.
 - `DISTRIBUTION_PLAN.md` (parent dir) — Distribution strategy and packaging plan.
+- **Security Remediation (OWASP Top 10)** — 7 findings fixed: debug mode env-gated, CORS localhost-only, AI key to keychain, prompt sanitization, rate limiting, error sanitization, nginx security headers. 15 new tests in `test_security.py`.
+- **SQLite Improvements** — WAL mode enabled, `get_db_connection()` context manager added, shared test DDL via `conftest.py` (eliminates DDL duplication across 5 test files).
+- **Budget Builder** — AI-powered budget recommendation engine. Profile → Regional data → AI generation → Editable table → Apply to Monarch. Backend: 27 tests. Frontend: 24 tests. 3 new DB tables, 11 API endpoints, 4 new React components.
+- **UI/UX Improvements** — Audit-driven redesign (36 items across 4 phases). Completed: stats card deltas (XS), design token system (S), color consolidation (S), budget table progress bars (M), sidebar navigation with URL routing (M). Remaining items: see `ui-ux-audit-pass1.md`, `ui-ux-audit-pass2.md`.
+- **Stashtrend Design Guide v1.0 Alignment** — 3-PR CSS update. PR 1 Tokens + Typography (PR #6), PR 2 Navigation + Interactive (PR #7), PR 3 Polish (PR #8). All merged.
+- **Mobile Budgets vs. Actuals** — Mobile-optimized budget experience at `/budgets`. All groups (A–G) complete. 303 backend + 557 frontend tests. Merged (PR #10).
+- **Budget Heatmap View** — Mobile-only 6-month heatmap as pane 0 in `HorizontalSwipeContainer`. All groups (A–F) complete. 607 frontend tests. Merged (PR #11).
+- **Heatmap Refinements** — 6 visual/interaction improvements to `HeatmapView` + `WindowPicker`. 625 frontend tests. Merged (PR #12).
+- **Net Worth Phases 0–2** — Holdings sync pipeline (PR #3), NW by account type + CAGR (PR #4), NW milestones + retirement tracker (PR #5). All merged.
 
 ## Active
-- **UI/UX Improvements** — Comprehensive audit-driven redesign. Audit reports: `ui-ux-audit-pass1.md`, `ui-ux-audit-pass2.md`. 36 items across 4 phases. Completed: stats card deltas (XS), design token system (S), color consolidation (S), budget table progress bars (M), sidebar navigation with URL routing (M). Remaining: see audit docs for full backlog.
-- **Stashtrend Design Guide v1.0 Alignment** — 3-PR CSS update to match official design guide. Plans: `ui-update-requirements.md`, `ui-update-research.md`, `ui-update-architecture.md`, `ui-update-pr1-plan.md`, `ui-update-pr3-plan.md`. PR 1 (Tokens + Typography): **merged** (PR #6). PR 2 (Navigation + Interactive): **merged** (PR #7). PR 3 (Polish): **implemented** (pending QA/review).
-- **Mobile Budgets vs. Actuals** — Mobile-optimized budget experience inside `/budgets` route (conditional on `useResponsive().isMobile`). Plan: `mobile-budgets-impl-plan.md`. Groups A–G. **Group A (Backend): complete** — `budget_custom_groups` DDL in `DASHBOARD_DDL`, `GET /api/budgets/custom-groups`, `POST /api/budgets/custom-groups` implemented. **Group B (Shared Utilities): complete** — `budgetUtils.js` (getBudgetZone, getPillAriaLabel, WARNING_THRESHOLD), `api.js` exports (fetchCustomGroups, saveCustomGroups), `BudgetTable.jsx` updated. **Group C (Leaf components): complete** — `BudgetPill`, `MonthDropdown`, `HorizontalSwipeContainer`. **Group D (Composite components): complete** — `BudgetLineItem`, `GroupAssignmentSheet`. **Group E (Container components): complete** — `BudgetGroup`, `MonthDetailView`, `MonthlySummaryView`. **Group F (Page integration): complete** — `MobileBudgetPage.jsx` + `MobileBudgetPage.module.css` (new), `BudgetPage.jsx` modified (mobile early return, customGroups state, Promise.all fetch for mobile path). **QA (Group G): complete** — `backend/tests/test_custom_groups.py` (36 tests), `frontend/src/utils/budgetUtils.test.js` (24), `frontend/src/api.test.js` (12 additions), `frontend/src/components/mobile/BudgetPill.test.jsx` (19), `BudgetGroup.test.jsx` (14), `MonthDropdown.test.jsx` (17), `HorizontalSwipeContainer.test.jsx` (16). All 303 backend + 557 frontend tests passing. Playwright visual QA passed (both views + desktop regression). **Status: ready for commit and PR.**
-- **Budget Heatmap View** — Mobile-only 6-month heatmap as pane 0 in `HorizontalSwipeContainer`. Plan: `heatmap-impl-plan.md`. Architecture: `heatmap-architecture.md`. Design: `heatmap-design-spec.md`. Groups A–F all complete. All 607 frontend tests passing. **Status: merged (PR #11).**
-- **Heatmap Refinements** — 6 visual/interaction improvements to `HeatmapView` + `WindowPicker`. Final plan: `heatmap-refinements-plan-final.md`. Changes: (A) `formatGroupLabel()` word-boundary truncation, (B) row padding, (C) `WindowPicker` combobox rewrite, (D) 5-item dot legend, (E) expanded-group cobalt border accent, (F) current-month column header accent. All 4 streams + integration pass complete. 625 frontend tests passing. **Status: pending Playwright QA, commit, PR, review loop.**
+None — all prior work merged. Next up: Phase 2.1 (see Roadmap below).
 
 ## Roadmap — Net Worth + Investments + Forecasting
 
@@ -48,15 +53,8 @@ Full requirements: `plans/investment-forecasting-requirements.md`
 ### Future / Deferred
 - FIRE number calculator (calculate financial independence number from expenses, show progress)
 
-## Recently Completed (cont.)
-- **Security Remediation (OWASP Top 10)** — 7 findings fixed: debug mode env-gated, CORS localhost-only, AI key to keychain, prompt sanitization, rate limiting, error sanitization, nginx security headers. 15 new tests in `test_security.py`.
-
 ## Research (No-Go)
 - **PostgreSQL Migration** — Evaluated and rejected. SQLite is the right fit for a single-user personal finance dashboard. See `postgres-migration-research.md` and `postgres-migration-architect-decision.md`.
-
-## Recently Completed
-- **SQLite Improvements** — WAL mode enabled, `get_db_connection()` context manager added, shared test DDL via `conftest.py` (eliminates DDL duplication across 5 test files).
-- **Budget Builder** — AI-powered budget recommendation engine. Profile → Regional data → AI generation → Editable table → Apply to Monarch. Backend: 27 tests. Frontend: 24 tests. 3 new DB tables, 11 API endpoints, 4 new React components.
 
 ## Known Bugs
 
