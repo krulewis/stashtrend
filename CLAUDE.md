@@ -65,7 +65,7 @@ For M/L changes, use **TeamCreate** to coordinate agents via shared task lists i
 | Phase | Team Name | Members | Notes |
 |-------|-----------|---------|-------|
 | **Planning** | `{feature}-planning` | `pm`, `researcher` | PM interviews user; researcher explores codebase/web in parallel. Architect + engineer run after (sequential dependency). |
-| **Implementation** | `{feature}-impl` | `qa`, `implementer` (x N), `frontend-designer`, `docs-updater` | QA writes tests first. Implementers work independent file groups in parallel. Frontend-designer provides design specs for UI work. Docs-updater runs alongside or after implementation. |
+| **Implementation** | `{feature}-impl` | `qa`, `implementer` (x N), `code-reviewer`, `frontend-designer`, `docs-updater` | QA writes tests first. Implementers work independent file groups in parallel. Code-reviewer does a lightweight pre-commit review after implementation completes. Frontend-designer provides design specs for UI work. Docs-updater runs alongside or after implementation. |
 | **Review** | `{feature}-review` | `staff-reviewer`, `implementer` / `debugger` | Staff reviewer finds issues → implementer/debugger fix → fresh staff-reviewer pass. |
 
 **Team rules:**
@@ -127,10 +127,11 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 1. **Planning pipeline** (required for M/L) — use a `{feature}-planning` team. Dispatch to `pm`, `researcher` (can overlap), then `architect`, `engineer`, `staff-reviewer` agents per pipeline steps above. For UI features, include `frontend-designer` after architecture to produce design specs before engineering plan.
 2. **Confirm** approach with user before writing code. If unavailable: proceed but note it — this does NOT waive any subsequent step.
 3. **Write tests first** — dispatch to `qa` agent. Tests must fail before implementation exists. Cover happy path, edge cases, and error cases.
-4. **Implement** — use a `{feature}-impl` team. Spawn `qa`, `implementer` (x N for independent file groups), `frontend-designer` (for UI work), and `docs-updater` as teammates. Coordinate via shared task list.
+4. **Implement** — use a `{feature}-impl` team. Spawn `qa`, `implementer` (x N for independent file groups), `code-reviewer`, `frontend-designer` (for UI work), and `docs-updater` as teammates. Coordinate via shared task list.
 5. **Update memory and docs** — dispatch to `docs-updater` agent before QA (see Memory Rules below for paths)
 6. **Run all automated tests** — failures → return to step 4
-7. **Playwright UI QA** — dispatch to `playwright-qa` agent. Exercise the feature in the running app, take a screenshot — issues → return to step 4
+7. **Lightweight code review** — dispatch `code-reviewer` agent on the uncommitted diff (`git diff`). Fixes any Critical/High findings before proceeding. Catches issues pre-commit so the PR review loop is cleaner.
+7b. **Playwright UI QA** — dispatch to `playwright-qa` agent. Exercise the feature in the running app, take a screenshot — issues → return to step 4
 8. **Commit to feature branch** — push and create PR against main via `gh pr create`
 8b. **Automated review** — run `/code-review --comment` on the PR. This posts a multi-agent Sonnet+Haiku review (bug scan, CLAUDE.md compliance, git blame context, confidence-scored findings) directly to the PR as a comment. Cheap first-pass filter before the Opus review loop.
 9. **PR Review Loop** — repeat until clean:
@@ -157,6 +158,7 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 ```
 [ ] Tests: written first (failed initially), all passing (new + existing)
 [ ] Memory/docs updated before QA
+[ ] Code review — lightweight pre-commit review clean (no Critical/High)
 [ ] Playwright QA — screenshot taken
 [ ] Cost analysis — actual vs estimate compared, calibration updated
 [ ] Automated review — `/code-review --comment` posted to PR
