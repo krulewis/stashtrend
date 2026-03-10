@@ -40,8 +40,9 @@ Run pipeline steps and build processes as **parallel agents** whenever their inp
 **Pipeline parallelism:**
 - Two `researcher` instances (codebase + web) run in parallel; both must complete before Architect starts
 - PM clarification follow-ups can overlap with research
-- Pre-flight dependency check + Regression risk scorer run in parallel after plan confirmation
+- Pre-flight dependency check + Regression risk scorer + Changelog scanner + File change classifier run in parallel after plan confirmation (all Haiku)
 - Cost estimate runs in background (non-blocking)
+- Packet summarization (Haiku) runs inline when any step exceeds 500-word limit
 - Multiple independent searches, reads, or validations should always be parallel
 
 **Implementation parallelism:**
@@ -50,6 +51,10 @@ Run pipeline steps and build processes as **parallel agents** whenever their inp
 - `qa` agent can begin writing tests in parallel with implementation when test interfaces are defined in the plan
 - QA + `frontend-designer` can overlap within a single feature: frontend-designer works on design specs for later components while QA writes tests for the first batch
 - Code review + Playwright QA (workflow steps 7/7b) run as parallel agents. Combined fix cycle if either finds issues. Re-run Playwright QA if code changes were required from parallel code review.
+- `lint-fixer` (Haiku) runs after implementation, before code review — can overlap with test execution
+- `test-triager` (Haiku) runs on test failure output before returning to implementation
+- `commit-drafter` + `pr-drafter` (both Haiku) run in parallel to draft commit message and PR description
+- `loop-guard` (Haiku) runs between PR review passes to detect cycling comments
 - `docs-updater` runs after tests pass (not before)
 - PR review loop fixes on independent files can be parallelized across `implementer` or `debugger` agents
 
@@ -69,6 +74,8 @@ Each pipeline agent (steps 1–6) receives and appends to a structured context p
 - **Pre-flight + risk scores** (WF-2b, post-pipeline): dependency issues flagged, per-file regression risk scores (0–10). QA agent uses risk scores to prioritize test coverage.
 
 The orchestrator maintains the packet and passes it to each agent. Step 6 (final plan) is the terminal consumer — it receives the packet but does not append. Project-level context (CLAUDE.md) is still loaded normally — the packet supplements, not replaces. The packet is ephemeral (not written to disk).
+
+**Packet summarization:** When any pipeline agent's output exceeds the 500-word limit, dispatch `packet-summarizer` (Haiku) to compress it before appending. This keeps the packet lean and prevents context bloat for downstream agents.
 
 ### Agent Teams
 
@@ -113,7 +120,7 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 |------|-------|----------|--------|
 | **Critical judgment** | opus | Mistakes are expensive and hard to reverse | `pm`, `architect`, `staff-reviewer` |
 | **Standard work** | sonnet | Produces artifacts by following patterns | `researcher`, `engineer`, `implementer`, `qa`, `code-reviewer`, `debugger`, `frontend-designer` |
-| **Mechanical** | haiku | Procedural tasks, no deep reasoning needed | `explorer` (incl. pre-flight checker, regression scorer), `docs-updater`, `playwright-qa` |
+| **Mechanical** | haiku | Procedural tasks, no deep reasoning needed | `explorer` (incl. pre-flight checker, regression scorer, file change classifier), `docs-updater`, `playwright-qa`, `commit-drafter`, `pr-drafter`, `test-triager`, `lint-fixer`, `packet-summarizer`, `changelog-scanner`, `loop-guard` |
 
 ### Agent Delegation — MANDATORY
 
@@ -134,14 +141,20 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 | PP-6. Final plan (delta-based) | `engineer` |
 | PP-7. Cost estimate (background) | `/tokencostscope` (inline) |
 | **— Development Workflow —** | |
-| WF-2b. Pre-flight check + risk scorer | `explorer` (haiku) × 2 |
+| WF-2b. Pre-flight check + risk scorer + changelog scan | `explorer` (haiku) × 2 + `changelog-scanner` (haiku) |
+| WF-2b. File change classifier | `explorer` (haiku) — git-history risk scoring |
 | WF-3. Write tests | `qa` |
 | WF-4. Implement | `implementer` |
+| WF-4b. Lint/format check | `lint-fixer` (haiku) |
+| WF-4c. Safety scan | `code-reviewer` (sonnet, security-focused) |
 | WF-5. Run tests | `make test` |
+| WF-5b. Test result triage (on failure) | `test-triager` (haiku) |
 | WF-6. Update docs (after tests pass) | `docs-updater` |
 | WF-7/7b. Code review + UI QA (parallel) | `code-reviewer` + `playwright-qa` |
+| WF-8. Commit + PR (drafts generated) | `commit-drafter` (haiku) + `pr-drafter` (haiku) |
 | WF-8b. Automated review → feeds into 9 | `/code-review --comment` (inline) |
 | WF-9. PR review (tiered) | `staff-reviewer` → `code-reviewer` |
+| WF-9. Loop guard monitoring | `loop-guard` (haiku) |
 | WF-9. PR fixes | `implementer` / `debugger` |
 | WF-10. Cost analysis | `/tokencostscope` (inline) |
 | **— Ad-hoc —** | |
@@ -157,13 +170,15 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 
 1. **Planning pipeline** (required for M/L) — use a `{feature}-planning` team. Dispatch to `pm`, two `researcher` instances (codebase + web, in parallel), then `architect`, `engineer`, `staff-reviewer` agents per pipeline steps above. For UI features, include `frontend-designer` after architecture to produce design specs before engineering plan.
 2. **Confirm** approach with user before writing code. If unavailable: proceed but note it — this does NOT waive any subsequent step.
-2b. **Pre-flight checks** (parallel) — dispatch `explorer` (Haiku) agents for pre-flight dependency check + regression risk scorer. Advisory — flags risks for QA but does not block.
+2b. **Pre-flight checks** (parallel) — dispatch `explorer` (Haiku) agents for pre-flight dependency check + regression risk scorer + `changelog-scanner` (Haiku) for dependency changelog summaries + `explorer` (Haiku) as file change classifier (git-history churn/bug-fix risk scoring). All advisory — flags risks for QA but does not block.
 3. **Write tests first** — dispatch to `qa` agent. Tests must fail before implementation exists. Cover happy path, edge cases, and error cases. Prioritize high-risk files flagged by regression risk scorer.
 4. **Implement** — use a `{feature}-impl` team. Spawn `qa`, `implementer` (x N for independent file groups), `code-reviewer`, `playwright-qa`, `frontend-designer` (for UI work), and `docs-updater` as teammates. Coordinate via shared task list. QA + frontend-designer can overlap within a feature.
-5. **Run all automated tests** — failures → return to step 4
+4b. **Lint/format check** — dispatch `lint-fixer` (Haiku) to run linters, parse output, and auto-fix trivial violations (import order, trailing whitespace, formatting). Keeps the Sonnet code-reviewer focused on logic.
+4c. **Safety scan** — dispatch `code-reviewer` (Sonnet) on the uncommitted diff with a security-focused prompt: scan for OWASP top 10 (injection, XSS, SSRF, secrets in code, insecure deserialization), unsafe patterns, and credential exposure. Any Critical finding blocks proceeding to tests. This is a fast, targeted pass — the full logic/style review happens at step 7/7b.
+5. **Run all automated tests** — failures → dispatch `test-triager` (Haiku) to parse test output, classify failures (flaky vs. real, related vs. unrelated to the change), and surface actionable ones before returning to step 4.
 6. **Update memory and docs** — dispatch to `docs-updater` agent after tests pass (see Memory Rules below for paths). As-you-go memory updates during implementation are still expected; this is the formal pass.
 7/7b. **Lightweight code review + Playwright UI QA** (parallel) — dispatch `code-reviewer` on the uncommitted diff (`git diff`) AND `playwright-qa` to exercise the feature in the running app, in parallel. Fixes any Critical/High findings before proceeding. If code changes result from review, re-run Playwright QA. Combined fix cycle if either finds issues → return to step 4.
-8. **Commit to feature branch** — push and create PR against main via `gh pr create`
+8. **Commit to feature branch** — dispatch `commit-drafter` (Haiku) to generate commit message from `git diff`, then `pr-drafter` (Haiku) to generate PR title/body from diff + plan context. Push and create PR against main via `gh pr create`.
 8b. **Automated review** — run `/code-review --comment` on the PR. This posts a multi-agent Sonnet+Haiku review (bug scan, CLAUDE.md compliance, git blame context, confidence-scored findings) directly to the PR as a comment. Cheap first-pass filter before the Opus review loop. **Output is passed as explicit input to the first staff-reviewer in step 9** so Opus skips re-discovering known issues.
 9. **PR Review Loop** (tiered) — repeat until clean:
    i. **First pass (Opus):** Dispatch to `staff-reviewer` agent with **fresh context**. Inputs: PR diff (`gh pr diff`) + project CLAUDE.md + `/code-review` findings from step 8b (explicit input, so Opus skips re-discovering known issues)
@@ -171,7 +186,7 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
    iii. Dispatch fixes to `implementer` or `debugger` agent as appropriate. Commit, push, re-run tests.
    iv. **Subsequent passes (tiered):** If prior pass had **≤2 findings AND none Critical/High**, downgrade to `code-reviewer` (Sonnet) for the next pass. If Sonnet flags new issues, **escalate back to Opus** `staff-reviewer` for the following pass.
    v. **Exit:** Reviewer states "no remaining comments"
-   vi. **Loop guard:** same comment on two consecutive passes → stop and flag to user (applies regardless of reviewer tier)
+   vi. **Loop guard:** dispatch `loop-guard` (Haiku) to compare consecutive review passes and detect duplicate/cycling comments. Same comment on two consecutive passes → stop and flag to user (applies regardless of reviewer tier)
 10. **Cost Analysis** — run `/tokencostscope` actual-vs-estimate comparison. Report the delta and update calibration data for future estimates.
 11. **Merge** — ask user for permission first. Never merge without confirmation.
 
