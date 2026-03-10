@@ -22,16 +22,117 @@ Full requirements: `plans/investment-forecasting-requirements.md`
 
 ### Build Order (foundation-first, ship incrementally)
 
-| Phase | Scope | Size | Status |
-|-------|-------|------|--------|
-| **0** | Sync holdings data from Monarch API (new `holdings` DB table + pipeline) | M | **Done** (PR #3) |
-| **1** | NW by account type + CAGR estimates on existing Net Worth page | M | **Done** (PR #4) |
-| **2** | NW milestones + retirement target tracker on Net Worth page | M | **Done** (PR #5, merged) |
-| **2.1** | Fix retirement tracker to use investable capital, not total NW | S | **Next** |
-| **3** | New Investments page — account-level performance dashboard + holdings drill-down | L | Planned |
-| **4** | New Forecasting page — simple projections + retirement planner | L | Planned |
-| **5** | Monte Carlo simulation + AI narrative layer on Forecasting page | M | Planned |
-| **6** | Benchmark comparison vs S&P 500 (nice-to-have) | S | Planned |
+| Phase | Scope | Size | Depends On | Status |
+|-------|-------|------|------------|--------|
+| **0** | Sync holdings data from Monarch API (new `holdings` DB table + pipeline) | M | — | **Done** (PR #3) |
+| **1** | NW by account type + CAGR estimates on existing Net Worth page | M | 0 | **Done** (PR #4) |
+| **2** | NW milestones + retirement target tracker on Net Worth page | M | 1 | **Done** (PR #5, merged) |
+| **2.1** | Fix retirement tracker to use investable capital, not total NW | S | 2 | **Next** |
+| **B** | Backend decomposition — split `app.py` into route blueprints + service modules | M | — | **Roadmap** |
+| **3** | New Investments page — account-level performance dashboard + holdings drill-down | L | 0, B | **Planning in progress** |
+| **4** | New Forecasting page — simple projections + retirement planner | L | 1, 2, B | **Planning in progress** |
+| **5** | Monte Carlo simulation + AI narrative layer on Forecasting page | M | 4 | **Planning in progress** |
+| **6** | Benchmark comparison vs S&P 500 (nice-to-have) | S | 3 | **Planning in progress** |
+
+### Planning Pipeline Status (Fresh-Context Agents)
+
+All planning uses fresh-context agents per CLAUDE.md — each step gets only written artifacts from prior steps, no accumulated context.
+
+| Step | Description | Phase 3 | Phase 4 | Phase 5 | Phase 6 |
+|------|-------------|---------|---------|---------|---------|
+| 1. PM | Requirements | Done | Done | Done | Done |
+| 2. Research | Codebase exploration | Done | Done | Done | Done |
+| 3. Architect | Architecture decisions | Done | Done | Done | Done |
+| 3b. Designer | UI/UX design spec | Done | Done | Done | Done |
+| 4. Engineer | Initial impl plan | **In progress** | Done | Done | **In progress** |
+| 5. Staff Review | Pressure-test plan | -- | **In progress** | Done (19 findings) | -- |
+| 6. Engineer | Final corrected plan | -- | -- | **In progress** | -- |
+
+**Note on Phase 6:** Fresh-context re-run of steps 3–6 is underway. Architecture and design spec complete; engineer plan in progress.
+
+### Phase 3 — New Investments Page
+
+**Fresh-context artifacts in `plans/`:**
+- `phase3-requirements.md` — detailed requirements (5 user stories, acceptance criteria, edge cases)
+- `phase3-research.md` — codebase exploration: holdings schema, page patterns, charting, design tokens, CAGR, navigation
+- `phase3-architecture.md` — 8 architecture decisions with rationale and rejected alternatives
+
+- `phase3-design-spec.md` — UI design: 7 components, account dashboard, donut chart, holdings table, drill-down, responsive behavior
+
+**Remaining:** impl-plan (in progress — retry after agent stuck on stale `monarch-dashboard/` paths), review, final plan
+
+**Key decisions:** Three API endpoints (`/api/investments/summary`, `/<id>/holdings`, `/performance`), URL-based drill-down (`/investments/:accountId`), ComposedChart for performance+contributions, per-account CAGR server-side, contribution detection via `category_group` transfer filter, server-side security_type normalization, client-side sort/filter for holdings.
+
+**Prerequisites:** Phase 0 (holdings sync — done, PR #3).
+
+### Phase 4 — New Forecasting Page
+
+**Fresh-context artifacts in `plans/`:**
+- `phase4-requirements.md` — detailed requirements (7 user stories, acceptance criteria, 13 edge cases)
+- `phase4-research.md` — codebase exploration: retirement tracker, CAGR, investable capital, page patterns, charting, design tokens
+- `phase4-architecture.md` — 12 architecture decisions with rationale and rejected alternatives
+- `phase4-design-spec.md` — UI design: projection chart, interactive sliders, summary cards, gap analysis, responsive behavior
+
+- `phase4-impl-plan.md` — file-level implementation plan (12 new files, 4 modifications, 4 parallel tracks)
+
+**Remaining:** review (in progress), final plan
+
+**Key decisions:** Frontend-only projection math (reuses `retirementMath.js`), no new backend endpoints, LineChart with 4 lines (historical solid + 3 dashed scenarios), balance-weighted blended CAGR as default return rate, `useMemo` for instant slider feedback, `SliderInput` reusable component, `getInvestableCapital()` extracted from RetirementPanel.
+
+**Prerequisites:** Phase 1 (CAGR — done), Phase 2 (Retirement tracker — done). Phase 2.1 (investable capital fix) ideally lands first but not blocking.
+
+### Phase 5 — Monte Carlo Simulation + AI Narrative
+
+**Fresh-context artifacts in `plans/`:**
+- `phase5-requirements.md` — detailed requirements (user stories, acceptance criteria, 13 edge cases)
+- `phase5-research.md` — codebase exploration: `_call_ai()`, AIAnalysisPanel, account_history volatility, charting patterns
+- `phase5-architecture.md` — 10 architecture decisions with rationale and rejected alternatives
+- `phase5-design-spec.md` — UI design: view toggle, probability bands, ProbabilityBadge, ForecastAIPanel
+
+- `phase5-impl-plan.md` — file-level implementation plan (11 new files, 4 modifications, 4-level parallelism)
+- `phase5-review.md` — staff review: 19 findings (3 Critical, 5 High, 7 Medium, 4 Low)
+
+**Remaining:** final plan (in progress — incorporating review findings)
+
+**Key decisions:** Backend Python NumPy GBM (5K sims), portfolio-level volatility from `account_history` (not `security_prices` — table doesn't exist), in-memory cache with `threading.Lock`, ForecastAIPanel reuses `AIAnalysisPanel.module.css`, p50 median replaces simple projection in Advanced view.
+
+**Prerequisites:** Phase 4 (Forecasting page must exist).
+
+### Phase 6 — Benchmark Comparison vs S&P 500
+
+**Fresh-context artifacts in `plans/`:**
+- `phase6-requirements.md` — detailed requirements (4 user stories, acceptance criteria, edge cases)
+- `phase6-research.md` — codebase patterns, S&P 500 data source evaluation (critical: Yahoo `^GSPC` access now problematic, SPY or FRED recommended)
+
+- `phase6-architecture.md` — 8 architecture decisions (Yahoo Finance SPY, benchmark_prices table, post-entity sync hook, 3 API endpoints)
+- `phase6-design-spec.md` — UI design: benchmark toggle, overlay line, delta card, allocation targets modal, drift table
+
+**Stale (accumulated context, kept as reference only):**
+- `phase6-impl-plan-final.md` — from old orchestrator, references deleted intermediate artifacts
+
+**Remaining:** impl-plan (in progress), review, final plan
+
+**Prerequisite:** Phase 3 must be complete before implementation begins.
+
+### Backend Decomposition — Split `app.py` into modules
+
+**Problem:** `backend/app.py` is a 2442-line monolith containing all routes, sync logic, database helpers, AI integration, and caching. This causes:
+- Agents waste tool calls re-reading the file at different offsets (observed: Phase 3 Engineer read it 3x)
+- Merge conflicts when multiple phases touch the same file
+- Hard to reason about in reviews — changes are buried in a massive diff
+
+**Proposed decomposition:**
+- `backend/app.py` — Flask app factory, config, middleware (thin shell)
+- `backend/routes/` — route blueprints grouped by feature (networth, investments, budgets, forecasting, sync, settings)
+- `backend/services/` — business logic (monarch_service, sync_worker, ai_service)
+- `backend/db.py` — connection management, DDL, helpers
+- `backend/cache.py` — caching infrastructure
+
+**Size:** M — multi-file refactor, no new features, existing tests must keep passing.
+
+**Prerequisites:** Should land before Phase 3–6 implementation begins, as those phases all add routes and logic to `app.py`. Decomposing first avoids merge conflicts.
+
+**Status:** Roadmap item — not yet planned.
 
 ### Phase 2.1 — Retirement Tracker: Investable Capital Fix
 
