@@ -21,7 +21,7 @@ class TestWALMode(unittest.TestCase):
     def test_wal_mode_enabled(self):
         """Connections from get_db() use WAL journal mode."""
         with tempfile.NamedTemporaryFile(suffix=".db") as tmp:
-            with patch("app.DB_PATH", tmp.name):
+            with patch("db.DB_PATH", tmp.name):
                 from app import get_db
                 conn = get_db()
                 mode = conn.execute("PRAGMA journal_mode").fetchone()[0]
@@ -34,7 +34,7 @@ class TestConnectionContextManager(unittest.TestCase):
 
     def test_auto_closes_on_exit(self):
         """Connection is closed after exiting the context manager."""
-        with patch("app.DB_PATH", ":memory:"):
+        with patch("db.DB_PATH", ":memory:"):
             from app import get_db_connection
             with get_db_connection() as conn:
                 conn.execute("SELECT 1")
@@ -43,7 +43,7 @@ class TestConnectionContextManager(unittest.TestCase):
 
     def test_foreign_keys_enabled(self):
         """Context manager enables foreign keys."""
-        with patch("app.DB_PATH", ":memory:"):
+        with patch("db.DB_PATH", ":memory:"):
             from app import get_db_connection
             with get_db_connection() as conn:
                 fk = conn.execute("PRAGMA foreign_keys").fetchone()[0]
@@ -52,7 +52,7 @@ class TestConnectionContextManager(unittest.TestCase):
     def test_wal_mode_enabled(self):
         """Context manager enables WAL mode on file-backed DBs."""
         with tempfile.NamedTemporaryFile(suffix=".db") as tmp:
-            with patch("app.DB_PATH", tmp.name):
+            with patch("db.DB_PATH", tmp.name):
                 from app import get_db_connection
                 with get_db_connection() as conn:
                     mode = conn.execute("PRAGMA journal_mode").fetchone()[0]
@@ -60,14 +60,14 @@ class TestConnectionContextManager(unittest.TestCase):
 
     def test_row_factory_set(self):
         """Context manager sets row_factory to sqlite3.Row."""
-        with patch("app.DB_PATH", ":memory:"):
+        with patch("db.DB_PATH", ":memory:"):
             from app import get_db_connection
             with get_db_connection() as conn:
                 self.assertEqual(conn.row_factory, sqlite3.Row)
 
     def test_closes_on_exception(self):
         """Connection is closed even if an exception occurs inside the block."""
-        with patch("app.DB_PATH", ":memory:"):
+        with patch("db.DB_PATH", ":memory:"):
             from app import get_db_connection
             try:
                 with get_db_connection() as conn:
