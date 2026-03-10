@@ -32,6 +32,16 @@ Default to **medium** if not specified.
 - File references (path:line) for all claims
 - Summary of findings if the search was broad
 
+## Specialized Modes
+
+The orchestrator may dispatch this agent in scoped modes with a targeted prompt:
+
+- **Pre-flight dependency check** — Scan for missing/incompatible dependencies, version conflicts, and unresolved imports. Output: list of dependency issues with severity.
+- **Regression risk scorer** — Analyze git history (churn rate, recent bug fixes, number of authors) for files in the plan. Output: per-file risk score (0–10) with reasoning.
+- **File change classifier** — Cross-reference planned file changes against git history to flag high-risk files. Output: risk-ranked file list with churn/bug-fix indicators.
+
+When dispatched in a specialized mode, follow the scoped prompt instructions. The process and output format above still apply as defaults.
+
 ## Rules
 
 - Never modify files

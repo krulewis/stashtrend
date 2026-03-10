@@ -144,7 +144,7 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 | PP-6. Final plan (delta-based) | `engineer` |
 | PP-7. Cost estimate (background) | `/tokencostscope` (inline) |
 | **— Development Workflow —** | |
-| WF-2b. Pre-flight check + risk scorer + file change classifier + changelog scan | `explorer` (haiku) × 3 + `changelog-scanner` (haiku) |
+| WF-2b. Pre-flight check + risk scorer + file change classifier + changelog scan | `explorer` (haiku) × 3 (pre-flight, risk scorer, file classifier) + `changelog-scanner` (haiku) |
 | WF-3. Write tests | `qa` |
 | WF-4. Implement | `implementer` |
 | WF-4b. Lint/format check | `lint-fixer` (haiku) |
@@ -176,7 +176,7 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 2. **Confirm** approach with user before writing code. If unavailable: proceed but note it — this does NOT waive any subsequent step.
 2b. **Pre-flight checks** (parallel) — dispatch `explorer` (Haiku) agents for pre-flight dependency check + regression risk scorer + `changelog-scanner` (Haiku) for dependency changelog summaries + `explorer` (Haiku) as file change classifier (git-history churn/bug-fix risk scoring). All advisory — flags risks for QA but does not block.
 3. **Write tests first** — dispatch to `qa` agent. Tests must fail before implementation exists. Cover happy path, edge cases, and error cases. Prioritize high-risk files flagged by regression risk scorer.
-4. **Implement** — use a `{feature}-impl` team. Spawn `qa`, `implementer` (x N for independent file groups), `code-reviewer`, `playwright-qa`, `frontend-designer` (for UI work), and `docs-updater` as teammates. Coordinate via shared task list. QA + frontend-designer can overlap within a feature.
+4. **Implement** — use a `{feature}-impl` team. Spawn `qa`, `implementer` (x N for independent file groups), `lint-fixer`, `security-scanner`, `test-triager`, `code-reviewer`, `playwright-qa`, `frontend-designer` (for UI work), `docs-updater`, `commit-drafter`, and `pr-drafter` as teammates. Coordinate via shared task list. QA + frontend-designer can overlap within a feature. Sub-steps 4b, 4c, 5b, and 8 dispatch from within this team.
 4b. **Lint/format check** — dispatch `lint-fixer` (Haiku) to run project linters via CLI only (e.g., `eslint --fix`, `prettier --write`). Does not manually edit source files — restricted to linter CLI auto-fix. Reports `git diff --stat` after fixes; subsequent safety scan (4c) and code review (7/7b) verify the changes. Keeps the Sonnet code-reviewer focused on logic.
 4c. **Safety scan** — dispatch `security-scanner` (Sonnet) on the uncommitted diff: scan for OWASP top 10 (injection, XSS, SSRF, secrets in code, insecure deserialization), unsafe patterns, and credential exposure. Critical finding → return to step 4 for fix → re-run 4c. High findings are logged and carried forward to step 7/7b review. This is a targeted security pass — the full logic/style review happens at step 7/7b.
 5. **Run all automated tests** — failures → dispatch `test-triager` (Haiku) to parse test output, classify failures (flaky vs. real, related vs. unrelated to the change), and surface actionable ones before returning to step 4.

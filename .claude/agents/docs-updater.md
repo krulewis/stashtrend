@@ -1,6 +1,6 @@
 ---
 name: docs-updater
-description: Memory and documentation updater. Updates MEMORY.md, architecture docs, conventions, gotchas, and plan indexes. Use at workflow step 5 (before QA).
+description: Memory and documentation updater. Updates MEMORY.md, architecture docs, conventions, gotchas, and plan indexes. Use at workflow step 6 (after tests pass).
 tools: Read, Write, Edit, Grep, Glob
 model: haiku
 ---
