@@ -65,7 +65,7 @@ For M/L changes, use **TeamCreate** to coordinate agents via shared task lists i
 | Phase | Team Name | Members | Notes |
 |-------|-----------|---------|-------|
 | **Planning** | `{feature}-planning` | `pm`, `researcher` | PM interviews user; researcher explores codebase/web in parallel. Architect + engineer run after (sequential dependency). |
-| **Implementation** | `{feature}-impl` | `qa`, `implementer` (x N), `frontend-designer`, `docs-updater` | QA writes tests first. Implementers work independent file groups in parallel. Frontend-designer provides design specs for UI work. Docs-updater runs alongside or after implementation. |
+| **Implementation** | `{feature}-impl` | `qa`, `implementer` (x N), `code-reviewer`, `frontend-designer`, `docs-updater` | QA writes tests first. Implementers work independent file groups in parallel. Code-reviewer does a lightweight pre-commit review after implementation completes. Frontend-designer provides design specs for UI work. Docs-updater runs alongside or after implementation. |
 | **Review** | `{feature}-review` | `staff-reviewer`, `implementer` / `debugger` | Staff reviewer finds issues → implementer/debugger fix → fresh staff-reviewer pass. |
 
 **Team rules:**
@@ -110,6 +110,7 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 | 4. Implement | `implementer` |
 | 5. Update docs | `docs-updater` |
 | 7. UI QA | `playwright-qa` |
+| 8b. Automated review | `/code-review --comment` (inline) |
 | 9. PR review | `staff-reviewer` |
 | 9. PR fixes | `implementer` / `debugger` |
 | 10. Cost analysis | `/tokencostscope` (inline) |
@@ -126,13 +127,15 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 1. **Planning pipeline** (required for M/L) — use a `{feature}-planning` team. Dispatch to `pm`, `researcher` (can overlap), then `architect`, `engineer`, `staff-reviewer` agents per pipeline steps above. For UI features, include `frontend-designer` after architecture to produce design specs before engineering plan.
 2. **Confirm** approach with user before writing code. If unavailable: proceed but note it — this does NOT waive any subsequent step.
 3. **Write tests first** — dispatch to `qa` agent. Tests must fail before implementation exists. Cover happy path, edge cases, and error cases.
-4. **Implement** — use a `{feature}-impl` team. Spawn `qa`, `implementer` (x N for independent file groups), `frontend-designer` (for UI work), and `docs-updater` as teammates. Coordinate via shared task list.
+4. **Implement** — use a `{feature}-impl` team. Spawn `qa`, `implementer` (x N for independent file groups), `code-reviewer`, `frontend-designer` (for UI work), and `docs-updater` as teammates. Coordinate via shared task list.
 5. **Update memory and docs** — dispatch to `docs-updater` agent before QA (see Memory Rules below for paths)
 6. **Run all automated tests** — failures → return to step 4
-7. **Playwright UI QA** — dispatch to `playwright-qa` agent. Exercise the feature in the running app, take a screenshot — issues → return to step 4
+7. **Lightweight code review** — dispatch `code-reviewer` agent on the uncommitted diff (`git diff`). Fixes any Critical/High findings before proceeding. Catches issues pre-commit so the PR review loop is cleaner.
+7b. **Playwright UI QA** — dispatch to `playwright-qa` agent. Exercise the feature in the running app, take a screenshot — issues → return to step 4
 8. **Commit to feature branch** — push and create PR against main via `gh pr create`
+8b. **Automated review** — run `/code-review --comment` on the PR. This posts a multi-agent Sonnet+Haiku review (bug scan, CLAUDE.md compliance, git blame context, confidence-scored findings) directly to the PR as a comment. Cheap first-pass filter before the Opus review loop.
 9. **PR Review Loop** — repeat until clean:
-   i. Dispatch to `staff-reviewer` agent with **fresh context**. Only inputs: PR diff (`gh pr diff`) + project CLAUDE.md
+   i. Dispatch to `staff-reviewer` agent with **fresh context**. Only inputs: PR diff (`gh pr diff`) + project CLAUDE.md + any `/code-review` findings already posted on the PR
    ii. Reviews for bugs, logic errors, edge cases, security, style → numbered findings list
    iii. Dispatch fixes to `implementer` or `debugger` agent as appropriate. Commit, push, re-run tests.
    iv. Dispatch to **new** `staff-reviewer` agent (fresh context) → repeat from (i)
@@ -155,8 +158,10 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 ```
 [ ] Tests: written first (failed initially), all passing (new + existing)
 [ ] Memory/docs updated before QA
+[ ] Code review — lightweight pre-commit review clean (no Critical/High)
 [ ] Playwright QA — screenshot taken
 [ ] Cost analysis — actual vs estimate compared, calibration updated
+[ ] Automated review — `/code-review --comment` posted to PR
 [ ] PR review loop clean — no comments on final pass
 [ ] User approved merge to main
 ```
@@ -167,18 +172,20 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 
 **Update memory AS YOU GO, not at the end.** Mandatory update at step 5 of workflow.
 
-`monarch-dashboard/MEMORY.md` is the index. Details live in `monarch-dashboard/docs/`:
+`MEMORY.md` is the index (create at repo root if it doesn't exist). Details live in `docs/`:
 
 | Trigger | Update |
 |---------|--------|
-| User shares a fact / preference | → `monarch-dashboard/MEMORY.md` → User Preferences |
-| A convention or pattern is established | → `monarch-dashboard/docs/conventions.md` |
-| A bug is fixed or pitfall discovered | → `monarch-dashboard/docs/gotchas.md` |
-| Architecture changes | → `monarch-dashboard/docs/architecture.md` + `MEMORY.md` Project section |
-| Test count changes | → `monarch-dashboard/MEMORY.md` Project section |
-| Plan completed or added | → `monarch-dashboard/docs/plans/index.md` |
+| User shares a fact / preference | → `MEMORY.md` → User Preferences |
+| A convention or pattern is established | → `docs/conventions.md` |
+| A bug is fixed or pitfall discovered | → `docs/gotchas.md` |
+| Architecture changes | → `docs/architecture.md` + `MEMORY.md` Project section |
+| Test count changes | → `MEMORY.md` Project section |
+| Plan completed or added | → `docs/plans/index.md` |
 
-**Auto memory** (auto-loaded each session): `.claude/projects/-Users-kellyl--Documents-Cowork-Projects-Personal-Finance/memory/MEMORY.md` — keep as a short pointer/fast-recall index only; full details always go in `monarch-dashboard/docs/`.
+**Auto memory** (auto-loaded each session): `.claude/projects/-Users-kellyl--Documents-Cowork-Projects-Personal-Finance/memory/MEMORY.md` — keep as a short pointer/fast-recall index only; full details always go in `docs/`.
+
+**Project structure:** Frontend code is in `frontend/src/`, backend in `backend/`. There is NO `monarch-dashboard/` directory — that was the old name.
 
 **Skip:** Quick factual questions, trivial tasks with no new info.
 
@@ -189,11 +196,11 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 ## Project-Specific Workflow Details
 
 **Step 5 — Memory/docs paths:**
-- `monarch-dashboard/MEMORY.md` (test counts, architecture changes)
-- `monarch-dashboard/docs/conventions.md` (new patterns)
-- `monarch-dashboard/docs/gotchas.md` (bugs found, pitfalls)
-- `monarch-dashboard/docs/architecture.md` (new features, structural changes)
-- `monarch-dashboard/docs/plans/index.md` (completed/active plans)
+- `MEMORY.md` (test counts, architecture changes)
+- `docs/conventions.md` (new patterns)
+- `docs/gotchas.md` (bugs found, pitfalls)
+- `docs/architecture.md` (new features, structural changes)
+- `docs/plans/index.md` (completed/active plans)
 
 **Step 7 — App URLs:** `http://localhost` (Docker) or `http://localhost:5173` (local dev)
 
