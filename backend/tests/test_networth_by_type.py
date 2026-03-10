@@ -78,7 +78,7 @@ class TestGetBucket(unittest.TestCase):
 
     def test_unknown_type_maps_to_other(self):
         """Unknown account type returns 'Other' and logs WARNING."""
-        with self.assertLogs(app.logger, level="WARNING") as cm:
+        with self.assertLogs("routes.networth", level="WARNING") as cm:
             result = _get_bucket("some_future_type", None)
         self.assertEqual(result, "Other")
         self.assertTrue(any("Unknown account type" in msg for msg in cm.output))

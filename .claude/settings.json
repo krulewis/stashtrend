@@ -1,4 +1,11 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Write(*)",
+      "Edit(*)"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {
