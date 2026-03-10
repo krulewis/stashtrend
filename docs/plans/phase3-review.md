@@ -55,13 +55,11 @@
 
 ---
 
-6. [High] phase3-impl-plan.md:263-265 — Dashboard mount effect has stale closure over `perfRange` and missing dependency.
+6. [High] phase3-impl-plan.md:263-265 — Dashboard mount effect and range-change effect both fire on initial mount, causing duplicate performance fetch.
 
-   The `loadDashboardData` function (lines 236-249) captures `perfRange` in its closure. The mount effect (lines 263-265) calls `loadDashboardData()` with `[]` as the dependency array. Since `loadDashboardData` is a regular function (not wrapped in `useCallback`), it captures the initial `perfRange` value. This works on mount, but the Refresh button (line 291) calls `loadDashboardData` which will always use the current `perfRange` via closure -- actually this is fine for the refresh case since regular functions read current state.
+   The mount effect (lines 263-265) calls `loadDashboardData()` which fetches both summary and performance. The range-change effect (lines 251-260) with dependency `[perfRange]` also fires on mount (since `perfRange` starts as `'1y'`), causing a duplicate performance fetch on every page load.
 
-   However, the separate range-change effect (lines 251-260) and the mount effect both fetch performance data redundantly on initial mount. The mount effect calls `loadDashboardData()` which fetches both summary and performance. The range-change effect `[perfRange]` also fires on mount (since `perfRange` starts as `'1y'`), causing a duplicate performance fetch.
-
-   Required action: Either (a) skip the initial render in the range-change effect by using a ref to track whether it's the first render, or (b) remove the performance fetch from `loadDashboardData` and let the range-change effect handle all performance fetches (but then add `perfRange` to its dependency and handle initial load there).
+   Required action: Either (a) skip the initial render in the range-change effect by using a ref to track whether it is the first render, or (b) remove the performance fetch from `loadDashboardData` and let the range-change effect handle all performance fetches (including initial load).
 
 ---
 
@@ -81,15 +79,15 @@
 
    The plan says: `cutoff = date(today.year - y, today.month, today.day)` as a fallback when dateutil is unavailable. This will raise `ValueError` on February 29 in a leap year when subtracting to a non-leap year (e.g., 2028-02-29 minus 1 year = 2027-02-29, which does not exist). The plan acknowledges "(handle month boundary)" but does not specify how.
 
-   Required action: Specify the exact fallback logic. Recommend: clamp the day to the last day of the target month. For example: `cutoff_month = today.month - (N % 12); cutoff_year = today.year - (N // 12); if cutoff_month < 1: cutoff_month += 12; cutoff_year -= 1; last_day = calendar.monthrange(cutoff_year, cutoff_month)[1]; cutoff = date(cutoff_year, cutoff_month, min(today.day, last_day))`. Or simply require `python-dateutil` as a dependency (it is already a transitive dependency of many common packages) and remove the fragile fallback entirely.
+   Required action: Specify the exact fallback logic. Recommend: clamp the day to the last day of the target month using `calendar.monthrange`. Or simply require `python-dateutil` as a dependency (it is already a transitive dependency of many common packages) and remove the fragile fallback entirely.
 
 ---
 
-9. [Medium] phase3-impl-plan.md:52-56 — `_get_investment_account_ids` queries all accounts and filters in Python, which is inefficient and couples to `_get_bucket` logic.
+9. [Medium] phase3-impl-plan.md:52-56 — `_get_investment_account_ids` queries all accounts and filters in Python, coupling to `_get_bucket` logic.
 
-   The helper queries ALL non-hidden, include-in-net-worth accounts, calls `_get_bucket` on each, and filters for Retirement/Brokerage buckets. This means every investment endpoint first loads the entire accounts table into Python. Additionally, the summary endpoint calls this helper, then calls `_compute_account_cagr` per account (finding #3), then runs the holdings aggregation query -- that is 3+ round trips minimum.
+   The helper queries ALL non-hidden, include-in-net-worth accounts, calls `_get_bucket` on each, and filters for Retirement/Brokerage buckets. This is acceptable for small account counts but should be documented.
 
-   Required action: This is acceptable for small account counts (most users have < 20 accounts total), but document the assumption. Consider adding a comment about potential optimization if account counts grow. No code change required, but the plan should acknowledge this tradeoff.
+   Required action: Add a comment in the plan acknowledging this is O(all accounts) and is acceptable given typical user account counts (< 20). No code change required.
 
 ---
 
@@ -105,39 +103,39 @@
 
     All three endpoints catch unhandled exceptions and return `str(e)` in the JSON response. This can expose internal paths, SQL errors, or stack details to the frontend.
 
-    Required action: Log the full exception server-side with `app.logger.exception(...)` and return a generic error message to the client: `{"error": "Internal server error"}`. This matches security best practices and is consistent with how sync errors are handled elsewhere in `app.py`.
+    Required action: Log the full exception server-side with `app.logger.exception(...)` and return a generic error message to the client: `{"error": "Internal server error"}`. This matches security best practices.
 
 ---
 
-12. [Medium] phase3-impl-plan.md:130-141 — Contribution detection query joins on `c.group_type = 'transfer'` but does not account for the possibility that the categories table may not have a `group_type` column.
+12. [Medium] phase3-impl-plan.md:130-141 — Contribution detection query joins on `c.group_type = 'transfer'` but the categories table schema must be verified.
 
-    The plan assumes a `group_type` column on the `categories` table. Let me verify this is correct.
+    The plan assumes a `group_type` column on the `categories` table. If the column uses a different name (e.g., `group` or `category_group`), the query will fail with a SQL error at runtime.
 
-    Required action: Confirm that the `categories` table schema includes a `group_type` column. If it uses a different column name (e.g., `group` or `category_group`), the query will fail with a SQL error. The implementer must verify the schema before writing the query.
+    Required action: Verify the `categories` table schema column name before implementation. Add the verified column name to the plan.
 
 ---
 
-13. [Medium] phase3-impl-plan.md:267-280 — Drill-down fetch effect does not clear dashboard state, and navigating back does not re-fetch.
+13. [Medium] phase3-impl-plan.md:267-280 — Navigating back from drill-down will show stale dashboard data.
 
-    When navigating from dashboard to drill-down (`/investments` to `/investments/:accountId`), the dashboard state (`summary`, `performance`) remains in memory. When navigating back, `isDrillDown` becomes false, but the mount effect has `[]` deps so it does not re-fire. The dashboard will show stale data from before the drill-down navigation.
+    When navigating from dashboard to drill-down (`/investments` to `/investments/:accountId`), the dashboard state (`summary`, `performance`) remains in memory. When navigating back, `isDrillDown` becomes false, but the mount effect has `[]` deps so it does not re-fire. The dashboard will show data from before the drill-down navigation without re-fetching.
 
-    Required action: Either (a) add `isDrillDown` (or `accountId`) to the mount effect dependencies so dashboard data re-fetches when navigating back, or (b) use separate components for dashboard and drill-down views mounted by the router (this would be a bigger change). Option (a) is simpler: change the mount effect to `[isDrillDown]` or `[accountId]` and add the guard `if (!isDrillDown) loadDashboardData()`.
+    Required action: Change the mount effect dependencies to `[accountId]` (or `[isDrillDown]`) and guard with `if (!isDrillDown) loadDashboardData()`. This ensures dashboard data re-fetches when navigating back.
 
 ---
 
 14. [Medium] phase3-impl-plan.md:276-278 — Error handling assumes the fetch rejection has a `.status` property, but `fetchJSON` throws a generic `Error`.
 
-    The drill-down fetch catch block checks `err.status === 404`. Looking at the existing `fetchJSON` implementation in `api.js`, it throws a standard `Error` with a message string, not an object with a `status` property. The 404 check will never match, and all errors will show the generic error message instead of the "Account not found" UI.
+    The drill-down fetch catch block checks `err.status === 404`. The existing `fetchJSON` in `api.js` throws a standard `Error` with a message string, not an object with a `status` property. The 404 check will never match, and the "Account not found" UI will never display.
 
-    Required action: Either (a) modify `fetchJSON` to attach the HTTP status code to the thrown error (e.g., `const err = new Error(msg); err.status = response.status; throw err;`), or (b) check the error message string instead (e.g., `err.message.includes('404')` or `err.message === 'Account not found'`). Option (a) is cleaner and benefits all future error handling.
+    Required action: Either (a) modify `fetchJSON` to attach the HTTP status code to the thrown error (e.g., `const err = new Error(msg); err.status = response.status; throw err;`), or (b) check the error message string instead. Option (a) is cleaner and benefits all future error handling.
 
 ---
 
-15. [Medium] phase3-impl-plan.md:464 — Stale badge display logic is inconsistent: show when `is_stale && stale_days < 7`, but `showStaleBanner` triggers when `maxStaleDays >= 7`.
+15. [Medium] phase3-impl-plan.md:464 — Stale badge display logic has an undocumented gap for accounts with stale_days >= 7.
 
-    The plan says stale badges appear on individual accounts when `is_stale=true && stale_days < 7` (line 464). The stale banner appears when `maxStaleDays >= 7` (line 283). The backend computes `is_stale` as `last_synced_at > 24 hours ago` (line 79). This means accounts with stale_days between 1-6 show a badge, accounts with stale_days >= 7 are hidden behind only the banner, and accounts with stale_days < 1 show nothing. This gap (stale_days >= 7 with no per-row indicator) seems intentional but is not documented.
+    Stale badges show on accounts when `is_stale=true && stale_days < 7` (line 464). The stale banner shows when `maxStaleDays >= 7` (line 283). Accounts with stale_days >= 7 get the banner but no per-row indicator. This gap is not documented.
 
-    Required action: Clarify the design intent. If accounts with stale_days >= 7 should also show a badge (in addition to the banner), update the condition. If the current behavior is intentional (banner-only for very stale accounts), add a comment explaining the rationale.
+    Required action: Clarify the design intent. If accounts with stale_days >= 7 should also show a badge (in addition to the banner), update the condition. If intentional, add a comment explaining the rationale.
 
 ---
 
@@ -145,62 +143,67 @@
 
     The plan describes a skeleton state for SummaryCards "when summary is null and !loading and !error" (line 339), then immediately says this is "not a valid state" (line 341), then says "treat loading=true as the skeleton trigger" (line 344). This contradictory guidance will confuse the implementer.
 
-    Required action: Remove the skeleton card logic from SummaryCards entirely. The loading spinner already covers the loading state. Skeleton cards are only useful when you want to show the card layout during load, in which case the skeleton should render when `loading=true`, not in the impossible `!loading && !summary` state.
+    Required action: Remove the contradictory skeleton paragraph. Either (a) show skeleton cards when `loading=true` (replace the "Loading..." text with skeleton cards), or (b) keep the loading spinner and remove skeleton card logic entirely. Pick one approach and state it clearly.
 
 ---
 
-17. [Medium] phase3-impl-plan.md:937 — `figcaption` in AllocationChart accesses `allocation?.map(...)` but will throw if `allocation` is null/undefined.
+17. [Medium] phase3-impl-plan.md:937 — `figcaption` in AllocationChart will render "undefined" when allocation is null.
 
-    The `<figcaption>` at line 937 is outside the conditional rendering blocks, so it renders even when `allocation` is null. The expression `allocation?.map(a=>...)` is safe with optional chaining, but `.join(', ')` on `undefined` (when `allocation` is null) would produce the string `"undefined"`.
+    The `<figcaption>` at line 937 is outside the conditional rendering blocks, so it renders even when `allocation` is null. The expression `allocation?.map(a=>...).join(', ')` evaluates to `undefined` when `allocation` is null, and React will render the string "undefined".
 
     Required action: Move the `<figcaption>` inside the `{!loading && allocation?.length > 0 && (...)}` conditional block, or guard with `allocation ? allocation.map(...).join(', ') : 'No data'`.
 
 ---
 
-18. [Low] phase3-impl-plan.md:211 — `InvestmentsPage.jsx` dependency tag says `depends-on: api.js, nav.js, App.jsx; also depends-on child components`.
+18. [Low] phase3-impl-plan.md:211 — `InvestmentsPage.jsx` dependency tag incorrectly lists `nav.js` and `App.jsx` as dependencies.
 
-    The page does not depend on `nav.js` or `App.jsx`. Those files are independent edits (nav entry and route registration). The page component imports from `api.js` and the child components, not from nav or App. The dependency is reversed: `App.jsx` depends on `InvestmentsPage.jsx`, not the other way around.
+    The page does not import from `nav.js` or `App.jsx`. The dependency is reversed: `App.jsx` depends on `InvestmentsPage.jsx`.
 
-    Required action: Change dependency tag to: `depends-on: api.js, child components (InvestmentAccountsTable, InvestmentPerformanceChart, AccountDetailHeader, HoldingsTable, AllocationChart)`. Move `App.jsx` to depend on `InvestmentsPage.jsx` (already correct in Group C of the dependency order section).
-
----
-
-19. [Low] phase3-impl-plan.md:994-999 — Dependency order says InvestmentsPage.jsx is Group B (depends on Group A), but App.jsx is Group C (depends on InvestmentsPage.jsx existing). The InvestmentsPage.module.css is listed as parallelizable with InvestmentsPage.jsx, which is correct, but InvestmentsPage.jsx could actually be written in parallel with child components since it only imports them -- the imports will resolve at build time, not at write time.
-
-    Required action: Consider moving `InvestmentsPage.jsx` to Group A (independent). Modern bundlers and editors do not require imported files to exist at write time. The dependency is only at build/test time. This enables more implementation parallelism.
+    Required action: Change dependency tag to: `depends-on: api.js, child components`. The dependency order section (Group B/C) is already correct.
 
 ---
 
-20. [Low] phase3-impl-plan.md:1144-1146 — Plan notes that existing tests "may break" but does not specify what changes are needed.
+19. [Low] phase3-impl-plan.md:994-999 — `InvestmentsPage.jsx` could be moved to Group A for more parallelism.
 
-    The plan mentions `App.test.jsx` and navigation snapshot tests may need updating but does not include the specific changes required.
+    The page is in Group B (depends on Group A completing), but modern bundlers do not require imported files to exist at write time. The page could be written in parallel with its child components.
 
-    Required action: Check whether `App.test.jsx` exists. If it does, add it to the plan as a file to modify with specific changes (e.g., adding the new route to test expectations). If navigation snapshot tests exist, specify that snapshots need to be updated.
+    Required action: Consider moving `InvestmentsPage.jsx` to Group A (independent) to enable more implementation parallelism. The dependency is only relevant at build/test time.
+
+---
+
+20. [Low] phase3-impl-plan.md:1144-1146 — Plan notes existing tests "may break" but does not specify changes.
+
+    The plan mentions `App.test.jsx` and navigation snapshot tests may need updating but does not include specific changes.
+
+    Required action: Check whether `App.test.jsx` and navigation snapshot tests exist. If so, add them to the plan with specific changes required (new route expectations, updated NAV_ITEMS length).
 
 ---
 
 ## Parallelism Assessment
 
-The dependency grouping is mostly correct but could be improved:
+The dependency grouping is mostly correct:
 
 - **Group A** is well-identified. All child components, api.js, nav.js, and backend are truly independent.
-- **InvestmentsPage.jsx** can be moved to Group A (see finding #19) since the import resolution is a build-time concern, not a write-time concern.
+- **InvestmentsPage.jsx** can be moved to Group A (see finding #19) since import resolution is a build-time concern.
 - **App.jsx** edit correctly depends on InvestmentsPage.jsx existing (Group C).
 - **Test files** are correctly identified as parallelizable with their implementation targets.
 - **CSS module files** are correctly identified as parallelizable with their component files.
 
 ## Missing Items
 
-- The plan does not specify whether `python-dateutil` needs to be added to `requirements.txt` or if the fallback-only approach is used. This must be decided.
+- The plan does not specify whether `python-dateutil` needs to be added to `requirements.txt` or if a fallback-only approach is used. This must be decided (see finding #8).
 - The plan does not include changes to `docs/architecture.md`, `MEMORY.md`, or `docs/plans/index.md` as required by the Memory Rules in CLAUDE.md.
-- No mention of the `@shimmer` keyframe animation definition. The CSS modules reference `animation: shimmer 1.5s infinite` but do not define `@keyframes shimmer`. If this is defined globally, that should be noted. If not, each module needs the keyframe definition.
+- The CSS modules reference `animation: shimmer 1.5s infinite` but do not define `@keyframes shimmer`. If this keyframe is defined globally, that should be noted. If not, each module that uses it needs the keyframe definition.
 
 ## Summary
 
-**3 Critical findings** (must fix before implementation):
-- Range label/API param case mismatch (#1)
-- Recharts Bar data prop misuse (#2)
+**2 Critical, 6 High, 8 Medium, 3 Low** -- 19 findings total.
 
-Wait -- let me recount. Findings #1 and #2 are Critical. The rest are High/Medium/Low.
+The plan is thorough and well-structured with good parallelism tagging and comprehensive test coverage. However, two critical bugs would ship broken features:
 
-**2 Critical, 6 High, 8 Medium, 3 Low** findings total. The plan is thorough and well-structured but has two bugs that would ship broken features (range selector and contribution chart) and several field name inconsistencies that would cause undefined values in the UI.
+1. The range selector will stop working after the first user interaction due to a case mismatch between UI labels and API params (#1).
+2. The contribution bar overlay will not render because Recharts `Bar` does not accept a separate `data` prop inside `ComposedChart` (#2).
+
+Additionally, inconsistent field naming between the backend DB schema (`basis`, `total_value`) and frontend prop expectations (`cost_basis`, `current_value`) will cause `undefined` values throughout the holdings UI (#4, #5). The `AccountDetailHeader` has an unpassed prop (#7), the drill-down error handling assumes an error shape that `fetchJSON` does not produce (#14), and navigating back from drill-down will show stale dashboard data (#13).
+
+All Critical and High findings must be resolved in the final plan before implementation begins.
