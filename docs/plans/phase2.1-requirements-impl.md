@@ -1,8 +1,9 @@
 # Implementation Requirements -- Phase 2.1: Dual-View Milestone Hero Card
 
 **Date:** 2026-03-10
-**Source:** PM Agent (based on user selection from brainstorm concepts)
+**Source:** PM Agent (based on user selection of Concepts 1 + 4 from brainstorm)
 **Status:** Ready for architecture/design pipeline
+**Supersedes:** Previous draft that incorrectly referenced "Summit Climb" as the primary view
 
 ---
 
@@ -10,39 +11,41 @@
 
 The user reviewed 8 milestone visualization concepts from the Phase 2.1 brainstorm and selected **two** to combine into a single hero card with a view toggle:
 
-- **Primary view: "Stack of Flags"** (Brainstorm Concept 2 -- Summit Climb Vertical Timeline) -- A vertical track with milestone nodes, a "you are here" glowing marker, solid/dashed connectors distinguishing achieved vs. future milestones
-- **Secondary view: "Mountain Skyline"** (Brainstorm Concept 4 -- Projection Chart) -- An SVG area chart showing historical investable capital with a dashed projection line forward to retirement, plus milestone reference lines
+- **Primary view: "Dashboard Cards"** (Brainstorm Concept 1 -- Stack of Flags Card Grid) -- A row/grid of cards, one per milestone plus the nest egg target. Each card shows the milestone label, dollar amount, a horizontal progress bar, percentage complete, and projected date or achieved date. Achieved milestones flip to a green state with a checkmark. The nest egg target card has a cobalt border-glow to distinguish it visually.
+- **Secondary view: "Mountain Skyline"** (Brainstorm Concept 4 -- Projection Chart) -- A full SVG area chart showing historical investable capital as a filled cobalt area with gradient, a dashed projection polyline extending forward to retirement, horizontal reference lines for each milestone, a vertical "today" divider, and clipPath regions separating history from projection.
 
-These two views are housed in a single card component with a view toggle mechanism. The toggle pattern follows the existing `HorizontalSwipeContainer` precedent used in `MobileBudgetPage.jsx`, which uses dot indicators with `role="tablist"` / `role="tab"` / `role="tabpanel"` ARIA patterns and supports both swipe gestures and tap-to-select.
+These two views live inside a single hero card component with a toggle mechanism. **Dashboard Cards is the default view.** The toggle pattern follows the precedent set by `HorizontalSwipeContainer` used in `MobileBudgetPage.jsx` (scroll-snap on mobile, dot indicators, `role="tablist"` / `role="tab"` / `role="tabpanel"` ARIA pattern, swipe gestures).
 
-The card replaces the current buggy `ReferenceLine` rendering on `TypeStackedChart` (which compares milestones against total NW instead of investable capital). All milestone progress in both views uses investable capital (Retirement + Brokerage) as the basis.
+The hero card replaces the current buggy `ReferenceLine` rendering on `TypeStackedChart` (lines 157-166, which compare milestones against total NW instead of investable capital). It is placed between `TypeStackedChart` and `AccountsBreakdown` in the `NetWorthPage` layout.
 
 ---
 
 ## 2. User Stories
 
-**US-1:** As a user tracking retirement milestones, I want to see my current position relative to achieved and future milestones in a vertical timeline so I can quickly understand where I am on my financial journey.
+**US-1:** As a user with milestones configured, I see a hero card on the Net Worth page that shows my progress toward each milestone at a glance, so I can quickly assess where I stand without scrolling into the retirement settings form.
 
-**US-2:** As a user, I want to see my investable capital growth history and forward projection on a chart with milestone reference lines so I can visually gauge when I will reach each milestone.
+**US-2:** As a user, I can toggle between a card grid view (showing concrete numbers per milestone) and a chart view (showing my historical trajectory and projection), so I get both snapshot and trajectory perspectives.
 
-**US-3:** As a user, I want to toggle between the timeline view and the chart view within the same card so I can choose the perspective that is most useful to me at any moment.
+**US-3:** As a mobile user, I can swipe between the two views using the same gesture pattern I already know from the budget page, so the interaction is consistent.
 
-**US-4:** As a mobile user, I want both views to work well on narrow screens so I can check my milestone progress on my phone.
+**US-4:** As a user who has passed milestones, I see them clearly marked as achieved with a green state, checkmark, and the month/year they were first crossed, so I feel a sense of progress.
 
-**US-5:** As a user with no milestones set, I want the card to either hide or show a prompt to add milestones so the UI does not display an empty or broken state.
+**US-5:** As a user with no milestones set, the hero card does not render, so the page is not cluttered with empty UI.
+
+**US-6:** As a user without retirement settings at all (`data.exists === false`), the hero card does not render.
 
 ---
 
 ## 3. Data Requirements
 
-All data is already available -- no new API endpoints or backend changes.
+All data is already available -- no new API endpoints or backend changes (per AG-5 from the parent requirements).
 
 ### Inputs
 
 | Data | Source | Notes |
 |------|--------|-------|
-| `investableCapital` (latest) | `typeData.series[last].Retirement + typeData.series[last].Brokerage` | Already computed in `RetirementPanel.jsx` lines 44-48 |
-| Investable capital series | `typeData.series.map(d => (d.Retirement ?? 0) + (d.Brokerage ?? 0))` | Derivable per-point; needed for Mountain Skyline chart and achievement date scanning |
+| `investableCapital` (latest) | `typeData.series[last].Retirement + typeData.series[last].Brokerage` | Already computed in `RetirementPanel.jsx` lines 44-48; must be lifted or recomputed |
+| Investable capital series | `typeData.series.map(d => (d.Retirement ?? 0) + (d.Brokerage ?? 0))` | Derivable per-point; needed for Mountain Skyline chart and for finding historical achievement dates |
 | `milestones` | `retirement.milestones` -- `[{label: string, amount: number}]` | Must be sorted by amount ascending for display (EC-7) |
 | `nestEgg` | `computeNestEgg()` from `retirementMath.js` | May be null if `desired_annual_income` not set |
 | `expected_return_pct` | `retirement.expected_return_pct` | Needed for projection line; may be absent (EC-6) |
@@ -51,208 +54,262 @@ All data is already available -- no new API endpoints or backend changes.
 | Projection series | `generateProjectionSeries()` from `retirementMath.js` | Generates monthly compound-growth forward series |
 | Merged series | `mergeHistoryWithProjection()` from `retirementMath.js` | Merges historical + projected for the chart view |
 
-### Derived Values
+### Derived Values (per milestone)
 
 | Value | Derivation |
-|-------|------------|
-| Per-milestone progress % | `Math.min(investableCapital / milestone.amount * 100, 100)` -- clamp to 100% |
-| Per-milestone achieved status | `investableCapital >= milestone.amount` |
-| Per-milestone achieved date | Scan investable capital series for first date where sum >= milestone.amount |
-| Per-milestone projected date | Generate projection series from current IC; find first point where `projected_net_worth >= milestone.amount` |
-| "You are here" position | Between last achieved milestone and next unachieved milestone in the sorted list |
+|-------|-----------|
+| `progress` | `Math.min(investableCapital / milestone.amount, 1)` -- capped at 1.0 for display |
+| `state` | `"achieved"` if `investableCapital >= amount`, `"in-progress"` if next unachieved, `"future"` otherwise |
+| `achievedDate` | Scan investable capital series for first month where cumulative >= amount; format as `"Mon 'YY"` |
+| `projectedDate` | For future milestones: find first month in projection series where `projected_net_worth >= amount`; format as `"Mon 'YY"` or `"N/A"` if projection unavailable |
+
+### Nest Egg as Final Card/Reference Line
+
+The nest egg target (from withdrawal rate math) is displayed as the final card in Dashboard Cards view and as the highest reference line in Mountain Skyline view. It is visually distinguished from user-defined milestones:
+- Dashboard Cards: cobalt border-glow on the nest egg card
+- Mountain Skyline: different line style (thicker or double-dashed)
+
+If `nestEgg` is `null` (income/withdrawal not configured), it is simply omitted -- not shown as a card or reference line.
 
 ---
 
 ## 4. Feature Scope -- Two Views in One Card
 
-### 4A. Stack of Flags View (Primary -- Vertical Timeline)
+### 4A. Dashboard Cards View (Primary -- Default)
 
-A vertical track running top-to-bottom within the card:
+A grid of milestone cards inside the hero card:
 
-- **Achieved milestone nodes:** Filled circles with checkmark icons, green color (`--color-positive`), connected by solid cobalt (`--accent`) line segments. Each node shows: milestone label, dollar amount, and achieved date (month + year, derived from historical series scan).
-- **"You are here" marker:** A glowing cobalt dot positioned between the last achieved milestone and the next future one. Labeled with current investable capital dollar amount.
-- **Future milestone nodes:** Hollow/outlined circles with muted text, connected by dashed line segments below the current position. Each node shows: milestone label, dollar amount, and projected date (month + year, or "N/A" if projection unavailable).
-- **Nest egg target node (optional):** If `nestEgg` is computed, it appears as the final node with a visually distinct treatment (cobalt glow border or star icon). If `nestEgg` is null, it is omitted.
-- **Node spacing:** Non-proportional (equal vertical gaps between nodes). Proportional spacing creates severe usability issues when milestone amounts are far apart. The brainstorm document confirms this design decision.
+- **Card layout:** 2-column grid on desktop (>= 768px), single-column stack on mobile (< 768px). Each card is a self-contained panel.
+- **Card contents per milestone:**
+  - Milestone label (e.g., "Half-Mil", "Fat FIRE")
+  - Dollar amount (e.g., "$500,000")
+  - Horizontal progress bar showing `progress` ratio
+  - Percentage text (e.g., "62%")
+  - Status line: achieved date (e.g., "Achieved Jan '24") or projected date (e.g., "Proj. Mar '29")
+- **Achieved cards:** Green progress bar at 100%, checkmark icon, achieved date. Green semantic state.
+- **In-progress cards:** Cobalt progress bar at partial fill, percentage shown, projected date. Cobalt semantic state.
+- **Future cards:** Amber/muted progress bar at partial fill, percentage shown, projected date. Amber semantic state.
+- **Nest egg card:** Same layout as other cards but with a cobalt border-glow (CSS `box-shadow` or `outline`) regardless of state, to mark it as the "summit" card.
+- **Header:** "MILESTONES" title with a count badge (e.g., "2 of 4 done") matching the brainstorm mockup.
+- **Progress bar minimum width:** 4px for any non-zero progress, so 0.2% is visible (EC-8).
+- **Progress bar accessibility:** `role="progressbar"` with `aria-valuenow`, `aria-valuemin="0"`, `aria-valuemax="100"`.
 
-### 4B. Mountain Skyline View (Secondary -- Area Chart)
+### 4B. Mountain Skyline View (Secondary)
 
-A standalone Recharts `AreaChart` showing only investable capital:
+A standalone area chart showing only investable capital over time:
 
-- **Historical area:** Cobalt area fill with solid line, covering all historical data points from `typeData.series`.
-- **Projection line:** Dashed lighter cobalt line extending from the latest data point forward to the retirement target year. Uses `generateProjectionSeries()` with the user's `expected_return_pct` and `monthly_contribution`. Merged with history via `mergeHistoryWithProjection()`.
-- **"Today" marker:** A vertical `ReferenceLine` at the most recent historical data point, separating history from projection.
-- **Milestone reference lines:** Horizontal `ReferenceLine` elements at each milestone amount. Achieved milestones use green (`COLOR_POSITIVE`); future milestones use amber (`COLOR_AMBER`). Labels use the Recharts `content` prop or a custom label component to mitigate label collision.
-- **Nest egg reference line:** If computed, shown as a distinguished reference line at the nest egg amount.
-- **Y-axis:** Domain covers investable capital range plus headroom to the highest milestone or nest egg target.
-- **X-axis:** Date labels, reduced tick count on mobile.
+- **Historical area:** Cobalt area fill with gradient, solid line. Data from `typeData.series` mapped to investable capital per point.
+- **Projection line:** Dashed lighter cobalt or white polyline extending from the latest data point forward to the retirement target year. Uses `generateProjectionSeries()` with the user's `expected_return_pct` and `monthly_contribution`. Merged with history via `mergeHistoryWithProjection()`.
+- **"Today" divider:** A vertical reference line at the most recent historical data point, separating history from projection. Subtle dashed or dotted style.
+- **Milestone reference lines:** Horizontal lines at each milestone amount:
+  - Achieved milestones: green (`--color-positive`) line
+  - Future milestones: amber (`--color-warning`) dashed line
+  - Each labeled with milestone name (collision mitigation strategy decided by architect -- DD-I6)
+- **Nest egg reference line:** If computed, shown as a distinguished horizontal line at the nest egg amount.
+- **Y-axis:** Domain covers from 0 to the highest milestone or nest egg target (whichever is greater), with headroom.
+- **X-axis:** Date labels, `interval="preserveStartEnd"`, reduced tick count on mobile.
+- **Chart height:** 300px desktop, 220px mobile (matching existing chart conventions from `TypeStackedChart` and `NetWorthChart`).
 
 ### 4C. View Toggle
 
-The toggle mechanism allows switching between the two views:
-
-- **Default view:** Stack of Flags (vertical timeline) is the default/primary view.
-- **Toggle UI:** A pair of dot indicators below the card content, following the `HorizontalSwipeContainer` dot pattern (role="tablist" with role="tab" buttons, role="tabpanel" on the content panes). On desktop, labeled text tabs ("Timeline" / "Chart") may be used instead of dots if the designer determines dots are too subtle at larger viewport widths.
-- **Swipe support on mobile:** If reusing `HorizontalSwipeContainer`, swipe gestures switch views natively via scroll-snap. On desktop, clicks/keyboard on the tab buttons switch views.
-- **Persistence:** View selection is stored in component-local state only. It resets on page reload. No localStorage or URL persistence -- this is a lightweight preference, not a routing concern.
-- **Animation:** Smooth transition between views via CSS scroll-snap (if using HorizontalSwipeContainer) or a crossfade. Respects `prefers-reduced-motion`.
+- **Default view:** Dashboard Cards (index 0).
+- **Desktop toggle:** A segmented control (two buttons) in the hero card header. Labels: "Cards" and "Chart" (or similar short labels). Active segment uses `--accent` cobalt.
+- **Mobile toggle:** Same segmented control, plus swipe gesture support within the hero card. Follows the `HorizontalSwipeContainer` scroll-snap pattern.
+- **ARIA:** `role="tablist"` on toggle container, `role="tab"` on each button with `aria-selected`, `role="tabpanel"` on each view.
+- **Persistence:** Component-local state only. Resets to Dashboard Cards on page reload. No localStorage.
+- **Transition:** CSS scroll-snap if using `HorizontalSwipeContainer`, or simple show/hide. Must respect `prefers-reduced-motion`.
 
 ---
 
 ## 5. Responsive Behavior
 
-### Mobile (< 768px)
+### Dashboard Cards View
 
-- **Stack of Flags:** Vertical layout works naturally on narrow screens. Labels may condense (dollar amount on second line below label). The "you are here" marker and node labels use the full card width.
-- **Mountain Skyline:** Recharts `ResponsiveContainer` handles width automatically. Chart height reduces (use `isMobile` from `useResponsive()` -- same pattern as `TypeStackedChart` which uses 220px mobile / 300px desktop). Milestone label text abbreviates to fit. X-axis tick count reduces.
-- **Toggle:** Dot indicators are centered below the card. Swipe gestures are the primary interaction.
+| Breakpoint | Layout |
+|-----------|--------|
+| Desktop (>= 768px) | 2-column grid of milestone cards. Cards are equal width. |
+| Mobile (< 768px) | Single-column stack, full-width cards. |
 
-### Desktop (>= 768px)
+Card contents are identical at all sizes -- no content is hidden on mobile, only layout changes.
 
-- **Stack of Flags:** Vertical timeline renders within a fixed-width column inside the card. The card does not stretch to full page width if that makes the timeline look sparse -- max-width constraint is appropriate.
-- **Mountain Skyline:** Chart uses full card width. Labels have room for full milestone names.
-- **Toggle:** Text tabs or segmented control are preferred over dots for discoverability. Keyboard navigation (arrow keys between tabs) must work.
+### Mountain Skyline View
 
-### Tablet (768px - 1023px)
+| Breakpoint | Layout |
+|-----------|--------|
+| Desktop (>= 768px) | Full-width chart, ~300px height. Milestone labels as positioned pills or right-aligned text. |
+| Mobile (< 768px) | Full-width chart, ~220px height. Milestone labels abbreviated. X-axis tick count reduced. Y-axis width reduced (52px vs 72px). |
 
-- Follows desktop layout with potential width adjustments. No unique tablet-specific behavior required.
+Uses `ResponsiveContainer` from Recharts (if Recharts is chosen) or `viewBox` scaling (if raw SVG). Uses `useResponsive()` hook for breakpoint detection, consistent with existing charts.
+
+### Hero Card Container
+
+- `--bg-card` (#1C2333) surface with standard card padding
+- Header row: title + count badge + segmented toggle
+- Content area: the active view
+- No max-width constraint on the card itself (matches other cards on the page), but the designer may specify one (DD-I8)
 
 ---
 
 ## 6. Milestone States
 
-Each milestone exists in one of three states, determined by comparing `investableCapital` against `milestone.amount`:
+Three states, determined by comparing `investableCapital` against each milestone's `amount` (sorted ascending):
 
-| State | Condition | Visual Treatment (Timeline) | Visual Treatment (Chart) |
-|-------|-----------|---------------------------|------------------------|
-| **Achieved** | `investableCapital >= milestone.amount` | Green filled circle + checkmark + achieved date | Green horizontal reference line |
-| **In-Progress** | Next unachieved milestone (the one immediately above current IC) | The "you are here" marker sits between last achieved and this node | Amber horizontal reference line (closest to current position) |
-| **Future** | All unachieved milestones after the in-progress one | Hollow circle, muted text, dashed connector | Amber horizontal reference line |
+| State | Condition | Dashboard Cards Appearance | Mountain Skyline Appearance |
+|-------|-----------|---------------------------|----------------------------|
+| **Achieved** | `investableCapital >= amount` | Green progress bar (100%), checkmark icon, achieved date | Green horizontal reference line |
+| **In-progress** | First unachieved milestone | Cobalt progress bar (partial fill), percentage, projected date | Amber reference line (closest target above current IC) |
+| **Future** | All subsequent unachieved milestones | Amber/muted progress bar (partial fill), percentage, projected date | Amber reference line |
 
-**Nest egg target** follows the same state logic but has additional visual distinction (cobalt glow, different icon) to separate it from user-defined milestones.
+The **nest egg card** follows the same state logic but additionally has the cobalt border-glow regardless of state.
+
+Color tokens:
+- Achieved: `--color-positive` (#2ECC8A)
+- In-progress: `--accent` (#4D9FFF)
+- Future: `--color-warning` (#F5A623)
+- Nest egg glow: `--accent` (#4D9FFF) with reduced opacity
 
 ---
 
 ## 7. Edge Cases and Error States
 
-All edge cases from the Phase 2.1 requirements document (EC-1 through EC-9) apply. Additional implementation-specific cases:
+All edge cases from `phase2.1-requirements.md` (EC-1 through EC-9) apply. View-specific handling:
 
-| ID | Condition | Behavior |
-|----|-----------|----------|
-| EC-1 | No milestones defined (empty array), retirement settings exist | Hide the milestone hero card entirely. Do not render an empty timeline or chart. The RetirementPanel still renders normally. |
-| EC-2 | No retirement settings (`data.exists === false`) | Hero card does not render. Existing graceful degradation pattern continues. |
-| EC-3 | Investable capital is zero (no Retirement/Brokerage accounts) | Timeline: "You are here" marker at $0, all milestones shown as future. Chart: historical area is flat at zero. Projected dates show "N/A" if no return rate. |
-| EC-4 | Single milestone already achieved | Timeline: one green node + "you are here" below it. No future nodes. Chart: IC area is above the single reference line. |
-| EC-5 | All milestones achieved | Timeline: all nodes green with checkmarks, "you are here" marker below the last node. No dashed connectors. If nest egg also achieved, show a consolidated "ahead of target" state. Chart: all reference lines are green, IC area is above all of them. |
-| EC-6 | No `expected_return_pct` set | Timeline: projected dates show "N/A" or are omitted for future milestones. Chart: no projection line rendered -- show only the historical area. Display a subtle notice ("Set expected return rate for projections"). |
-| EC-7 | Milestones not in ascending order | Sort milestones by `amount` ascending before rendering in both views. |
-| EC-8 | Very large milestone values (e.g., $50M vs $100K IC) | Timeline: non-proportional spacing handles this naturally (equal gaps). Chart: Y-axis domain extends to accommodate the highest milestone, but the historical area will be a thin band at the bottom. Consider log scale as a future enhancement but use linear for now. |
-| EC-9 | Negative investable capital (margin debt) | Treat as zero for progress calculations. Timeline: "you are here" at $0. Chart: area may dip below zero but milestone comparisons use `Math.max(0, ic)`. |
-| EC-10 | Only 1 milestone defined | Timeline: renders with just one node + "you are here" marker. The track is short but functional. Chart: single reference line. Both views are usable but minimal. |
-| EC-11 | Projection extends beyond a reasonable horizon (100+ years) | Cap projection series at 50 years or retirement target year, whichever is sooner. If a milestone's projected date exceeds the cap, show "50+ years" rather than a specific date. |
-| EC-12 | `typeData` loaded but `retirement` not yet loaded (async timing) | Do not render the hero card until both `typeData` and `retirement` data are available. No loading spinner inside the card -- it simply appears when ready (consistent with how TypeStackedChart and RetirementPanel handle loading). |
-| EC-13 | Recharts label collision in Mountain Skyline view | When milestones have amounts close together, reference line labels may overlap. Mitigation: use a custom label component with the Recharts `content` prop to offset labels vertically, or use tooltip-on-hover for milestone labels instead of static text. The architect should specify the exact strategy. |
+| ID | Condition | Dashboard Cards | Mountain Skyline |
+|----|-----------|----------------|-----------------|
+| EC-1 | No milestones defined (empty array), retirement settings exist | Hero card does not render. No empty state. | Same -- card absent. |
+| EC-2 | No retirement settings (`data.exists === false`) | Hero card does not render. | Same. |
+| EC-3 | Investable capital is zero | All cards show 0% with 4px minimum progress bar. Projected dates shown if projection available, else "N/A". | Flat line at zero. Milestone reference lines above. |
+| EC-4 | Milestone already achieved | Card shows 100%, green state, achieved date. Bar does not exceed bounds. | Green reference line below current IC position. |
+| EC-5 | All milestones achieved | All cards green with checkmarks. If nest egg also achieved, nest egg card shows "Ahead of target" label. | All reference lines green, below IC area. |
+| EC-6 | No `expected_return_pct` set | Cards still show progress and achieved dates. Future milestone projected dates show "N/A". | Historical area renders. No projection line. Subtle text: "Set expected return for projections." |
+| EC-7 | Milestones not sorted by amount | Sort by amount ascending before rendering. | Same. |
+| EC-8 | Very large milestone (e.g., $50M vs $100K) | 4px minimum progress bar width. Percentage shows actual value (e.g., "0.2%"). | Y-axis extends to highest milestone. Historical IC is a thin band at bottom. |
+| EC-9 | Negative investable capital | Treat as zero for progress calculations. All cards show 0%. | Chart shows actual negative area. Progress uses `Math.max(0, ic)`. |
+| EC-10 | Single milestone only | One card rendered full-width (no grid). | One reference line. Fully functional. |
+| EC-11 | Nest egg is null but milestones exist | Milestone cards render. No nest egg card. | Milestone reference lines render. No nest egg line. |
+| EC-12 | `typeData` loaded but `retirement` not yet loaded | Hero card does not render until both are available. No loading spinner -- appears when ready. | Same. |
+| EC-13 | Recharts label collision (Mountain Skyline) | N/A | Custom label component with vertical offset, or hover-only labels. Architect decides strategy (DD-I6). |
+| EC-14 | Projection horizon > 50 years | Cards show "50+ years" for milestones beyond projection cap. | Chart X-axis capped at 50 years from today. |
 
 ---
 
 ## 8. Placement and Wiring
 
-The hero card is placed in `NetWorthPage.jsx` between `TypeStackedChart` and `AccountsBreakdown`:
+### Page Layout Order in `NetWorthPage.jsx`
 
 ```
 StatsCards
 NetWorthChart (total NW history)
 TypeStackedChart (NW by bucket, CAGR table) -- ReferenceLine loop REMOVED
-MilestoneHeroCard (NEW -- dual-view milestone visualization)  <-- here
+>>> MilestoneHeroCard (NEW) <<<
 AccountsBreakdown
 RetirementPanel (form + MilestoneEditor + RetirementSummary)
 ```
 
-### Props / Data Wiring
+### Props / Data Flow
 
-The hero card needs these props from `NetWorthPage`:
+The hero card needs from `NetWorthPage`:
+- `typeData` -- to derive investable capital (latest + full series)
+- `retirement` -- milestones, return rate, contribution, ages, income, withdrawal rate, SS
 
-- `typeData` -- to derive investable capital series
-- `retirement` -- milestones, return rate, contribution, ages
-- Or: pre-computed values passed as individual props (architect decides the interface)
+The architect decides whether to pass raw data and compute inside the component, or pre-compute derived values in `NetWorthPage` and pass them down (DD-I3).
 
 ### TypeStackedChart Changes
 
-- Remove the `milestones` prop
-- Remove the `ReferenceLine` rendering loop (lines 157-166)
-- Remove the `milestones` PropTypes declaration
-- Update `NetWorthPage.jsx` line 99 to stop passing `milestones={retirement?.milestones}`
+- Remove the `milestones` prop from the component interface
+- Remove the `<ReferenceLine>` rendering loop (lines 157-166 of `TypeStackedChart.jsx`)
+- Remove the `milestones` entry from `PropTypes`
+- Update `NetWorthPage.jsx` line 99: remove `milestones={retirement?.milestones}`
 
 ---
 
-## 9. Constraints and Anti-Goals
+## 9. Success Criteria (Implementation-Specific)
 
-### Constraints (carried forward from Phase 2.1 requirements)
+These supplement SC-1 through SC-12 from the parent requirements:
 
-- C-1: Investable capital = Retirement + Brokerage. Definition must remain consistent with `RetirementPanel.jsx`.
-- C-2: Must use existing Dark Cobalt design tokens. No new color tokens unless the designer agent defines them.
-- C-3: Milestone data model (`[{label, amount}]` in `retirement_settings.milestones`) does not change.
-- C-4: No new API endpoints or backend changes (AG-5).
-- C-5: Performance: renders in under 200ms with 60 data points (SC-9).
-- C-6: Keyboard navigable with ARIA labels/roles (SC-10).
-
-### Anti-Goals (explicitly out of scope)
-
-- AG-1: **The other 6 brainstorm concepts** (Cards, Fuel Gauge, Achievement Shelf, Runway Staircase, Twin Lines, Distance to Summit) are not being built.
-- AG-2: **Inline milestone editing** from the hero card. Milestones are edited only via MilestoneEditor inside RetirementPanel.
-- AG-3: **Monte Carlo or probability-based projections.** Simple compound growth only.
-- AG-4: **Persistence of view selection** across page loads (localStorage, URL params, etc.).
-- AG-5: **Celebration animations** when milestones are achieved. Simple state distinction (green checkmark) is sufficient.
-- AG-6: **Log-scale Y-axis** for the Mountain Skyline chart. Linear scale only for Phase 2.1.
-- AG-7: **Changes to RetirementPanel form**, RetirementSummary, or CAGR table.
-- AG-8: **A separate page** for milestone tracking. Everything stays on the Net Worth page.
-- AG-9: **Drag-to-reorder milestones** in the visualization. Milestones are always sorted by amount.
+- **SC-I1:** Hero card renders between `TypeStackedChart` and `AccountsBreakdown` in `NetWorthPage`.
+- **SC-I2:** `TypeStackedChart` no longer renders milestone `<ReferenceLine>` elements or accepts a `milestones` prop.
+- **SC-I3:** Dashboard Cards is the default view on page load.
+- **SC-I4:** Segmented toggle switches between Dashboard Cards and Mountain Skyline. Both views render correctly.
+- **SC-I5:** On mobile, swipe gesture switches views (consistent with `HorizontalSwipeContainer` pattern).
+- **SC-I6:** Achieved milestones show the historical month/year they were first crossed (derived from investable capital series scan).
+- **SC-I7:** Nest egg card has a visible cobalt border-glow distinguishing it from other milestone cards.
+- **SC-I8:** Mountain Skyline shows: historical investable capital area, dashed projection line, horizontal milestone reference lines (green/amber by state), vertical "today" divider.
+- **SC-I9:** ARIA: `role="tablist"` on toggle, `role="tab"` on buttons with `aria-selected`, `role="tabpanel"` on views, `role="progressbar"` with `aria-valuenow`/`aria-valuemin`/`aria-valuemax` on progress bars.
+- **SC-I10:** Hero card does not render when milestones array is empty or retirement settings do not exist.
+- **SC-I11:** Progress bars have minimum 4px rendered width for non-zero progress values.
+- **SC-I12:** All milestone data uses investable capital (Retirement + Brokerage), not total net worth.
 
 ---
 
-## 10. Deferred Decisions
+## 10. Constraints and Anti-Goals
+
+### Constraints
+
+- **C-1:** Investable capital = Retirement + Brokerage (consistent with `RetirementPanel.jsx`).
+- **C-2:** Dark Cobalt design tokens only. New tokens require designer agent approval.
+- **C-3:** Milestone data model unchanged (`[{label, amount}]`).
+- **C-4:** No new API endpoints or network requests.
+- **C-5:** Performance: renders in under 200ms with 60 data points.
+- **C-6:** Keyboard navigable with appropriate ARIA labels/roles.
+- **C-7:** Toggle pattern should follow `HorizontalSwipeContainer` precedent (or a simplified version for 2 views).
+
+### Anti-Goals
+
+- **AG-I1:** No inline milestone editing from the hero card. Editing is in `MilestoneEditor` inside `RetirementPanel`.
+- **AG-I2:** No animation on progress bars or chart transitions (future enhancement).
+- **AG-I3:** No localStorage persistence of view toggle selection.
+- **AG-I4:** The other 6 brainstorm concepts are not built (Summit Climb, Fuel Gauge, Achievement Shelf, Runway Staircase, Twin Lines, Distance to Summit).
+- **AG-I5:** No Monte Carlo or probability projections.
+- **AG-I6:** No separate investable capital trend line on TypeStackedChart.
+- **AG-I7:** No changes to RetirementPanel form fields, RetirementSummary layout, or CAGR table.
+- **AG-I8:** No separate milestone page. Everything stays on Net Worth page.
+- **AG-I9:** No celebration animations when milestones are achieved.
+
+---
+
+## 11. Deferred Decisions (for Architect/Designer)
 
 | ID | Decision | Owner |
 |----|----------|-------|
-| DD-1 | Whether the toggle uses `HorizontalSwipeContainer` directly, a new shared toggle component, or an inline implementation | Architect |
-| DD-2 | Exact label collision mitigation strategy for Mountain Skyline reference lines | Architect + Designer |
-| DD-3 | Whether to use the user's `expected_return_pct` or observed CAGR for projection fallback | Architect |
-| DD-4 | Whether the "On Track / Off Track" badge should move from RetirementSummary into the hero card | Designer |
-| DD-5 | Whether the nest egg target is shown as a milestone node or kept separate | Designer |
-| DD-6 | Exact animation/transition treatment for view switching | Designer |
-| DD-7 | Desktop toggle UI: dots vs. segmented control vs. text tabs | Designer |
-| DD-8 | Whether the hero card has a max-width constraint on desktop or stretches to full container width | Designer |
+| DD-I1 | Whether Mountain Skyline uses Recharts or raw SVG | Architect |
+| DD-I2 | Whether to reuse `HorizontalSwipeContainer` or build a simpler inline toggle for 2 views | Architect |
+| DD-I3 | How to compute and pass data to the hero card (lift computation, independent recomputation, or shared hook) | Architect |
+| DD-I4 | Card header layout (title left + toggle right, or centered toggle below title) | Designer |
+| DD-I5 | Y-axis format in Mountain Skyline (compact vs full) | Architect (match existing conventions) |
+| DD-I6 | Milestone reference line label collision strategy (offset pills, hover-only, legend below) | Architect + Designer |
+| DD-I7 | Whether "On Track / Off Track" badge should move from RetirementSummary into hero card | Designer (recommend: do not move in Phase 2.1) |
+| DD-I8 | Whether hero card has max-width constraint on desktop | Designer |
 
 ---
 
-## 11. Open Questions
+## 12. Open Questions
 
-- **OQ-1:** Should both views share the same card header (e.g., "Milestone Progress") or should the header text change per view (e.g., "Milestone Timeline" / "Growth Projection")?
-- **OQ-2:** The Mountain Skyline chart adds Recharts complexity (label collisions, SVG rendering). If label collision mitigation proves too costly, should the architect be empowered to simplify (e.g., tooltips only, no static labels) without returning to PM?
-- **OQ-3:** Should the Stack of Flags view show the percentage progress toward the next unachieved milestone, or only the dollar amounts? The brainstorm noted that the timeline "does not answer 'am I on pace?' quantitatively" -- adding a percentage could address this weakness.
+- **OQ-I1:** Should the card header show a summary count (e.g., "2 of 4 done")? The Concept 1 mockup includes this. Recommend yes -- it adds useful context at no implementation cost.
+- **OQ-I2:** When the Mountain Skyline projection line crosses a milestone reference line, should the intersection point be marked with a dot? Adds visual reinforcement of projected dates but increases chart complexity.
+- **OQ-I3:** Should both views share a single card title ("Milestones") or use view-specific titles ("Milestone Progress" / "Growth Projection")?
 
 ---
 
-## 12. Scope Summary
+## 13. Scope Summary
 
 ### Will be built:
 
-1. **MilestoneHeroCard component** -- a single card with two togglable views
-2. **Stack of Flags view** (primary) -- vertical milestone timeline with achieved/in-progress/future states, "you are here" marker, projected dates
-3. **Mountain Skyline view** (secondary) -- Recharts area chart with historical IC, projection line, milestone reference lines
-4. **View toggle** -- dot indicators (mobile) / tabs (desktop), following HorizontalSwipeContainer ARIA pattern
-5. **Remove milestone ReferenceLine rendering** from TypeStackedChart
-6. **Remove `milestones` prop** from TypeStackedChart
-7. **Wire MilestoneHeroCard** into NetWorthPage between TypeStackedChart and AccountsBreakdown
-8. **Edge case handling** for all EC-1 through EC-13 scenarios
-9. **Tests** for the new component and updated integration tests for TypeStackedChart (milestone prop removal)
+1. **`MilestoneHeroCard` component** -- Container card with header (title + count badge + segmented toggle) and two view panels.
+2. **`MilestoneCardsView` component** (Dashboard Cards) -- 2-column grid (desktop) / single-column stack (mobile) of milestone cards with progress bars, semantic states, achieved dates, projected dates. Nest egg card with cobalt glow.
+3. **`MilestoneSkylineView` component** (Mountain Skyline) -- Area chart with historical investable capital fill, dashed projection line, milestone reference lines (green/amber), "today" divider.
+4. **Milestone data derivation utilities** -- Functions to: sort milestones, compute state per milestone, scan series for achieved date, scan projection for projected date, compute progress percentage.
+5. **Remove milestone reference lines from `TypeStackedChart`** -- Delete `<ReferenceLine>` loop (lines 157-166), remove `milestones` prop and PropTypes.
+6. **Wire into `NetWorthPage`** -- Add hero card between `TypeStackedChart` and `AccountsBreakdown`, passing `typeData` and `retirement` data.
+7. **Tests** -- Unit tests for derivation utilities, component tests for both views and the toggle, edge case coverage for EC-1 through EC-14.
 
 ### Will NOT be built:
 
-- The other 6 brainstorm concepts
+- The other 6 brainstorm visualization concepts
 - Backend changes or new API endpoints
 - Inline milestone editing from the hero card
 - Monte Carlo projections
-- Persistence of view selection
+- View toggle persistence
+- Progress bar or transition animations
 - Changes to RetirementPanel, RetirementSummary, MilestoneEditor, or CAGR table
-- A separate milestone page
+- A separate milestone tracking page
