@@ -28,7 +28,7 @@ Full requirements: `plans/investment-forecasting-requirements.md`
 | **1** | NW by account type + CAGR estimates on existing Net Worth page | M | 0 | **Done** (PR #4) |
 | **2** | NW milestones + retirement target tracker on Net Worth page | M | 1 | **Done** (PR #5, merged) |
 | **2.1** | Fix retirement tracker to use investable capital, not total NW | S | 2 | **Next** |
-| **B** | Backend decomposition — split `app.py` into route blueprints + service modules | M | — | **Roadmap** |
+| **B** | Backend decomposition — split `app.py` into route blueprints + service modules | M | — | **Planned** — land before Phases 3–6 |
 | **3** | New Investments page — account-level performance dashboard + holdings drill-down | L | 0, B | **Planning in progress** |
 | **4** | New Forecasting page — simple projections + retirement planner | L | 1, 2, B | **Planning in progress** |
 | **5** | Monte Carlo simulation + AI narrative layer on Forecasting page | M | 4 | **Planning in progress** |
@@ -114,25 +114,23 @@ All planning uses fresh-context agents per CLAUDE.md — each step gets only wri
 
 **Prerequisite:** Phase 3 must be complete before implementation begins.
 
-### Backend Decomposition — Split `app.py` into modules
+### Phase B — Backend Modularization
 
-**Problem:** `backend/app.py` is a 2442-line monolith containing all routes, sync logic, database helpers, AI integration, and caching. This causes:
-- Agents waste tool calls re-reading the file at different offsets (observed: Phase 3 Engineer read it 3x)
-- Merge conflicts when multiple phases touch the same file
-- Hard to reason about in reviews — changes are buried in a massive diff
+**Problem:** `backend/app.py` is a 2,442-line Flask monolith combining route handlers, DB helpers, sync logic, AI integration, background scheduling, DDL, and startup code. This makes Phases 3–6 development error-prone and creates merge conflicts as all new routes land in the same file.
 
-**Proposed decomposition:**
-- `backend/app.py` — Flask app factory, config, middleware (thin shell)
-- `backend/routes/` — route blueprints grouped by feature (networth, investments, budgets, forecasting, sync, settings)
-- `backend/services/` — business logic (monarch_service, sync_worker, ai_service)
-- `backend/db.py` — connection management, DDL, helpers
-- `backend/cache.py` — caching infrastructure
+**Approach:** Blueprint split with a backward-compatible shim in `app.py`. The monolith is split into `db.py`, `ai.py`, `sync_core.py`, `token_auth.py`, and 9 route modules under `routes/`. The original `app.py` becomes a ~90-line shim that re-exports all public names — all 15 existing test files and `wsgi.py` require zero changes.
+
+**Prerequisites:** Should land before Phases 3–6 begin. Decomposing first avoids merge conflicts as those phases add routes and logic.
 
 **Size:** M — multi-file refactor, no new features, existing tests must keep passing.
 
-**Prerequisites:** Should land before Phase 3–6 implementation begins, as those phases all add routes and logic to `app.py`. Decomposing first avoids merge conflicts.
+**Planning artifacts:**
+- Research: `phase-b-research.md`
+- Architecture decision: `phase-b-architecture.md`
+- Implementation plan: `phase-b-final-plan.md`
+- Staff review: `phase-b-review.md`
 
-**Status:** Roadmap item — not yet planned.
+---
 
 ### Phase 2.1 — Retirement Tracker: Investable Capital Fix
 
