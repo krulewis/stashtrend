@@ -40,7 +40,8 @@ Run pipeline steps and build processes as **parallel agents** whenever their inp
 **Pipeline parallelism:**
 - Two `researcher` instances (codebase + web) run in parallel; both must complete before Architect starts
 - PM clarification follow-ups can overlap with research
-- Pre-flight dependency check + Regression risk scorer + Changelog scanner + File change classifier run in parallel after plan confirmation (all Haiku)
+- `explorer` instances (pre-flight check, regression risk scorer, file change classifier) run in parallel after plan confirmation (all Haiku)
+- `changelog-scanner` (Haiku) runs in parallel with the above explorer instances
 - Cost estimate runs in background (non-blocking)
 - Packet summarization (Haiku) runs inline when any step exceeds 500-word limit
 - Multiple independent searches, reads, or validations should always be parallel
@@ -51,11 +52,13 @@ Run pipeline steps and build processes as **parallel agents** whenever their inp
 - `qa` agent can begin writing tests in parallel with implementation when test interfaces are defined in the plan
 - QA + `frontend-designer` can overlap within a single feature: frontend-designer works on design specs for later components while QA writes tests for the first batch
 - Code review + Playwright QA (workflow steps 7/7b) run as parallel agents. Combined fix cycle if either finds issues. Re-run Playwright QA if code changes were required from parallel code review.
-- `lint-fixer` (Haiku) runs after implementation, before code review — can overlap with test execution
+- `lint-fixer` (Haiku) runs after implementation, before code review — can overlap with test execution (steps 4b and 5 may run concurrently)
 - `test-triager` (Haiku) runs on test failure output before returning to implementation
-- `commit-drafter` + `pr-drafter` (both Haiku) run in parallel to draft commit message and PR description
-- `loop-guard` (Haiku) runs between PR review passes to detect cycling comments
+- `commit-drafter` + `pr-drafter` (both Haiku) run in parallel — both read from the pre-commit diff independently, no sequential dependency
 - `docs-updater` runs after tests pass (not before)
+
+**Review parallelism:**
+- `loop-guard` (Haiku) runs between PR review passes to detect cycling comments
 - PR review loop fixes on independent files can be parallelized across `implementer` or `debugger` agents
 
 When in doubt, prefer parallel — the cost of a wasted agent is lower than the cost of idle waiting.
@@ -75,7 +78,7 @@ Each pipeline agent (steps 1–6) receives and appends to a structured context p
 
 The orchestrator maintains the packet and passes it to each agent. Step 6 (final plan) is the terminal consumer — it receives the packet but does not append. Project-level context (CLAUDE.md) is still loaded normally — the packet supplements, not replaces. The packet is ephemeral (not written to disk).
 
-**Packet summarization:** When any pipeline agent's output exceeds the 500-word limit, dispatch `packet-summarizer` (Haiku) to compress it before appending. This keeps the packet lean and prevents context bloat for downstream agents.
+**Packet summarization:** When any pipeline agent's raw output exceeds 500 words, the orchestrator dispatches `packet-summarizer` (Haiku) with the full raw output as input. The summarizer returns a ≤500-word summary that the orchestrator appends to the packet in place of the raw output. If the raw output is already ≤500 words, it is appended directly without invoking the summarizer.
 
 ### Agent Teams
 
@@ -97,8 +100,8 @@ For M/L changes, use **TeamCreate** to coordinate agents via shared task lists i
 | Phase | Team Name | Members | Notes |
 |-------|-----------|---------|-------|
 | **Planning** | `{feature}-planning` | `pm`, `researcher` (x2: codebase + web) | PM interviews user; two researcher instances run in parallel (codebase + web). Team covers the parallelizable portion only. `architect`, `engineer`, `staff-reviewer` are dispatched sequentially by the orchestrator after the team completes (sequential dependency on both researchers completing). |
-| **Implementation** | `{feature}-impl` | `qa`, `implementer` (x N), `code-reviewer`, `playwright-qa`, `frontend-designer`, `docs-updater` | QA writes tests first. QA + frontend-designer can overlap (frontend-designer works on later components while QA tests first batch). Implementers work independent file groups in parallel. Code-reviewer + playwright-qa run in parallel after implementation. Docs-updater runs after tests pass. |
-| **Review** | `{feature}-review` | `staff-reviewer`, `implementer` / `debugger` | Staff reviewer finds issues → implementer/debugger fix → fresh staff-reviewer pass. |
+| **Implementation** | `{feature}-impl` | `qa`, `implementer` (x N), `lint-fixer`, `security-scanner`, `test-triager`, `code-reviewer`, `playwright-qa`, `frontend-designer`, `docs-updater`, `commit-drafter`, `pr-drafter` | QA writes tests first. QA + frontend-designer can overlap. Implementers work independent file groups in parallel. lint-fixer → security-scanner after implementation. test-triager on failures. Code-reviewer + playwright-qa in parallel after tests pass. commit-drafter + pr-drafter in parallel for step 8. Docs-updater after tests pass. |
+| **Review** | `{feature}-review` | `staff-reviewer`, `loop-guard`, `implementer` / `debugger` | Staff reviewer finds issues → implementer/debugger fix → fresh staff-reviewer pass. loop-guard monitors for cycling comments between passes. |
 
 **Team rules:**
 - Each team phase corresponds to a workflow stage — don't mix planning and implementation agents in one team
@@ -119,7 +122,7 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 | Tier | Model | Criteria | Agents |
 |------|-------|----------|--------|
 | **Critical judgment** | opus | Mistakes are expensive and hard to reverse | `pm`, `architect`, `staff-reviewer` |
-| **Standard work** | sonnet | Produces artifacts by following patterns | `researcher`, `engineer`, `implementer`, `qa`, `code-reviewer`, `debugger`, `frontend-designer` |
+| **Standard work** | sonnet | Produces artifacts by following patterns | `researcher`, `engineer`, `implementer`, `qa`, `code-reviewer`, `security-scanner`, `debugger`, `frontend-designer` |
 | **Mechanical** | haiku | Procedural tasks, no deep reasoning needed | `explorer` (incl. pre-flight checker, regression scorer, file change classifier), `docs-updater`, `playwright-qa`, `commit-drafter`, `pr-drafter`, `test-triager`, `lint-fixer`, `packet-summarizer`, `changelog-scanner`, `loop-guard` |
 
 ### Agent Delegation — MANDATORY
@@ -141,12 +144,11 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 | PP-6. Final plan (delta-based) | `engineer` |
 | PP-7. Cost estimate (background) | `/tokencostscope` (inline) |
 | **— Development Workflow —** | |
-| WF-2b. Pre-flight check + risk scorer + changelog scan | `explorer` (haiku) × 2 + `changelog-scanner` (haiku) |
-| WF-2b. File change classifier | `explorer` (haiku) — git-history risk scoring |
+| WF-2b. Pre-flight check + risk scorer + file change classifier + changelog scan | `explorer` (haiku) × 3 + `changelog-scanner` (haiku) |
 | WF-3. Write tests | `qa` |
 | WF-4. Implement | `implementer` |
 | WF-4b. Lint/format check | `lint-fixer` (haiku) |
-| WF-4c. Safety scan | `code-reviewer` (sonnet, security-focused) |
+| WF-4c. Safety scan | `security-scanner` (sonnet) |
 | WF-5. Run tests | `make test` |
 | WF-5b. Test result triage (on failure) | `test-triager` (haiku) |
 | WF-6. Update docs (after tests pass) | `docs-updater` |
@@ -168,17 +170,19 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 
 ## Development Workflow (strict order — do not skip or reorder)
 
+*Sub-steps (e.g., 4b/4c) may overlap with adjacent steps where noted — see Parallelism section for details.*
+
 1. **Planning pipeline** (required for M/L) — use a `{feature}-planning` team. Dispatch to `pm`, two `researcher` instances (codebase + web, in parallel), then `architect`, `engineer`, `staff-reviewer` agents per pipeline steps above. For UI features, include `frontend-designer` after architecture to produce design specs before engineering plan.
 2. **Confirm** approach with user before writing code. If unavailable: proceed but note it — this does NOT waive any subsequent step.
 2b. **Pre-flight checks** (parallel) — dispatch `explorer` (Haiku) agents for pre-flight dependency check + regression risk scorer + `changelog-scanner` (Haiku) for dependency changelog summaries + `explorer` (Haiku) as file change classifier (git-history churn/bug-fix risk scoring). All advisory — flags risks for QA but does not block.
 3. **Write tests first** — dispatch to `qa` agent. Tests must fail before implementation exists. Cover happy path, edge cases, and error cases. Prioritize high-risk files flagged by regression risk scorer.
 4. **Implement** — use a `{feature}-impl` team. Spawn `qa`, `implementer` (x N for independent file groups), `code-reviewer`, `playwright-qa`, `frontend-designer` (for UI work), and `docs-updater` as teammates. Coordinate via shared task list. QA + frontend-designer can overlap within a feature.
-4b. **Lint/format check** — dispatch `lint-fixer` (Haiku) to run linters, parse output, and auto-fix trivial violations (import order, trailing whitespace, formatting). Keeps the Sonnet code-reviewer focused on logic.
-4c. **Safety scan** — dispatch `code-reviewer` (Sonnet) on the uncommitted diff with a security-focused prompt: scan for OWASP top 10 (injection, XSS, SSRF, secrets in code, insecure deserialization), unsafe patterns, and credential exposure. Any Critical finding blocks proceeding to tests. This is a fast, targeted pass — the full logic/style review happens at step 7/7b.
+4b. **Lint/format check** — dispatch `lint-fixer` (Haiku) to run project linters via CLI only (e.g., `eslint --fix`, `prettier --write`). Does not manually edit source files — restricted to linter CLI auto-fix. Reports `git diff --stat` after fixes; subsequent safety scan (4c) and code review (7/7b) verify the changes. Keeps the Sonnet code-reviewer focused on logic.
+4c. **Safety scan** — dispatch `security-scanner` (Sonnet) on the uncommitted diff: scan for OWASP top 10 (injection, XSS, SSRF, secrets in code, insecure deserialization), unsafe patterns, and credential exposure. Critical finding → return to step 4 for fix → re-run 4c. High findings are logged and carried forward to step 7/7b review. This is a targeted security pass — the full logic/style review happens at step 7/7b.
 5. **Run all automated tests** — failures → dispatch `test-triager` (Haiku) to parse test output, classify failures (flaky vs. real, related vs. unrelated to the change), and surface actionable ones before returning to step 4.
 6. **Update memory and docs** — dispatch to `docs-updater` agent after tests pass (see Memory Rules below for paths). As-you-go memory updates during implementation are still expected; this is the formal pass.
 7/7b. **Lightweight code review + Playwright UI QA** (parallel) — dispatch `code-reviewer` on the uncommitted diff (`git diff`) AND `playwright-qa` to exercise the feature in the running app, in parallel. Fixes any Critical/High findings before proceeding. If code changes result from review, re-run Playwright QA. Combined fix cycle if either finds issues → return to step 4.
-8. **Commit to feature branch** — dispatch `commit-drafter` (Haiku) to generate commit message from `git diff`, then `pr-drafter` (Haiku) to generate PR title/body from diff + plan context. Push and create PR against main via `gh pr create`.
+8. **Commit to feature branch** — dispatch `commit-drafter` and `pr-drafter` (both Haiku) in parallel — both read from the pre-commit diff independently. Use drafts for commit message and PR title/body. Push and create PR against main via `gh pr create`.
 8b. **Automated review** — run `/code-review --comment` on the PR. This posts a multi-agent Sonnet+Haiku review (bug scan, CLAUDE.md compliance, git blame context, confidence-scored findings) directly to the PR as a comment. Cheap first-pass filter before the Opus review loop. **Output is passed as explicit input to the first staff-reviewer in step 9** so Opus skips re-discovering known issues.
 9. **PR Review Loop** (tiered) — repeat until clean:
    i. **First pass (Opus):** Dispatch to `staff-reviewer` agent with **fresh context**. Inputs: PR diff (`gh pr diff`) + project CLAUDE.md + `/code-review` findings from step 8b (explicit input, so Opus skips re-discovering known issues)
@@ -197,13 +201,15 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 [ ] Change size classified — pipeline run if M/L
 [ ] Cost estimate launched (tokencostscope, non-blocking)
 [ ] Plan confirmed with user
-[ ] Pre-flight checks + regression risk scorer run (parallel, advisory)
+[ ] Pre-flight checks + regression risk scorer + changelog scanner + file change classifier run (parallel, advisory)
 [ ] Tests written before implementation (high-risk files prioritized)
 ```
 
 **POST-WORK** (after completing):
 ```
 [ ] Tests: written first (failed initially), all passing (new + existing)
+[ ] Lint/format: lint-fixer run, trivial violations auto-fixed
+[ ] Safety scan: no Critical security findings (step 4c)
 [ ] Memory/docs updated after tests pass (formal docs-updater pass)
 [ ] Code review + Playwright QA — run in parallel, no Critical/High findings
 [ ] Cost analysis — actual vs estimate compared, calibration updated
