@@ -28,10 +28,29 @@ Full requirements: `plans/investment-forecasting-requirements.md`
 | **1** | NW by account type + CAGR estimates on existing Net Worth page | M | **Done** (PR #4) |
 | **2** | NW milestones + retirement target tracker on Net Worth page | M | **Done** (PR #5, merged) |
 | **2.1** | Fix retirement tracker to use investable capital, not total NW | S | **Next** |
+| **B** | Backend modularization — split `app.py` monolith into Blueprint modules | M | **Planned** — land before Phases 3–6 |
 | **3** | New Investments page — account-level performance dashboard + holdings drill-down | L | Planned |
 | **4** | New Forecasting page — simple projections + retirement planner | L | Planned |
 | **5** | Monte Carlo simulation + AI narrative layer on Forecasting page | M | Planned |
 | **6** | Benchmark comparison vs S&P 500 (nice-to-have) | S | Planned |
+
+### Phase B — Backend Modularization
+
+**Problem:** `backend/app.py` is a 2,442-line Flask monolith combining route handlers, DB helpers, sync logic, AI integration, background scheduling, DDL, and startup code. This makes Phases 3–6 development error-prone and creates merge conflicts as all new routes land in the same file.
+
+**Approach:** Blueprint split with a backward-compatible shim in `app.py`. The monolith is split into `db.py`, `ai.py`, `sync_core.py`, `token_auth.py`, and 9 route modules under `routes/`. The original `app.py` becomes a ~90-line shim that re-exports all public names — all 15 existing test files and `wsgi.py` require zero changes.
+
+**Prerequisites:** Should land before Phases 3–6 begin. Decomposing first avoids merge conflicts as those phases add routes and logic.
+
+**Size:** M — multi-file refactor, no new features, existing tests must keep passing.
+
+**Planning artifacts:**
+- Research: `phase-b-research.md`
+- Architecture decision: `phase-b-architecture.md`
+- Implementation plan: `phase-b-final-plan.md`
+- Staff review: `phase-b-review.md`
+
+---
 
 ### Phase 2.1 — Retirement Tracker: Investable Capital Fix
 
