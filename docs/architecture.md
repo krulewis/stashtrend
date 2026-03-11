@@ -22,7 +22,7 @@
   - Backend: `GET /api/networth/by-type` — `BUCKET_MAP`/`TYPE_MAP` constants, `_get_bucket()`, `_compute_bucket_cagr()`. Buckets: Retirement, Brokerage, Cash, Real Estate, Debt, Other. Filter: `include_in_net_worth=1` only (matches `networth_history`, no `is_hidden` filter)
   - Frontend: `TypeStackedChart.jsx` (stacked area + CAGR table, no milestone ReferenceLines since Phase 2.1), `AccountsBreakdown.jsx` simplified (pie charts removed, collapsible list retained), `fmtPct` moved to `chartUtils.jsx`
   - CAGR: aggregate-balance approximation `(end/start)^(1/years) - 1` for 1Y/3Y/5Y. Null for <30 days non-zero history. UI tooltip: "Estimated CAGR — actual returns may differ."
-  - **Dual-axis chart:** Left YAxis for positive buckets (stacked), Right YAxis for Debt (absolute values, minus-prefixed ticks). `NEGATIVE_BUCKETS` Set in TypeStackedChart.jsx. CustomTooltip negates values back for display.
+  - **Dual-axis chart:** Left YAxis for positive buckets (stacked), Right YAxis for Debt (absolute values, minus-prefixed ticks). `NEGATIVE_BUCKETS` Set in TypeStackedChart.jsx. CustomTooltip negates values back for display. As of the axis sync fix, both YAxes share a computed `axisDomain` of `[0, Math.max(leftMax, rightMax)]` where `leftMax` is the max stacked sum of positive buckets per data point and `rightMax` is the max absolute debt value per data point. This ensures tick marks mirror exactly: 1M on left aligns with −1M on right.
   - **AccountsBreakdown:** Groups by `bucket` field (from API) instead of raw Monarch `type`. API adds `bucket` via `_get_bucket()`.
 - **NW Milestones + Retirement Tracker (Phase 2):** COMPLETE ✅
   - Backend: `retirement_settings` singleton table (`CHECK (id = 1)`), `GET /api/retirement` + `POST /api/retirement` endpoints. Milestones stored as JSON text column, deserialized with `json.loads()` on GET. Validation: both ages required (positive int ≤120), target > current, withdrawal_rate ≤100, return_pct ≤50, milestones max 20 with positive amounts and labels ≤100 chars.
@@ -93,3 +93,6 @@ from monarchmoney import MonarchMoney
 - **Error sanitization:** all `except` blocks return generic messages + `app.logger.exception()`; global `@app.errorhandler(Exception)` as defense-in-depth
 - **Rate limiting:** per-endpoint 2s cooldown on AI endpoints (`_ai_cooldowns` dict + `_check_ai_rate_limit()` + `_ai_cooldowns_lock` threading.Lock for thread safety)
 - **Prompt injection:** `_sanitize_prompt_field()` strips control chars and truncates; applied at prompt construction time (not save time). `save_builder_profile` validates `location` ≤200 chars, `other_info` ≤1000 chars
+
+## Claude Code Hooks
+- **Edit-count detector:** `.claude/hooks/edit-count-detector.sh` — PostToolUse hook registered in `.claude/settings.json` for Edit/Write tools. Tracks per-file edit counts per session in `/tmp/edit_counts_${PPID}.json`. After 5 edits to the same file, warns: "You have edited '[filename]' N times this session. Step back and reconsider your approach before making further edits to this file." Prevents doom loops during implementation and debugging.

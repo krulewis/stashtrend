@@ -2,13 +2,13 @@
 
 *Source: [The Anatomy of an Agent Harness](https://blog.langchain.com/the-anatomy-of-an-agent-harness/) — mapped against our existing pipeline.*
 
-## 1. Edit-Count Loop Detection for Implementers
+## 1. Edit-Count Loop Detection for Implementers ✅ IMPLEMENTED
 
 **Problem:** An `implementer` or `debugger` agent can get stuck editing the same file repeatedly without making progress (a "doom loop"). Currently we only catch cycling at the PR review level via `loop-guard`.
 
-**Recommendation:** Add middleware/hook logic that tracks per-file edit counts within a single agent session. After N edits to the same file (suggest N=5), inject a context message: *"You've edited this file {N} times. Step back and reconsider your approach before continuing."* This catches doom loops much earlier than waiting for test-triager or loop-guard.
+**Solution:** Added `.claude/hooks/edit-count-detector.sh` — a PostToolUse hook registered in `.claude/settings.json` for Edit and Write tools. Tracks per-file edit counts per session in `/tmp/edit_counts_${PPID}.json`. After 5 edits to the same file, injects warning: *"You have edited '[filename]' N times this session. Step back and reconsider your approach before making further edits to this file."* This catches doom loops much earlier than waiting for test-triager or loop-guard.
 
-**Where it fits:** WF-4 (Implement). Could be implemented as a hook on the Edit tool within `implementer` and `debugger` agents.
+**Deployed:** WF-4 (Implement). Hook fires for all agents on Edit/Write tool use.
 
 ---
 
@@ -20,7 +20,7 @@
 
 **Where it fits:** All agents that consume large outputs — especially `implementer`, `debugger`, `qa`, and `researcher`. Could be implemented as a post-tool-call hook.
 
-**Implementation note:** Claude Code's PostToolUse hooks can annotate output but cannot intercept and replace it before it enters the agent's context window. True output replacement would require changes at the Claude Code platform level. A hook can detect large output and append a flag/summary note, but the full output is still in context. This recommendation is partially infeasible with current hook capabilities and is deferred until platform support improves.
+**Implementation note:** Claude Code's PostToolUse hooks cannot intercept and replace output before it enters the agent's context window. True output replacement would require changes at the Claude Code platform level. A hook can detect large output and append a flag/summary note, but the full output is still consumed. This recommendation is currently infeasible with existing hook capabilities and is deferred until platform support improves.
 
 ---
 
