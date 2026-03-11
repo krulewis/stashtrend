@@ -1,0 +1,131 @@
+.container {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  padding: 16px;
+  margin-bottom: var(--sp-5);
+}
+
+@media (min-width: 768px) {
+  .container { padding: 20px 24px; }
+}
+
+.backLink {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent);
+  text-decoration: none;
+  margin-bottom: var(--sp-3);
+}
+
+.backLink:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+.accountIdentity {
+  margin-bottom: var(--sp-3);
+}
+
+.accountName {
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--text-primary);
+}
+
+@media (min-width: 768px) {
+  .accountName { font-size: 20px; }
+}
+
+.institution {
+  font-size: 13px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.bucketBadge {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+  color: var(--accent-wash);
+  background: var(--accent-tint);
+  border: 1px solid var(--accent-border-hover);
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+}
+
+.metricsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-5);
+  margin-top: var(--sp-4);
+  border-top: 1px solid var(--border-sub);
+  padding-top: var(--sp-4);
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metricLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.metricValue {
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text-primary);
+}
+
+.metricSub {
+  font-size: 13px;
+  margin-top: 2px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.positive { color: var(--color-positive); }
+.negative { color: var(--color-negative); }
+.muted    { color: var(--text-muted); }
+
+.desktopOnly {
+  /* visible by default */
+}
+
+@media (max-width: 767px) {
+  .desktopOnly { display: none; }
+}
+
+.lastSynced {
+  text-align: right;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: var(--sp-3);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.staleBadge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--color-warning);
+  background: rgba(245, 166, 35, 0.15);
+  border: 1px solid rgba(245, 166, 35, 0.3);
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+}
