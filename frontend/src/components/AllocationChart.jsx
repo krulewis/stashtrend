@@ -5,12 +5,12 @@ import { fmtFull, fmtCompact, fmtPct, TOOLTIP_STYLE } from './chartUtils.jsx'
 import styles from './AllocationChart.module.css'
 
 const SLICE_COLORS = {
-  Stock: '#4D9FFF',
-  ETF: '#2ECC8A',
-  Bond: '#F5A623',
-  'Mutual Fund': '#9B7FE8',
-  Cash: '#5EDDA8',
-  Other: '#4A6080',
+  stock: '#4D9FFF',
+  etf: '#2ECC8A',
+  bond: '#F5A623',
+  mutual_fund: '#9B7FE8',
+  cash: '#5EDDA8',
+  other: '#4A6080',
 }
 
 const tooltipStyles = { ...TOOLTIP_STYLE }
@@ -67,7 +67,7 @@ export default function AllocationChart({ allocation, totals, accountName, loadi
                   {allocation.map((entry) => (
                     <Cell
                       key={entry.type}
-                      fill={SLICE_COLORS[entry.type] || SLICE_COLORS.Other}
+                      fill={SLICE_COLORS[entry.type] || SLICE_COLORS.other}
                       aria-label={`${entry.type}: ${fmtFull(entry.value)}, ${entry.pct.toFixed(1)}%`}
                     />
                   ))}
@@ -86,7 +86,7 @@ export default function AllocationChart({ allocation, totals, accountName, loadi
               <li key={item.type} className={styles.legendRow}>
                 <span
                   className={styles.legendDot}
-                  style={{ background: SLICE_COLORS[item.type] || SLICE_COLORS.Other }}
+                  style={{ background: SLICE_COLORS[item.type] || SLICE_COLORS.other }}
                 />
                 <span className={styles.legendName}>{item.type}</span>
                 <span className={styles.legendValue}>{fmtFull(item.value)}</span>
