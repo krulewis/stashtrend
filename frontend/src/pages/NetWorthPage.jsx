@@ -5,6 +5,7 @@ import NetWorthChart from '../components/NetWorthChart.jsx'
 import AccountsBreakdown from '../components/AccountsBreakdown.jsx'
 import TypeStackedChart from '../components/TypeStackedChart.jsx'
 import RetirementPanel from '../components/RetirementPanel.jsx'
+import MilestoneHeroCard from '../components/MilestoneHeroCard.jsx'
 import { fetchNetworthStats, fetchNetworthHistory, fetchAccountsSummary, fetchNetworthByType, fetchRetirement, saveRetirement } from '../api.js'
 
 export default function NetWorthPage() {
@@ -96,7 +97,8 @@ export default function NetWorthPage() {
         <>
           <StatsCards stats={stats} />
           <NetWorthChart history={history} />
-          <TypeStackedChart data={typeData} milestones={retirement?.milestones} />
+          <TypeStackedChart data={typeData} />
+          <MilestoneHeroCard typeData={typeData} retirement={retirement} />
           <AccountsBreakdown accounts={accounts} />
           <RetirementPanel
             data={retirement}

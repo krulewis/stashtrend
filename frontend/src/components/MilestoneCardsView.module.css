@@ -1,0 +1,170 @@
+/* MilestoneCardsView — grid layout and individual card anatomy */
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ── Individual milestone card ─────────────────────────────────────────── */
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  overflow: hidden;
+  transition: border-color var(--ease-smooth);
+}
+
+.achieved {
+  border-color: rgba(46, 204, 138, 0.25);
+  background: linear-gradient(135deg, var(--bg-card) 0%, #192B1F 100%);
+}
+
+.inProgress {
+  border-color: var(--border);
+}
+
+.future {
+  border-color: var(--border);
+}
+
+/* nestEggGlow comes last in className so its border-color wins over state classes */
+.nestEggGlow {
+  border-color: rgba(77, 159, 255, 0.4);
+  box-shadow: 0 0 20px rgba(77, 159, 255, 0.12), var(--shadow-md);
+}
+
+/* ── Card anatomy ──────────────────────────────────────────────────────── */
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.eyebrow {
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.milestoneLabel {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.amount {
+  font-size: 20px;
+  font-weight: 400;
+  margin-bottom: 10px;
+}
+
+.amountAchieved {
+  color: var(--color-positive);
+}
+
+.amountInProgress {
+  color: var(--accent);
+}
+
+.amountFuture {
+  color: var(--color-warning);
+}
+
+/* ── Progress bar ──────────────────────────────────────────────────────── */
+
+.progressTrack {
+  height: 6px;
+  background: var(--bg-raised);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  margin-bottom: var(--sp-2);
+  position: relative;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  /* width set via inline style — data-driven */
+}
+
+.fillAchieved {
+  background: var(--color-positive);
+}
+
+.fillInProgress {
+  background: var(--accent);
+}
+
+.fillFuture {
+  background: var(--color-warning);
+}
+
+/* ── Status line ───────────────────────────────────────────────────────── */
+
+.statusLine {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ── Status pills ──────────────────────────────────────────────────────── */
+
+.pillGreen {
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  background: var(--green-tint);
+  color: var(--green);
+}
+
+.pillCobalt {
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  background: var(--accent-tint);
+  color: var(--accent-light);
+}
+
+.pillAmber {
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  background: var(--amber-tint);
+  color: var(--amber);
+}
+
+/* ── Percentage text ───────────────────────────────────────────────────── */
+
+.percentage {
+  font-size: 13px;
+  font-weight: 500;
+  /* color set via inline style by state */
+}
+
+/* ── Checkmark icon ────────────────────────────────────────────────────── */
+
+.checkmark {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}

@@ -34,6 +34,7 @@ All colors in CSS module files MUST use CSS custom properties defined in `index.
 - **Text:** `--text-primary` (#F0F6FF), `--text-secondary` (#8BA8CC), `--text-muted` (#4A6080), `--text-faint` (#2B4060), `--text-bright`, `--text-subtle`
 - **Accent:** `--accent` (#4D9FFF), `--accent-hover`/`--accent-600` (#2B7FE0), `--accent-light`/`--accent-300` (#7DBFFF), `--accent-wash`/`--accent-200` (#99CCFF), `--accent-glow`
 - **Semantic:** `--color-positive`/`--green` (#2ECC8A), `--color-negative`/`--red` (#FF5A7A), `--color-warning`/`--amber` (#F5A623), `--white`
+- **Tint tokens (Phase 2.1):** `--accent-tint` (rgba(77,159,255,0.12)), `--green-tint` (rgba(46,204,138,0.12)), `--amber-tint` (rgba(245,166,35,0.12)) — use for pill/badge backgrounds in milestone cards and similar state indicators
 - **Surfaces:** `--bg-error`, `--bg-error-subtle`
 - **Spacing:** `--sp-1` through `--sp-12` (4px increments)
 - **Radius:** `--radius-sm` (6px), `--radius-md` (8px), `--radius-lg` (12px), `--radius-xl` (16px)
@@ -41,10 +42,9 @@ All colors in CSS module files MUST use CSS custom properties defined in `index.
 - **Transitions:** `--ease-quick` (150ms), `--ease-default` (200ms), `--ease-smooth` (300ms)
 - **Radius (new):** `--radius-btn-lg` (10px), `--radius-feature` (14px), `--radius-pill` (9999px)
 - **Accent scale aliases:** `--accent-200` (→accent-wash), `--accent-300` (→accent-light), `--accent-600` (→accent-hover)
-- **Accent tint:** `--accent-tint` (rgba(77,159,255,0.12))
 - **Accent border hover:** `--accent-border-hover` (rgba(77,159,255,0.25)) — card hover glow
 
-**Recharts hardcoded hex:** Charts use raw hex because SVG attrs don't support CSS vars. Constants in `chartUtils.jsx`: `COLOR_ACCENT` (#4D9FFF), `COLOR_POSITIVE` (#2ECC8A), `COLOR_NEGATIVE` (#FF5A7A), `COLOR_AMBER` (#F5A623), `AXIS_TICK` (`{ fill: '#4A6080', fontSize: 11 }`), `GRID_STROKE` (#1E2D4A), `TOOLTIP_STYLE` bg (#1C2333). Backend `BUCKET_COLORS` in `app.py` must stay in sync. All chart axis ticks must use `AXIS_TICK` (not hardcoded `#94a3b8`) — `BudgetChart` corrected in PR3.
+**Recharts hardcoded hex:** Charts use raw hex because SVG attrs don't support CSS vars. Constants in `chartUtils.jsx`: `COLOR_ACCENT` (#4D9FFF), `COLOR_POSITIVE` (#2ECC8A), `COLOR_NEGATIVE` (#FF5A7A), `COLOR_AMBER` (#F5A623), `COLOR_ACCENT_LIGHT` (#7DBFFF — projection lines, added Phase 2.1), `AXIS_TICK` (`{ fill: '#4A6080', fontSize: 11 }`), `GRID_STROKE` (#1E2D4A), `TOOLTIP_STYLE` bg (#1C2333). Backend `BUCKET_COLORS` in `app.py` must stay in sync. All chart axis ticks must use `AXIS_TICK` (not hardcoded `#94a3b8`) — `BudgetChart` corrected in PR3.
 
 **Custom Recharts tick renderers:** When per-tick styling is needed (e.g. highlighting current month in cobalt), use a custom `tick={<ComponentFn />}` prop instead of `tickFormatter`. The component receives `{ x, y, payload }` and returns SVG `<text>`. Drop `tickFormatter` when using a custom tick component — the component handles both formatting and coloring. See `MonthTick` in `BudgetChart.jsx` as the reference implementation.
 
@@ -53,6 +53,12 @@ All colors in CSS module files MUST use CSS custom properties defined in `index.
 **AI pulse dot animation (PR3):** Add animated indicator dots to AI panels. Use `@keyframes aiPulse` (0%/100%: opacity 1, 50%: opacity 0.35) with 2s ease-in-out. Apply via `::before` pseudo-element on the flex container: `content: ''`, `width/height: 6px`, `border-radius: 50%`, `background: var(--accent)`, `flex-shrink: 0`. Example: `AIAnalysisPanel.module.css` `.badges::before`.
 
 **Cobalt glow pseudo-elements (PR3):** Create depth/emphasis with subtle radial gradient glows. Pattern: `::before` pseudo-element with `position: absolute`, `z-index: 0`, `pointer-events: none`, `background: radial-gradient(ellipse at center, var(--accent-tint) 0%, transparent 70%)`. Parent must have `position: relative`; children need `position: relative; z-index: 1` to stack above the glow. Sizing varies by context: use `inset` with negative offsets for bleed-out glows (NetWorthPage `.pageHeader::before`), or explicit pixel dimensions for full-page ambient glows (SetupPage `.root::before`).
+
+**State pill pattern (Phase 2.1):** Three-state status pills for achieved/in-progress/future states use `--green-tint`/`--green`, `--accent-tint`/`--accent-light`, and `--amber-tint`/`--amber` respectively. Pills have `border-radius: var(--radius-pill)`, `font-size: 11px`, `font-weight: 600`, `padding: 3px 10px`. State text conventions: `"✓ Achieved"`, `"◆ Next Goal"`, `"→ In Progress"`.
+
+**View toggle pattern (Phase 2.1):** Two-button view toggles that aren't tab-panels use `aria-pressed` buttons (not `role="tablist"`). The toggle strip mirrors `RangeSelector.module.css` visually: `background: var(--bg-root)`, `border-radius: 8px`, `padding: 4px`, active state uses `background: var(--border)`. The view container uses `role="region"` (not `role="tabpanel"`). Conditional rendering (not `display:none`) is used for the two views to avoid Recharts chart mount issues on invisible panels.
+
+**Investable capital definition (Phase 2.1):** `Retirement + Brokerage` bucket sum from the latest typeData series point. This is the canonical baseline for milestone progress, nest egg comparison, and retirement projection. Never use total net worth for retirement readiness calculations. See `useMilestoneData.js` for the hook that computes this.
 
 ## Frontend
 - **Named API exports:** All API calls go through named exports in `api.js` (e.g. `fetchGroups()`, `saveGroupsConfigs()`). Pages must never use raw `fetchJSON`/`postJSON` with URL strings — those are internal helpers.
@@ -92,6 +98,7 @@ All colors in CSS module files MUST use CSS custom properties defined in `index.
 - **API endpoint contract tests:** Use `it.each()` in `api.test.js` to parametrize URL/method assertions across all wrapper functions. GET wrappers check URL only; mutating wrappers check URL + method.
 - **Integration tests:** Create `*.integration.test.jsx` files that render real child components (no mocks) to verify parent→child data flow. Only mock recharts and `useResponsive`. Use `getAllByText` when names appear in multiple children.
 - **Fake timer coupling:** Use `vi.advanceTimersToNextTimer()` instead of `vi.advanceTimersByTime(N)` to avoid coupling tests to implementation-detail interval values.
+- **MilestoneSkylineView test pattern:** The component uses real recharts (not the `frontend/__mocks__/recharts.jsx` auto-mock) when tested directly — you must add an explicit `vi.mock('recharts', () => ({...}))` factory in each test file that renders it. The global mock in `frontend/__mocks__/` is used by files that do NOT have a local `vi.mock('recharts')` call.
 
 ## Security
 - **Error messages:** Never expose `str(exc)` to clients. Use generic messages + `app.logger.exception()`. The global `@app.errorhandler(Exception)` catches anything that slips through.

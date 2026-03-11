@@ -12,9 +12,10 @@
 - **Budget Heatmap View** — Mobile-only 6-month heatmap as pane 0 in `HorizontalSwipeContainer`. All groups (A–F) complete. 607 frontend tests. Merged (PR #11).
 - **Heatmap Refinements** — 6 visual/interaction improvements to `HeatmapView` + `WindowPicker`. 625 frontend tests. Merged (PR #12).
 - **Net Worth Phases 0–2** — Holdings sync pipeline (PR #3), NW by account type + CAGR (PR #4), NW milestones + retirement tracker (PR #5). All merged.
+- **Phase 2.1 — Dual-View Milestone Hero Card** — `MilestoneHeroCard` (Cards + Skyline views) between TypeStackedChart and AccountsBreakdown. Investable capital (Retirement + Brokerage) is the correct baseline. ReferenceLine loop removed from TypeStackedChart. New files: `milestoneUtils.js`, `useMilestoneData.js`, `MilestoneHeroCard.jsx/.module.css`, `MilestoneCardsView.jsx/.module.css`, `MilestoneSkylineView.jsx/.module.css`. New tokens: `--green-tint`, `--amber-tint` in `index.css`. New constant: `COLOR_ACCENT_LIGHT` in `chartUtils.jsx`. Implementation in progress (not yet committed).
 
 ## Active
-None — all prior work merged. Next up: Phase 2.1 (see Roadmap below).
+None — Phase 2.1 implementation complete (pending commit/PR).
 
 ## Roadmap — Net Worth + Investments + Forecasting
 
@@ -27,7 +28,7 @@ Full requirements: `plans/investment-forecasting-requirements.md`
 | **0** | Sync holdings data from Monarch API (new `holdings` DB table + pipeline) | M | — | **Done** (PR #3) |
 | **1** | NW by account type + CAGR estimates on existing Net Worth page | M | 0 | **Done** (PR #4) |
 | **2** | NW milestones + retirement target tracker on Net Worth page | M | 1 | **Done** (PR #5, merged) |
-| **2.1** | Fix retirement tracker to use investable capital, not total NW | S | 2 | **Next** |
+| **2.1** | Fix retirement tracker to use investable capital, not total NW | S | 2 | **Implementation complete — pending commit** |
 | **B** | Backend decomposition — split `app.py` into route blueprints + service modules | M | — | **Planning complete — ready for implementation** |
 | **3** | New Investments page — account-level performance dashboard + holdings drill-down | L | 0, B | **Planning complete — ready for implementation** |
 | **4** | New Forecasting page — simple projections + retirement planner | L | 1, 2, B | **Planning complete — ready for implementation** |
@@ -138,15 +139,22 @@ All planning uses fresh-context agents per CLAUDE.md — each step gets only wri
 **Correct model:** Retirement readiness = **Retirement + Brokerage account balances** (investable/spendable capital). This is the sum that the 4% safe withdrawal rate applies to.
 
 **Changes needed:**
-1. **Move milestone ReferenceLines** from `NetWorthChart` → `TypeStackedChart` (or a new dedicated chart), plotted against the Retirement + Brokerage bucket sum
-2. **Nest egg / on-track calculation** should compare against current Retirement + Brokerage balance (available from `/api/networth/by-type` data), not total NW
-3. **RetirementSummary** should display current investable capital as the baseline metric
-4. **RetirementPanel** may need a `typeData` prop to access bucket balances for the computation
-5. **Projection series** (when wired in Phase 4) should project investable capital growth, not total NW
+1. **Move milestone ReferenceLines** from `NetWorthChart` → new `MilestoneHeroCard` component with two views (Cards + Skyline chart), plotted against Retirement + Brokerage bucket sum
+2. **Nest egg / on-track calculation** compares against current Retirement + Brokerage balance (from `/api/networth/by-type` data), not total NW
+3. **MilestoneCardsView** shows achievement dates, projected dates, and progress bars per milestone
+4. **MilestoneSkylineView** shows Recharts AreaChart of investable capital history + dashed projection
+5. **TypeStackedChart** — ReferenceLine loop removed; `milestones` prop removed
 
 **What stays the same:** retirement_settings table, form inputs, MilestoneEditor, save/load flow, computeNestEgg math, backend endpoints.
 
-**Size:** S — mostly moving where milestones render and what balance they compare against. No new endpoints, no new tables, no new components.
+**Size:** S — new frontend components, no new backend endpoints or tables.
+
+**Status:** Implementation complete — pending commit/PR.
+
+**Planning artifacts:**
+- `phase2.1-impl-plan.md` — base implementation plan
+- `phase2.1-impl-plan-final.md` — errata/corrections (20 findings from staff review)
+- `phase2.1-design-spec.md` — UI design specification
 
 ### Future / Deferred
 - FIRE number calculator (calculate financial independence number from expenses, show progress)

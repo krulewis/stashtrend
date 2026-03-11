@@ -333,3 +333,18 @@ export const MOCK_RETIREMENT = {
     { label: 'First Million', amount: 1000000 },
   ],
 }
+
+export const MOCK_RETIREMENT_NO_RETURN = {
+  ...MOCK_RETIREMENT,
+  expected_return_pct: null,
+}
+
+export const MOCK_RETIREMENT_NO_MILESTONES = {
+  ...MOCK_RETIREMENT,
+  milestones: [],
+}
+
+export const MOCK_RETIREMENT_SINGLE_MILESTONE = {
+  ...MOCK_RETIREMENT,
+  milestones: [{ label: 'Half-Mil', amount: 500000 }],
+}

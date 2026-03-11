@@ -20,7 +20,7 @@
   - Apply endpoint uses `asyncio.run()` pattern, processes months chronologically, `apply_to_future=False`, partial failure handling
 - **NW by Account Type + CAGR:** COMPLETE — stacked area chart + CAGR sidebar ✅
   - Backend: `GET /api/networth/by-type` — `BUCKET_MAP`/`TYPE_MAP` constants, `_get_bucket()`, `_compute_bucket_cagr()`. Buckets: Retirement, Brokerage, Cash, Real Estate, Debt, Other. Filter: `include_in_net_worth=1` only (matches `networth_history`, no `is_hidden` filter)
-  - Frontend: `TypeStackedChart.jsx` (stacked area + CAGR table), `AccountsBreakdown.jsx` simplified (pie charts removed, collapsible list retained), `fmtPct` moved to `chartUtils.jsx`
+  - Frontend: `TypeStackedChart.jsx` (stacked area + CAGR table, no milestone ReferenceLines since Phase 2.1), `AccountsBreakdown.jsx` simplified (pie charts removed, collapsible list retained), `fmtPct` moved to `chartUtils.jsx`
   - CAGR: aggregate-balance approximation `(end/start)^(1/years) - 1` for 1Y/3Y/5Y. Null for <30 days non-zero history. UI tooltip: "Estimated CAGR — actual returns may differ."
   - **Dual-axis chart:** Left YAxis for positive buckets (stacked), Right YAxis for Debt (absolute values, minus-prefixed ticks). `NEGATIVE_BUCKETS` Set in TypeStackedChart.jsx. CustomTooltip negates values back for display.
   - **AccountsBreakdown:** Groups by `bucket` field (from API) instead of raw Monarch `type`. API adds `bucket` via `_get_bucket()`.
@@ -28,14 +28,27 @@
   - Backend: `retirement_settings` singleton table (`CHECK (id = 1)`), `GET /api/retirement` + `POST /api/retirement` endpoints. Milestones stored as JSON text column, deserialized with `json.loads()` on GET. Validation: both ages required (positive int ≤120), target > current, withdrawal_rate ≤100, return_pct ≤50, milestones max 20 with positive amounts and labels ≤100 chars.
   - Frontend utility: `retirementMath.js` — `computeNestEgg()` (safe withdrawal rate with division-by-zero guard → returns null), `generateProjectionSeries()` (compound growth, fresh `new Date(year, month+i, 1)` per iteration to prevent drift), `mergeHistoryWithProjection()` (Map-based date-keyed merge).
   - Components: `RetirementPanel.jsx` (form container, useEffect hydration, onSave callback), `MilestoneEditor.jsx` (editable milestone rows, add/remove, max 20), `RetirementSummary.jsx` (nest egg, projected amount, on/off track badge with `color-mix()`).
-  - Integration: `NetWorthChart.jsx` renders `<ReferenceLine>` per milestone (amber dashed). `NetWorthPage.jsx` fetches retirement in `Promise.all` with `.catch(() => ({ exists: false }))` for graceful degradation.
+  - Integration: `NetWorthPage.jsx` fetches retirement in `Promise.all` with `.catch(() => ({ exists: false }))` for graceful degradation.
   - Tests: 16 backend + 47 frontend = 63 new tests.
+- **Phase 2.1 — Dual-View Milestone Hero Card:** COMPLETE (pending commit) ✅
+  - Fixes the Phase 2 bug where milestones compared against total NW instead of investable capital.
+  - **Investable capital:** `Retirement + Brokerage` bucket sum from `typeData.series` last point. Lives in `useMilestoneData` hook.
+  - **`MilestoneHeroCard`:** Full-width card between `TypeStackedChart` and `AccountsBreakdown`. Two views toggled by `aria-pressed` button strip:
+    - **MilestoneCardsView:** 2-column grid (1-column mobile) of milestone cards with state pills (Achieved/Next Goal/In Progress), progress bars (`role="progressbar"`), projected dates.
+    - **MilestoneSkylineView:** Recharts AreaChart with historical investable capital (solid cobalt area) + dashed projection (`COLOR_ACCENT_LIGHT`), milestone horizontal ReferenceLines, TODAY vertical divider.
+  - **`useMilestoneData` hook:** `frontend/src/hooks/useMilestoneData.js` — returns `{ shouldRender, investableCapital, rawInvestableCapital, milestones, achievedCount, totalCount, projectionSeries, mergedSeries, nestEgg }`. Guards EC-1 (no milestones), EC-2 (no retirement), EC-12 (no type data). Projection years capped at `min(target_age - current_age, 50)`.
+  - **`milestoneUtils.js`:** `frontend/src/utils/milestoneUtils.js` — pure functions: `sortMilestones`, `computeInvestableCapital`, `buildInvestableSeries`, `classifyMilestones`, `findAchievementDate`, `findProjectedDate`, `formatDateShort`, `buildMergedSeries`.
+  - **TypeStackedChart changes:** `milestones` prop removed, `ReferenceLine` import removed, milestone loop deleted.
+  - **New CSS tokens:** `--green-tint` (rgba(46,204,138,0.12)), `--amber-tint` (rgba(245,166,35,0.12)) added to `index.css :root`.
+  - **New chart constant:** `COLOR_ACCENT_LIGHT = '#7DBFFF'` added to `chartUtils.jsx`.
+  - **ARIA pattern:** `aria-pressed` toggle buttons, `role="region"` on view container. Conditional rendering (not `display:none`).
+  - **Test count:** ~75 new frontend tests across 5 new test files + 2 modified.
 
 ## Design System — Dark Cobalt
 - **Logo:** SVG bar chart + trend arrow + "STASHTREND" wordmark at `frontend/src/assets/stashtrend-logo.svg`. Rendered as `<img>` in App.jsx and SetupPage.jsx. Header: 48px mobile / 64px desktop.
 - **Palette:** `#0A0F1E` base, `#1C2333` cards, `#4D9FFF` cobalt accent, `#F0F6FF` text, `#2ECC8A` green, `#FF5A7A` red, `#F5A623` amber. Full token list: `docs/conventions.md` → Design System section.
 - **CSS tokens:** All colors as custom properties in `index.css :root`. Components use `var(--token)` — never hardcoded hex.
-- **Recharts exception:** SVG attrs can't use CSS vars. Constants in `chartUtils.jsx` (`COLOR_ACCENT`, `COLOR_POSITIVE`, etc.) and backend `BUCKET_COLORS` in `app.py` must stay in sync.
+- **Recharts exception:** SVG attrs can't use CSS vars. Constants in `chartUtils.jsx` (`COLOR_ACCENT`, `COLOR_POSITIVE`, `COLOR_ACCENT_LIGHT`, etc.) and backend `BUCKET_COLORS` in `app.py` must stay in sync.
 - **Color doc:** `stashtrend-colors.html` (in Content dir) — full reference.
 
 ## DDL Init Order (Critical)
