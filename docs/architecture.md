@@ -28,6 +28,18 @@
   - CAGR: aggregate-balance approximation `(end/start)^(1/years) - 1` for 1Y/3Y/5Y. Null for <30 days non-zero history. UI tooltip: "Estimated CAGR — actual returns may differ."
   - **Dual-axis chart:** Left YAxis for positive buckets (stacked), Right YAxis for Debt (absolute values, minus-prefixed ticks). `NEGATIVE_BUCKETS` Set in TypeStackedChart.jsx. CustomTooltip negates values back for display. As of the axis sync fix, both YAxes share a computed `axisDomain` of `[0, Math.max(leftMax, rightMax)]` where `leftMax` is the max stacked sum of positive buckets per data point and `rightMax` is the max absolute debt value per data point. This ensures tick marks mirror exactly: 1M on left aligns with −1M on right.
   - **AccountsBreakdown:** Groups by `bucket` field (from API) instead of raw Monarch `type`. API adds `bucket` via `_get_bucket()`.
+- **Investments Page (Phase 3):** COMPLETE ✅
+  - Backend: 3 new endpoints (`/api/investments/summary`, `/api/investments/accounts/<id>/holdings`, `/api/investments/performance`), batch CAGR computation (`_compute_all_cagrs`), security type normalization, contribution detection via transfer-categorized transactions, `python-dateutil` relativedelta for date arithmetic
+  - Frontend: `InvestmentsPage` with dashboard/drill-down views, `InvestmentAccountsTable`, `InvestmentPerformanceChart` (ComposedChart with merged contribution bars), `AccountDetailHeader`, `HoldingsTable` (sortable/filterable), `AllocationChart` (donut)
+  - Routing: `/investments` (dashboard) + `/investments/:accountId` (drill-down)
+  - RangeSelector updated for value-based selection (backward compatible with label-based callers)
+  - `fetchJSON` extended to attach `.status` on thrown errors
+- **Forecasting Page (Phase 4):** COMPLETE ✅
+  - Frontend-only: All projection math runs in the browser
+  - Math: 3 new functions in `retirementMath.js` — `getInvestableCapital`, `computeBlendedCAGR`, `calculateContributionToTarget` (annuity formula with floor guard)
+  - Components: `ForecastingPage`, `ForecastingChart` (historical + 3 projected lines + nest egg target), `ForecastingControls` (dual `SliderInput`), `ForecastingSummary` (readiness cards + gap analysis), `ForecastingSetup` (first-time inline form, purely presentational)
+  - `SliderInput` reusable component (synced number input + range slider)
+  - Routing: `/forecasting`
 - **NW Milestones + Retirement Tracker (Phase 2):** COMPLETE ✅
   - Backend: `retirement_settings` singleton table (`CHECK (id = 1)`), `GET /api/retirement` + `POST /api/retirement` endpoints. Milestones stored as JSON text column, deserialized with `json.loads()` on GET. Validation: both ages required (positive int ≤120), target > current, withdrawal_rate ≤100, return_pct ≤50, milestones max 20 with positive amounts and labels ≤100 chars.
   - Frontend utility: `retirementMath.js` — `computeNestEgg()` (safe withdrawal rate with division-by-zero guard → returns null), `generateProjectionSeries()` (compound growth, fresh `new Date(year, month+i, 1)` per iteration to prevent drift), `mergeHistoryWithProjection()` (Map-based date-keyed merge).
