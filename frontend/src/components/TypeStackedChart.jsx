@@ -94,6 +94,16 @@ export default function TypeStackedChart({ data }) {
   const negativeBuckets = activeBuckets.filter((b) => NEGATIVE_BUCKETS.has(b))
   const hasRightAxis = negativeBuckets.length > 0
 
+  // Shared axis domain so left/right ticks mirror each other exactly.
+  // Left is stacked (sum of positive buckets per point); right is per-series max.
+  const leftMax = chartData.length
+    ? Math.max(...chartData.map((d) => positiveBuckets.reduce((sum, b) => sum + (d[b] || 0), 0)))
+    : 0
+  const rightMax = chartData.length
+    ? Math.max(...chartData.flatMap((d) => negativeBuckets.map((b) => d[b] || 0)))
+    : 0
+  const axisDomain = [0, Math.max(leftMax, rightMax) || 1]
+
   return (
     <div className={styles.container} data-testid="type-stacked-chart">
       <div className={styles.header}>
@@ -113,11 +123,12 @@ export default function TypeStackedChart({ data }) {
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} vertical={false} />
           <XAxis dataKey="date" tick={AXIS_TICK} tickLine={false} axisLine={false} tickFormatter={formatDateLabel} interval="preserveStartEnd" />
-          <YAxis yAxisId="left" tickFormatter={fmtCompact} tick={AXIS_TICK} tickLine={false} axisLine={false} width={yAxisWidth} />
+          <YAxis yAxisId="left" domain={axisDomain} tickFormatter={fmtCompact} tick={AXIS_TICK} tickLine={false} axisLine={false} width={yAxisWidth} />
           {hasRightAxis && (
             <YAxis
               yAxisId="right"
               orientation="right"
+              domain={axisDomain}
               tickFormatter={(v) => `-${fmtCompact(v)}`}
               tick={{ ...AXIS_TICK, fill: bucket_colors.Debt || COLOR_NEGATIVE }}
               tickLine={false}

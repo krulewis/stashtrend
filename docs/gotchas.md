@@ -201,3 +201,10 @@ screen.getByRole('button', { name: (_, el) =>
 **Symptom:** Tooltip said "Shares an account with a selected group" — user couldn't tell which group conflicted with which, making group definition problems impossible to self-diagnose.
 **Fix:** Changed to `"Shares accounts with: ${names.join(', ')}"` using a `conflictingNames()` helper that looks up the names of whichever selected groups the blocked chip conflicts with.
 **Rule:** Conflict/error messages that reference specific data (groups, accounts, users) must name that data. "Something conflicts with something" sends the user on a blind investigation; "X conflicts with Y" lets them fix it immediately.
+
+### Dual-Axis Recharts Domain Mismatch (TypeStackedChart)
+**Where:** `TypeStackedChart.jsx` — YAxis left (positive buckets) and YAxis right (debt, plotted as absolute values).
+**Symptom:** Right-axis tick marks didn't align with left-axis ticks — e.g. the $1M gridline on the left was not at -$1M on the right.
+**Root cause:** Recharts computes each YAxis domain independently from its own data. The debt series (right axis) auto-scaled to its own max, producing different tick intervals than the left axis.
+**Fix:** Compute `leftMax` (max stacked sum of positive buckets per point) and `rightMax` (max absolute debt value per point), take `Math.max(leftMax, rightMax)`, and pass `domain={[0, axisMax]}` to both YAxis. Right-axis formatter prefixes `-` so ticks read as negative.
+**Rule:** Whenever a dual-axis chart is supposed to mirror scales, you must explicitly sync the `domain` prop on both axes. Never rely on auto-scaling to align them.
