@@ -7,9 +7,11 @@
  * without `end`). Not needed today since no routes share a prefix.
  */
 export const NAV_ITEMS = [
-  { path: '/networth', label: 'Net Worth',      icon: '📈' },
-  { path: '/groups',   label: 'Account Groups', icon: '⬡'  },
+  { path: '/networth',     label: 'Net Worth',      icon: '📈' },
+  { path: '/investments',  label: 'Investments',    icon: '\uD83D\uDCBC' },
+  { path: '/groups',       label: 'Account Groups', icon: '⬡'  },
   { path: '/budgets',  label: 'Budgets',        icon: '💰' },
   { path: '/builder',  label: 'Budget Builder', icon: '🏗'  },
+  { path: '/forecasting', label: 'Forecasting', icon: '🔮' },
   { path: '/sync',     label: 'Sync Data',      icon: '🔄' },
 ]

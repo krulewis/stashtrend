@@ -10,6 +10,8 @@ import BudgetPage from './pages/BudgetPage.jsx'
 import BudgetBuilderPage from './pages/BudgetBuilderPage.jsx'
 import SyncPage from './pages/SyncPage.jsx'
 import SetupPage from './pages/SetupPage.jsx'
+import InvestmentsPage from './pages/InvestmentsPage.jsx'
+import ForecastingPage from './pages/ForecastingPage.jsx'
 import { fetchSetupStatus } from './api.js'
 import { version } from '../package.json'
 
@@ -35,9 +37,12 @@ function AppShell() {
         <Routes>
           <Route path="/"        element={<Navigate to="/networth" replace />} />
           <Route path="/networth" element={<NetWorthPage />} />
+          <Route path="/investments" element={<InvestmentsPage />} />
+          <Route path="/investments/:accountId" element={<InvestmentsPage />} />
           <Route path="/groups"  element={<GroupsPage />} />
           <Route path="/budgets" element={<BudgetPage />} />
           <Route path="/builder" element={<BudgetBuilderPage />} />
+          <Route path="/forecasting" element={<ForecastingPage />} />
           <Route path="/sync"    element={<SyncPage />} />
           <Route path="*"        element={<Navigate to="/networth" replace />} />
         </Routes>
