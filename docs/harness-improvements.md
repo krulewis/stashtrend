@@ -20,6 +20,8 @@
 
 **Where it fits:** All agents that consume large outputs — especially `implementer`, `debugger`, `qa`, and `researcher`. Could be implemented as a post-tool-call hook.
 
+**Implementation note:** Claude Code's PostToolUse hooks can annotate output but cannot intercept and replace it before it enters the agent's context window. True output replacement would require changes at the Claude Code platform level. A hook can detect large output and append a flag/summary note, but the full output is still in context. This recommendation is partially infeasible with current hook capabilities and is deferred until platform support improves.
+
 ---
 
 ## 3. Phase-Scoped Tool Loading (Lazy Loading)

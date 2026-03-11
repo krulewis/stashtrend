@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: Lightweight in-flight code reviewer for quick feedback during development. Not for formal PR review loops — use staff-reviewer for those.
-tools: Read, Write, Grep, Glob, Bash
+tools: Read, Grep, Glob, Bash
 model: sonnet
 ---
 
