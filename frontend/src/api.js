@@ -2,7 +2,11 @@
 
 export async function fetchJSON(url) {
   const res = await fetch(url)
-  if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`)
+  if (!res.ok) {
+    const err = new Error(`HTTP ${res.status} from ${url}`)
+    err.status = res.status
+    throw err
+  }
   return res.json()
 }
 
@@ -78,3 +82,9 @@ export const applyBuilderPlan = (id) => postJSON(`/api/budget-builder/plans/${id
 // ── Retirement / Milestones ───────────────────────────────────────────────
 export const fetchRetirement = () => fetchJSON('/api/retirement')
 export const saveRetirement = (data) => postJSON('/api/retirement', data)
+
+// ── Investments ───────────────────────────────────────────────────────────
+export const fetchInvestmentsSummary = () => fetchJSON('/api/investments/summary')
+export const fetchInvestmentsHoldings = (accountId) => fetchJSON(`/api/investments/accounts/${accountId}/holdings`)
+export const fetchInvestmentsPerformance = (range = '1y', accounts = '') =>
+  fetchJSON(`/api/investments/performance?range=${range}${accounts ? `&accounts=${accounts}` : ''}`)

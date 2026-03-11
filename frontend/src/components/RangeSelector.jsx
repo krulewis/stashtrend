@@ -8,15 +8,18 @@ import styles from './RangeSelector.module.css'
 export default function RangeSelector({ ranges, activeRange, onSelect, className }) {
   return (
     <div className={`${styles.rangeButtons}${className ? ` ${className}` : ''}`}>
-      {ranges.map((r) => (
-        <button
-          key={r.label}
-          onClick={() => onSelect(r.label)}
-          className={`${styles.rangeBtn} ${activeRange === r.label ? styles.rangeBtnActive : ''}`}
-        >
-          {r.label}
-        </button>
-      ))}
+      {ranges.map((r) => {
+        const selectValue = r.value !== undefined ? r.value : r.label
+        return (
+          <button
+            key={r.label}
+            onClick={() => onSelect(selectValue)}
+            className={`${styles.rangeBtn} ${activeRange === selectValue ? styles.rangeBtnActive : ''}`}
+          >
+            {r.label}
+          </button>
+        )
+      })}
     </div>
   )
 }
