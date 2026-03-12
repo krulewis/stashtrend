@@ -3,6 +3,9 @@
  * consumed by MilestoneCardsView.
  *
  * Uses useMemo to memoize expensive computations (series scans, projection generation).
+ *
+ * IMPORTANT: All useMemo calls must run unconditionally (Rules of Hooks). Guard checks
+ * live at the END of the hook — each memo handles null/empty inputs safely.
  */
 import { useMemo } from 'react'
 import { computeNestEgg, generateProjectionSeries } from '../utils/retirementMath.js'
@@ -47,40 +50,32 @@ const NOT_READY = {
  * }}
  */
 export function useMilestoneData(typeData, retirement) {
-  // Guard: EC-1 (no milestones), EC-2 (no retirement settings), EC-12 (no type data)
-  if (!typeData?.series?.length || !retirement?.exists || !retirement?.milestones?.length) {
-    return NOT_READY
-  }
+  // All hooks must be called unconditionally. Guard (shouldRender) is computed at the end.
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const rawInvestableCapital = useMemo(
-    () => computeInvestableCapital(typeData.series),
+    () => typeData?.series?.length ? computeInvestableCapital(typeData.series) : 0,
     [typeData]
   )
 
   // EC-9: negative IC treated as zero for progress calculations; raw value preserved for chart
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const investableCapital = useMemo(
     () => Math.max(0, rawInvestableCapital),
     [rawInvestableCapital]
   )
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const investableSeries = useMemo(
-    () => buildInvestableSeries(typeData.series),
+    () => typeData?.series?.length ? buildInvestableSeries(typeData.series) : [],
     [typeData]
   )
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const sortedMilestones = useMemo(
-    () => sortMilestones(retirement.milestones),
+    () => retirement?.milestones?.length ? sortMilestones(retirement.milestones) : [],
     [retirement]
   )
 
   // API values are numeric; || null converts 0 to null for computeNestEgg
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const nestEgg = useMemo(
-    () => computeNestEgg(
+    () => !retirement?.exists ? null : computeNestEgg(
       Number(retirement.desired_annual_income) || null,
       Number(retirement.social_security_annual) || 0,
       Number(retirement.withdrawal_rate_pct) || 0,
@@ -88,10 +83,8 @@ export function useMilestoneData(typeData, retirement) {
     [retirement]
   )
 
-  // Projection years: capped at remaining years to retirement age, max 50 (EC-14)
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const projectionSeries = useMemo(() => {
-    if (!retirement.expected_return_pct) return null
+    if (!retirement?.expected_return_pct) return null
     const yearsRemaining = Math.min(
       Number(retirement.target_retirement_age) - Number(retirement.current_age),
       50
@@ -104,13 +97,11 @@ export function useMilestoneData(typeData, retirement) {
     })
   }, [investableCapital, retirement])
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const achievementDates = useMemo(
     () => sortedMilestones.map((m) => findAchievementDate(investableSeries, m.amount)),
     [investableSeries, sortedMilestones]
   )
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const projectedDates = useMemo(() => {
     const items = nestEgg != null
       ? [...sortedMilestones, { amount: nestEgg }]
@@ -120,7 +111,6 @@ export function useMilestoneData(typeData, retirement) {
     )
   }, [projectionSeries, sortedMilestones, nestEgg])
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const enrichedMilestones = useMemo(() => {
     const classified = classifyMilestones(sortedMilestones, investableCapital, nestEgg)
     return classified.map((m, i) => ({
@@ -132,17 +122,20 @@ export function useMilestoneData(typeData, retirement) {
     }))
   }, [sortedMilestones, investableCapital, nestEgg, achievementDates, projectedDates, investableSeries])
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const achievedCount = useMemo(
     () => enrichedMilestones.filter((m) => m.state === 'achieved').length,
     [enrichedMilestones]
   )
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const mergedSeries = useMemo(
     () => buildMergedSeries(investableSeries, projectionSeries),
     [investableSeries, projectionSeries]
   )
+
+  // Guard: EC-1 (no milestones), EC-2 (no retirement settings), EC-12 (no type data)
+  if (!typeData?.series?.length || !retirement?.exists || !retirement?.milestones?.length) {
+    return NOT_READY
+  }
 
   return {
     shouldRender: true,

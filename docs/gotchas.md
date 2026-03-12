@@ -16,6 +16,15 @@ After Phase B, route modules that define a helper AND a route that calls that he
 Any new endpoint querying pipeline tables is safe — but don't break this init order.
 See `docs/architecture.md` → DDL Init Order.
 
+## Frontend — React Hooks
+
+### Rules of Hooks: No Early Returns Before useMemo/useState Calls
+A custom hook that does `if (noData) return EMPTY` **before** calling any `useMemo`/`useState` violates React's Rules of Hooks. On the first render (loading state) the early return fires and no hooks run. Once data arrives, hooks run — React sees a different hook count and throws, producing a blank page with no visible error in production.
+
+**Fix:** Move all guard checks to the **end** of the hook (after all `useMemo`/`useState` calls). Make each memo null-safe internally (e.g. `typeData?.series?.length ? computeX(typeData.series) : []`). The `// eslint-disable-next-line react-hooks/rules-of-hooks` pattern is a red flag — it suppresses the lint warning that would have caught this.
+
+Found and fixed in `frontend/src/hooks/useMilestoneData.js` (2026-03-12) — caused a blank Milestones page in production.
+
 ## Frontend Testing
 
 ### App.test.jsx Async Pattern
