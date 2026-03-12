@@ -2,6 +2,9 @@
 
 ## Backend
 
+### Phase B: Same-Module Callables Must Use `_app.func()` (Phase B)
+After Phase B, route modules that define a helper AND a route that calls that helper must call it via `_app.func()` — not directly. If a route calls `has_token()` directly (same-module reference), `patch("app.has_token", ...)` won't intercept it because the patch replaces `app.has_token` in `app`'s namespace, not in the route module's local namespace. Fix: `import app as _app` and call `_app.has_token()`. Found and fixed in `routes/setup.py::setup_status()`.
+
 ### conn.close() Omission Pattern (Partially resolved)
 `get_db_connection()` context manager added to auto-close connections. Endpoints that use `get_db()` directly (budget-related, AI, budget-builder) still intentionally omit `conn.close()` because tests share a single in-memory connection across multiple `patch` blocks. Migration to `get_db_connection()` is incremental — endpoints need `get_db()` when tests mock the return value. The context manager is for new code and non-test-mocked endpoints. Exception: `ai_analyze()` uses `try/finally: conn.close()` because it was refactored to use `_call_ai()` and the connection must stay open through the AI call but close on all exit paths.
 
@@ -105,11 +108,11 @@ JSX conditionals render separate text nodes; use a custom `el.textContent` funct
 **Fix:** Apply `_sanitize_prompt_field()` at prompt construction time, not at save time. Both saved profile fields and overrides get sanitized.
 **Rule:** Input sanitization for AI prompts must happen at the point of prompt construction, not at the point of data storage.
 
-### Net Worth ≠ Retirement Capital (Phase 2.1 fix planned)
-**Where:** RetirementPanel + NetWorthChart milestone markers
-**Symptom:** Milestone lines on NW chart and nest egg on-track comparison use total net worth ($1.08M), which includes home equity, vehicles, and illiquid assets. A user appears close to a $1M milestone when their actual investable capital (Retirement + Brokerage) is only ~$975K.
+### Net Worth ≠ Retirement Capital (Fixed in Phase 2.1)
+**Where:** RetirementPanel + NetWorthChart milestone markers (Phase 2), now fixed in Phase 2.1.
+**Symptom:** Milestone lines on NW chart and nest egg on-track comparison used total net worth ($1.08M), which includes home equity, vehicles, and illiquid assets. A user appeared close to a $1M milestone when their actual investable capital (Retirement + Brokerage) was only ~$975K.
 **Root cause:** Phase 2 conflated net worth with spendable retirement capital. The safe withdrawal rate (4% rule) only applies to investable assets, not total NW.
-**Fix:** Phase 2.1 — move milestones to TypeStackedChart (Retirement + Brokerage buckets), compare nest egg target against investable capital sum.
+**Fix:** Phase 2.1 — `MilestoneHeroCard` compares milestones against investable capital (Retirement + Brokerage bucket sum from `typeData.series` last point). ReferenceLine loop removed from `TypeStackedChart`. `useMilestoneData` hook computes investable capital and exposes `rawInvestableCapital` (for chart) and `investableCapital = Math.max(0, raw)` (for progress bars).
 **Rule:** Financial planning features must distinguish between total net worth and investable/spendable capital. Retirement readiness = liquid investment accounts only.
 
 ### APScheduler Stub Missing `running` Property (Fixed)
@@ -195,6 +198,19 @@ screen.getByRole('button', { name: (_, el) =>
 **Root cause:** The plan's months array for that test was written oldest-first (`['2025-09-01'...'2026-02-01']`), but `WindowPicker` expects most-recent-first. `open()` sets `gridYear` to `oldestMonth`'s year — which is `windowSlice[windowSlice.length-1]`. With oldest-first ordering, `windowSlice[5]` is the newest date (2026), so the grid opens on 2026 instead of 2025.
 **Fix:** Reverse the array to most-recent-first: `['2026-02-01', '2026-01-01', '2025-12-01', '2025-11-01', '2025-10-01', '2025-09-01']`.
 **Rule:** All `months[]` arrays passed to `WindowPicker` (and used in its tests) must be sorted most-recent-first. The `open()` function derives `gridYear` from the oldest month in the current window, which is `windowSlice[windowSlice.length - 1]` — the last element of a most-recent-first slice is the furthest-past date.
+
+### Recharts Components Require Explicit vi.mock in Test Files
+**Where:** Any test file that imports a component using Recharts (`MilestoneSkylineView.test.jsx`, etc.)
+**Symptom:** Tests fail with "Unable to find an element by: [data-testid='reference-line-500000']" or "data-testid='responsive-container'" — elements rendered inside Recharts chart components never appear in the DOM.
+**Root cause:** `frontend/__mocks__/recharts.jsx` is the global auto-mock, but it only applies when the test file does NOT define its own `vi.mock('recharts', ...)` factory. Even without a custom factory, `ResponsiveContainer` uses `ResizeObserver` internally which jsdom doesn't implement — children may not render. When a test file has any `vi.mock(...)` calls, the auto-mock is NOT automatically applied.
+**Fix:** Add an explicit `vi.mock('recharts', () => ({ ... }))` factory at the top of the test file, before the import of the component under test. Render `ResponsiveContainer` as `<div data-testid="responsive-container">{children}</div>`, `AreaChart` as `<div data-testid="area-chart">{children}</div>`, and `ReferenceLine` as `<div data-testid={y != null ? \`reference-line-\${y}\` : \`reference-line-x-\${x}\`} />`.
+**Rule:** Every test file that renders a component containing Recharts charts must define its own explicit `vi.mock('recharts', ...)` factory. Never rely on the global auto-mock when the test file has other `vi.mock` calls.
+
+### getByText Ambiguity — Pill Text + Status Line Share "Achieved"
+**Where:** `MilestoneCardsView.test.jsx` — any test querying `/Achieved/`.
+**Symptom:** `getByText(/Achieved/)` throws "Found multiple elements" — the pill text "✓ Achieved" and the status line "Achieved Jan '24" both match.
+**Fix:** Use `getAllByText(/Achieved/).length >= 1` for a presence check, or use a more specific query (e.g., `getByText("Jan '24")` to confirm the date is rendered).
+**Rule:** Milestone card state pills and status lines intentionally share state vocabulary ("Achieved", "In Progress"). Use `getAllByText` or a unique sub-string when testing cards that have both a pill and a status line with overlapping text.
 
 ### Generic Conflict Messages Create Investigation Overhead
 **Where:** `GroupSnapshotControls.jsx` chip `title` attribute.
