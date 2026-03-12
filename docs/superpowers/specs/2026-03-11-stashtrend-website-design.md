@@ -56,7 +56,8 @@ Replace all `href="#"` placeholder links with real URLs:
 - "Clone on GitHub" buttons → `https://github.com/krulewis/stashtrend`
 - "GitHub" nav link → `https://github.com/krulewis/stashtrend`
 - "GitHub" footer link → `https://github.com/krulewis/stashtrend`
-- "View docs →" / "Read the docs →" → `https://github.com/krulewis/stashtrend#readme` (until a docs site exists)
+- "View docs →" / "Read the docs →" → `https://github.com/krulewis/stashtrend/wiki`
+- "Wiki" nav link → `https://github.com/krulewis/stashtrend/wiki` (add alongside existing Features / How it works / GitHub nav links)
 - Step 1 code block: `git clone https://github.com/krulewis/stashtrend`
 
 ### 1.5 Mobile Responsiveness
@@ -144,6 +145,47 @@ Static HTML/CSS — no build step. Deployed via Cloudflare Pages to stashtrend.c
 | Red | `#FF5A7A` |
 | Amber | `#F5A623` |
 | Font | Helvetica Neue, Helvetica, Arial, sans-serif |
+
+---
+
+## Epic 3 — GitHub Wiki Sync
+
+### 3.1 GitHub Actions Workflow
+
+Add `.github/workflows/sync-wiki.yml` to the **main stashtrend repo** (`krulewis/stashtrend`). On every push to `main` that touches `docs/wiki/**`, it pushes the contents of `docs/wiki/` to the GitHub Wiki repo (`krulewis/stashtrend.wiki.git`).
+
+```yaml
+# .github/workflows/sync-wiki.yml
+name: Sync Wiki
+on:
+  push:
+    branches: [main]
+    paths: ['docs/wiki/**']
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Push docs/wiki/ to GitHub Wiki
+        uses: Andrew-Chen-Wang/github-wiki-action@v4
+        with:
+          path: docs/wiki/
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+```
+
+The `GITHUB_TOKEN` secret is available automatically — no manual setup required.
+
+### 3.2 Landing Page Wiki Link
+
+With sync in place, use the clean GitHub Wiki URL:
+- Nav "Wiki" link → `https://github.com/krulewis/stashtrend/wiki`
+- "View docs →" / "Read the docs →" → `https://github.com/krulewis/stashtrend/wiki`
+
+### 3.3 Initial Wiki Seed
+
+On first workflow run, `docs/wiki/Home.md` becomes the wiki home page. Subsequent pushes to `docs/wiki/` auto-update the wiki. `docs/wiki/` remains the source of truth.
 
 ---
 
