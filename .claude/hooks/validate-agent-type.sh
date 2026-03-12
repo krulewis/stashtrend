@@ -37,6 +37,7 @@ ALLOWED=(
   "packet-summarizer"
   "changelog-scanner"
   "loop-guard"
+  "security-scanner"
 )
 
 for allowed in "${ALLOWED[@]}"; do
