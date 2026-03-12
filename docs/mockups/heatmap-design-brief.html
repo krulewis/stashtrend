@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Budget Heatmap — Stashtrend Design Brief</title>
+<style>
+  /* ─── Reset ──────────────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: #1a1a2e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 60px;
+    -webkit-font-smoothing: antialiased;
+    color: #8BA8CC;
+  }
+
+  h1 {
+    color: #F0F6FF;
+    font-size: 22px;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: #8BA8CC;
+    margin-bottom: 32px;
+  }
+
+  /* ─── Phone frame ────────────────────────────────────────────────────── */
+  .phone-frame {
+    width: 390px;
+    min-height: 700px;
+    background: #0A0F1E;
+    border-radius: 24px;
+    border: 2px solid #1E2D4A;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  .phone-content {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* ─── Window picker ──────────────────────────────────────────────────── */
+  .window-picker {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 44px;
+    padding: 0 16px;
+    background: #1C2333;
+    border: 1px solid #1E2D4A;
+    border-radius: 8px;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .window-picker:hover {
+    border-color: rgba(77,159,255,0.25);
+  }
+
+  .picker-label {
+    font-size: 15px;
+    font-weight: 400;
+    color: #F0F6FF;
+  }
+
+  .picker-chevron {
+    font-size: 12px;
+    color: #4A6080;
+    transition: transform 200ms ease;
+  }
+
+  /* ─── Heatmap grid card ──────────────────────────────────────────────── */
+  .heatmap-card {
+    background: #1C2333;
+    border: 1px solid #1E2D4A;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  /* ─── Column headers ─────────────────────────────────────────────────── */
+  .col-headers {
+    display: flex;
+    align-items: center;
+    height: 28px;
+    padding: 0 16px;
+    border-bottom: 1px solid #162035;
+  }
+
+  .col-label-spacer {
+    width: 127px;
+    flex-shrink: 0;
+  }
+
+  .col-gap {
+    width: 8px;
+    flex-shrink: 0;
+  }
+
+  .col-months {
+    flex: 1;
+    display: flex;
+  }
+
+  .col-month {
+    flex: 1;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 400;
+    color: #4A6080;
+  }
+
+  /* ─── Group row ──────────────────────────────────────────────────────── */
+  .group-row {
+    border-bottom: 1px solid #162035;
+  }
+
+  .group-row:last-child {
+    border-bottom: none;
+  }
+
+  .group-header {
+    display: flex;
+    align-items: center;
+    height: 44px;
+    padding: 0 16px;
+    cursor: pointer;
+    gap: 8px;
+    user-select: none;
+  }
+
+  .group-header:active {
+    background: #243044;
+  }
+
+  .chevron {
+    font-size: 12px;
+    color: #4A6080;
+    display: inline-block;
+    transition: transform 200ms ease;
+    width: 10px;
+    flex-shrink: 0;
+  }
+
+  .chevron.expanded {
+    transform: rotate(90deg);
+  }
+
+  .group-name {
+    width: 109px; /* 127 - 10 (chevron) - 8 (gap) */
+    flex-shrink: 0;
+    font-size: 15px;
+    font-weight: 500;
+    color: #F0F6FF;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .dots-zone {
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+
+  .dot-col {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .dot {
+    border-radius: 50%;
+  }
+
+  .dot-agg  { width: 12px; height: 12px; }
+  .dot-item { width: 10px; height: 10px; }
+
+  .dot-green  { background: #2ECC8A; }
+  .dot-yellow { background: #F5A623; }
+  .dot-red    { background: #FF5A7A; }
+  .dot-grey   { background: #4A6080; }
+  .dot-faint  { background: #2B4060; }
+
+  /* ─── Expanded items ─────────────────────────────────────────────────── */
+  .group-items {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 300ms ease;
+  }
+
+  .group-items.expanded {
+    max-height: 500px;
+  }
+
+  .item-row {
+    display: flex;
+    align-items: center;
+    height: 36px;
+    padding: 0 16px;
+    gap: 8px;
+  }
+
+  .item-indent {
+    width: 10px;
+    flex-shrink: 0;
+  }
+
+  .item-name {
+    width: 109px;
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 400;
+    color: #8BA8CC;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ─── Legend ──────────────────────────────────────────────────────────── */
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 10px 16px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .legend-label {
+    font-size: 11px;
+    font-weight: 400;
+    color: #4A6080;
+  }
+
+  /* ─── Design callouts ────────────────────────────────────────────────── */
+  .callout {
+    position: absolute;
+    font-size: 11px;
+    font-weight: 500;
+    color: #4D9FFF;
+    background: rgba(77,159,255,0.12);
+    border: 1px solid rgba(77,159,255,0.25);
+    border-radius: 4px;
+    padding: 3px 8px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .callout-line {
+    position: absolute;
+    background: rgba(77,159,255,0.3);
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* ─── Annotations container ──────────────────────────────────────────── */
+  .annotations {
+    width: 390px;
+    margin-top: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .annotation-card {
+    background: #1C2333;
+    border: 1px solid #1E2D4A;
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+
+  .annotation-card h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #4D9FFF;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .annotation-card p {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #8BA8CC;
+  }
+
+  .annotation-card code {
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 12px;
+    background: #0D1220;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #F0F6FF;
+  }
+
+  .spec-table {
+    width: 100%;
+    margin-top: 8px;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  .spec-table th {
+    text-align: left;
+    font-weight: 500;
+    color: #4A6080;
+    padding: 4px 8px 4px 0;
+    border-bottom: 1px solid #162035;
+  }
+
+  .spec-table td {
+    padding: 4px 8px 4px 0;
+    color: #8BA8CC;
+    border-bottom: 1px solid #0E1423;
+  }
+
+  .spec-table td:last-child {
+    color: #F0F6FF;
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 11px;
+  }
+
+  .callout-inline {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 500;
+    color: #4D9FFF;
+    background: rgba(77,159,255,0.12);
+    border: 1px dashed rgba(77,159,255,0.3);
+    border-radius: 3px;
+    padding: 1px 6px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  .view-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 0 4px;
+  }
+
+  .view-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #2B4060;
+  }
+
+  .view-dot.active {
+    background: #4D9FFF;
+  }
+</style>
+</head>
+<body>
+
+<h1>Budget Heatmap View</h1>
+<p class="subtitle">Stashtrend Mobile Design Brief -- Interactive Mockup</p>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- PHONE FRAME                                                            -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+
+<div class="phone-frame">
+  <div class="phone-content">
+
+    <!-- ── Window Picker ─────────────────────────────────────────────────── -->
+    <div class="window-picker" style="position: relative;">
+      <span class="picker-label">Sep 2025 &mdash; Feb 2026</span>
+      <span class="picker-chevron">&#8964;</span>
+      <span class="callout-inline">Six-month window picker</span>
+    </div>
+
+    <!-- ── Heatmap Grid Card ─────────────────────────────────────────────── -->
+    <div class="heatmap-card">
+
+      <!-- Column headers -->
+      <div class="col-headers">
+        <div class="col-label-spacer"></div>
+        <div class="col-gap"></div>
+        <div class="col-months">
+          <div class="col-month">Sep</div>
+          <div class="col-month">Oct</div>
+          <div class="col-month">Nov</div>
+          <div class="col-month">Dec</div>
+          <div class="col-month">Jan</div>
+          <div class="col-month">Feb</div>
+        </div>
+      </div>
+
+      <!-- ── Group 1: Food & Dining (EXPANDED) ──────────────────────────── -->
+      <div class="group-row" id="group-food">
+        <div class="group-header" onclick="toggleGroup('food')">
+          <span class="chevron expanded" id="chevron-food">&rsaquo;</span>
+          <span class="group-name">Food & Dining</span>
+          <div class="dots-zone">
+            <div class="dot-col"><span class="dot dot-agg dot-green"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-green"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-yellow"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-red"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-green"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-green"></span></div>
+          </div>
+          <span class="callout-inline" style="position: absolute; right: -2px; top: -14px; font-size: 9px;">Aggregate dot</span>
+        </div>
+        <div class="group-items expanded" id="items-food">
+          <div class="item-row">
+            <div class="item-indent"></div>
+            <span class="item-name">Groceries</span>
+            <div class="dots-zone">
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-yellow"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-red"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="item-indent"></div>
+            <span class="item-name">Restaurants</span>
+            <div class="dots-zone">
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-yellow"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-red"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-red"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-yellow"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+            </div>
+            <span class="callout-inline" style="position:absolute;right:-2px;top:0;font-size:9px;">Individual category dot</span>
+          </div>
+          <div class="item-row">
+            <div class="item-indent"></div>
+            <span class="item-name">Coffee Shops</span>
+            <div class="dots-zone">
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-yellow"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-faint"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Group 2: Housing (COLLAPSED) ────────────────────────────────── -->
+      <div class="group-row" id="group-housing">
+        <div class="group-header" onclick="toggleGroup('housing')">
+          <span class="chevron" id="chevron-housing">&rsaquo;</span>
+          <span class="group-name">Housing</span>
+          <div class="dots-zone">
+            <div class="dot-col"><span class="dot dot-agg dot-green"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-green"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-green"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-green"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-green"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-green"></span></div>
+          </div>
+        </div>
+        <div class="group-items" id="items-housing">
+          <div class="item-row">
+            <div class="item-indent"></div>
+            <span class="item-name">Rent</span>
+            <div class="dots-zone">
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="item-indent"></div>
+            <span class="item-name">Utilities</span>
+            <div class="dots-zone">
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-yellow"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Group 3: Auto & Transport (COLLAPSED) ──────────────────────── -->
+      <div class="group-row" id="group-auto">
+        <div class="group-header" onclick="toggleGroup('auto')">
+          <span class="chevron" id="chevron-auto">&rsaquo;</span>
+          <span class="group-name">Auto & Transport</span>
+          <div class="dots-zone">
+            <div class="dot-col"><span class="dot dot-agg dot-green"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-yellow"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-red"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-yellow"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-green"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-green"></span></div>
+          </div>
+        </div>
+        <div class="group-items" id="items-auto">
+          <div class="item-row">
+            <div class="item-indent"></div>
+            <span class="item-name">Gas & Fuel</span>
+            <div class="dots-zone">
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-yellow"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-red"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-yellow"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="item-indent"></div>
+            <span class="item-name">Car Insurance</span>
+            <div class="dots-zone">
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="item-indent"></div>
+            <span class="item-name">Parking</span>
+            <div class="dots-zone">
+              <div class="dot-col"><span class="dot dot-item dot-grey"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-red"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-red"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-grey"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-faint"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-faint"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Group 4: Lifestyle (COLLAPSED) ──────────────────────────────── -->
+      <div class="group-row" id="group-lifestyle">
+        <div class="group-header" onclick="toggleGroup('lifestyle')">
+          <span class="chevron" id="chevron-lifestyle">&rsaquo;</span>
+          <span class="group-name">Lifestyle</span>
+          <div class="dots-zone">
+            <div class="dot-col"><span class="dot dot-agg dot-yellow"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-red"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-red"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-yellow"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-red"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-yellow"></span></div>
+          </div>
+        </div>
+        <div class="group-items" id="items-lifestyle">
+          <div class="item-row">
+            <div class="item-indent"></div>
+            <span class="item-name">Shopping</span>
+            <div class="dots-zone">
+              <div class="dot-col"><span class="dot dot-item dot-yellow"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-red"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-red"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-yellow"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-red"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-yellow"></span></div>
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="item-indent"></div>
+            <span class="item-name">Entertainment</span>
+            <div class="dots-zone">
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-yellow"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-red"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-red"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="item-indent"></div>
+            <span class="item-name">Subscriptions</span>
+            <div class="dots-zone">
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Group 5: Health & Fitness (COLLAPSED) ───────────────────────── -->
+      <div class="group-row" id="group-health">
+        <div class="group-header" onclick="toggleGroup('health')">
+          <span class="chevron" id="chevron-health">&rsaquo;</span>
+          <span class="group-name">Health & Fitness</span>
+          <div class="dots-zone">
+            <div class="dot-col"><span class="dot dot-agg dot-green"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-green"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-grey"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-green"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-yellow"></span></div>
+            <div class="dot-col"><span class="dot dot-agg dot-green"></span></div>
+          </div>
+        </div>
+        <div class="group-items" id="items-health">
+          <div class="item-row">
+            <div class="item-indent"></div>
+            <span class="item-name">Gym</span>
+            <div class="dots-zone">
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="item-indent"></div>
+            <span class="item-name">Doctor / Dental</span>
+            <div class="dots-zone">
+              <div class="dot-col"><span class="dot dot-item dot-faint"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-faint"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-grey"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-green"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-yellow"></span></div>
+              <div class="dot-col"><span class="dot dot-item dot-faint"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /heatmap-card -->
+
+    <!-- ── Legend ─────────────────────────────────────────────────────────── -->
+    <div class="legend">
+      <div class="legend-item">
+        <span class="legend-dot" style="background:#2ECC8A;"></span>
+        <span class="legend-label">Under 85%</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot" style="background:#F5A623;"></span>
+        <span class="legend-label">85 &ndash; 100%</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot" style="background:#FF5A7A;"></span>
+        <span class="legend-label">Over 100%</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot" style="background:#4A6080;"></span>
+        <span class="legend-label">No budget</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot" style="background:#2B4060;"></span>
+        <span class="legend-label">No data</span>
+      </div>
+    </div>
+
+    <!-- ── View indicator dots (pane 3 of 3 active) ──────────────────────── -->
+    <div class="view-dots">
+      <span class="view-dot"></span>
+      <span class="view-dot"></span>
+      <span class="view-dot active"></span>
+    </div>
+
+  </div><!-- /phone-content -->
+</div><!-- /phone-frame -->
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- DESIGN ANNOTATIONS                                                      -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+
+<div class="annotations">
+
+  <div class="annotation-card">
+    <h3>Layout Spec</h3>
+    <p>The grid fits in 375px (minimum) to 390px (standard) viewports with no horizontal scrolling. Row labels take 127px, an 8px gap separates labels from the dot zone, and the remaining space distributes evenly across 6 columns.</p>
+    <table class="spec-table">
+      <tr><th>Element</th><th>Value</th></tr>
+      <tr><td>Page padding</td><td>16px (--sp-4)</td></tr>
+      <tr><td>Row label width</td><td>127px</td></tr>
+      <tr><td>Label-to-dots gap</td><td>8px (--sp-2)</td></tr>
+      <tr><td>Aggregate dot</td><td>12px diameter</td></tr>
+      <tr><td>Item dot</td><td>10px diameter</td></tr>
+      <tr><td>Group header height</td><td>44px</td></tr>
+      <tr><td>Item row height</td><td>36px</td></tr>
+      <tr><td>Column header height</td><td>28px</td></tr>
+    </table>
+  </div>
+
+  <div class="annotation-card">
+    <h3>Color Tokens</h3>
+    <p>All colors map to CSS custom properties in <code>index.css</code>. No hardcoded hex in CSS modules.</p>
+    <table class="spec-table">
+      <tr><th>Zone</th><th>Token</th></tr>
+      <tr><td style="color:#2ECC8A;">Safe (&lt;85%)</td><td>--color-positive / --green</td></tr>
+      <tr><td style="color:#F5A623;">Warning (85-100%)</td><td>--color-warning / --amber</td></tr>
+      <tr><td style="color:#FF5A7A;">Over (&gt;100%)</td><td>--color-negative / --red</td></tr>
+      <tr><td style="color:#4A6080;">No budget</td><td>--text-muted</td></tr>
+      <tr><td style="color:#2B4060;">No data</td><td>--text-faint</td></tr>
+      <tr><td>Card bg</td><td>--bg-card (#1C2333)</td></tr>
+      <tr><td>Card border</td><td>--border (#1E2D4A)</td></tr>
+    </table>
+  </div>
+
+  <div class="annotation-card">
+    <h3>Interaction</h3>
+    <p><strong>Tap group header</strong> to expand/collapse. Chevron rotates 90deg. Content animates with <code>grid-template-rows: 0fr/1fr</code> (300ms, <code>--ease-smooth</code>). All groups default to collapsed.</p>
+    <p style="margin-top:6px;"><strong>Window picker</strong> selects the 6-month range. Tapping opens a calendar-style month grid; selecting a month sets the start of the window. Follows the same ARIA combobox/listbox pattern as <code>MonthDropdown</code>.</p>
+    <p style="margin-top:6px;"><strong>Dots are read-only</strong> &mdash; no tap, hover, or focus interaction.</p>
+  </div>
+
+  <div class="annotation-card">
+    <h3>Zone Logic</h3>
+    <p>Reuses <code>getBudgetZone(actual, budgeted)</code> from <code>utils/budgetUtils.js</code> with the existing <code>WARNING_THRESHOLD = 0.85</code>. Aggregate dots use group-level totals (sum of actual, sum of budgeted).</p>
+  </div>
+
+  <div class="annotation-card">
+    <h3>Accessibility</h3>
+    <p>Grid uses <code>role="grid"</code> with <code>role="row"</code> / <code>role="gridcell"</code>. Each dot cell has an <code>aria-label</code> describing category, month, percentage, and zone status. Group headers use <code>aria-expanded</code> and <code>aria-controls</code>. Picker follows combobox pattern with keyboard nav (Arrow/Enter/Escape). <code>prefers-reduced-motion</code> disables all transitions.</p>
+  </div>
+
+  <div class="annotation-card">
+    <h3>Integration</h3>
+    <p>Third pane (index 2) in <code>HorizontalSwipeContainer</code>. View indicator shows 3 dots. Data lifted to <code>BudgetPage</code> &mdash; heatmap pane receives pre-fetched multi-month data as props. Reuses existing <code>budget_custom_groups</code> ordering.</p>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- INTERACTION SCRIPT                                                      -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+
+<script>
+function toggleGroup(id) {
+  const items = document.getElementById('items-' + id);
+  const chevron = document.getElementById('chevron-' + id);
+  if (!items || !chevron) return;
+
+  const isExpanded = items.classList.contains('expanded');
+  if (isExpanded) {
+    items.classList.remove('expanded');
+    chevron.classList.remove('expanded');
+  } else {
+    items.classList.add('expanded');
+    chevron.classList.add('expanded');
+  }
+}
+</script>
+
+</body>
+</html>

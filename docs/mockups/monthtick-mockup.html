@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MonthTick Comparison — PR3 Decision</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0A0F1E;
+    color: #F0F6FF;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    padding: 48px;
+  }
+  h1 {
+    font-size: 20px;
+    font-weight: 400;
+    margin-bottom: 8px;
+    color: #F0F6FF;
+  }
+  .subtitle {
+    font-size: 13px;
+    color: #4A6080;
+    margin-bottom: 40px;
+  }
+  .comparison {
+    display: flex;
+    gap: 48px;
+    flex-wrap: wrap;
+  }
+  .panel {
+    flex: 1;
+    min-width: 400px;
+    background: #1C2333;
+    border: 1px solid #1E2D4A;
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .panel-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #4A6080;
+    margin-bottom: 16px;
+  }
+  .chart-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: #F0F6FF;
+    margin-bottom: 16px;
+  }
+  .chart-area {
+    background: #0A0F1E;
+    border-radius: 8px;
+    padding: 20px 16px 8px;
+    position: relative;
+  }
+
+  /* Fake chart grid */
+  .grid {
+    position: relative;
+    height: 180px;
+    border-left: 1px solid #1E2D4A;
+    border-bottom: 1px solid #1E2D4A;
+  }
+  .grid-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-top: 1px dashed #1E2D4A;
+  }
+  .grid-line:nth-child(1) { top: 0; }
+  .grid-line:nth-child(2) { top: 33%; }
+  .grid-line:nth-child(3) { top: 66%; }
+
+  /* Fake bars */
+  .bars {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    padding: 0 8px;
+    height: 100%;
+  }
+  .bar-group {
+    display: flex;
+    gap: 3px;
+    align-items: flex-end;
+  }
+  .bar {
+    width: 18px;
+    border-radius: 3px 3px 0 0;
+  }
+  .bar.budget { background: #4D9FFF; }
+  .bar.actual { background: #2ECC8A; }
+
+  /* Axis ticks */
+  .x-axis {
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 8px 0;
+  }
+  .tick {
+    font-size: 12px;
+    text-align: center;
+  }
+  /* Current style: all ticks same muted color */
+  .tick.uniform {
+    color: #94a3b8;
+  }
+  /* Proposed style: current month highlighted cobalt */
+  .tick.muted {
+    color: #4A6080;
+  }
+  .tick.current {
+    color: #4D9FFF;
+    font-weight: 500;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 12px;
+    font-size: 13px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+  }
+  .legend-a .legend-dot { background: #4D9FFF; }
+  .legend-b .legend-dot { background: #2ECC8A; }
+  .legend-uniform { color: #94a3b8; }
+  .legend-proposed { color: #4A6080; }
+
+  /* Callout */
+  .callout {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: rgba(77,159,255,0.08);
+    border: 1px solid rgba(77,159,255,0.15);
+    border-radius: 8px;
+    font-size: 12px;
+    color: #8BA8CC;
+    line-height: 1.6;
+  }
+  .callout code {
+    background: rgba(77,159,255,0.12);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #4D9FFF;
+  }
+  .diff {
+    margin-top: 24px;
+    padding: 16px;
+    background: #111827;
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  .diff-title {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #4A6080;
+    margin-bottom: 8px;
+  }
+  .diff-old { color: #FF5A7A; }
+  .diff-new { color: #2ECC8A; }
+  .diff-comment { color: #4A6080; }
+
+  .arrow-callout {
+    position: relative;
+    margin-top: 4px;
+  }
+  .arrow-callout::before {
+    content: "^";
+    position: absolute;
+    top: -14px;
+    color: #4D9FFF;
+    font-size: 14px;
+    font-weight: bold;
+  }
+  .arrow-label {
+    font-size: 10px;
+    color: #4D9FFF;
+    letter-spacing: 0.5px;
+  }
+
+  /* highlight ring around current month tick */
+  .highlight-ring {
+    position: relative;
+  }
+  .highlight-ring::after {
+    content: '';
+    position: absolute;
+    inset: -4px -8px;
+    border: 1.5px dashed rgba(77,159,255,0.4);
+    border-radius: 6px;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<h1>MonthTick — Current vs Proposed</h1>
+<p class="subtitle">PR3 decision: should the current month's x-axis tick be highlighted in cobalt? This requires a small MonthTick render function.</p>
+
+<div class="comparison">
+
+  <!-- CURRENT -->
+  <div class="panel">
+    <div class="panel-label">A. Current (no change)</div>
+    <div class="chart-title">Monthly Totals</div>
+    <div class="chart-area">
+      <div class="grid">
+        <div class="grid-line"></div>
+        <div class="grid-line"></div>
+        <div class="grid-line"></div>
+        <div class="bars">
+          <div class="bar-group">
+            <div class="bar budget" style="height: 55%"></div>
+            <div class="bar actual" style="height: 48%"></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar budget" style="height: 60%"></div>
+            <div class="bar actual" style="height: 72%"></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar budget" style="height: 65%"></div>
+            <div class="bar actual" style="height: 58%"></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar budget" style="height: 60%"></div>
+            <div class="bar actual" style="height: 52%"></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar budget" style="height: 70%"></div>
+            <div class="bar actual" style="height: 64%"></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar budget" style="height: 60%"></div>
+            <div class="bar actual" style="height: 35%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="x-axis">
+        <span class="tick uniform">Oct '25</span>
+        <span class="tick uniform">Nov '25</span>
+        <span class="tick uniform">Dec '25</span>
+        <span class="tick uniform">Jan '26</span>
+        <span class="tick uniform">Feb '26</span>
+        <span class="tick uniform">Mar '26</span>
+      </div>
+      <div class="legend legend-uniform">
+        <div class="legend-item legend-a"><div class="legend-dot"></div> Budget</div>
+        <div class="legend-item legend-b"><div class="legend-dot"></div> Actual</div>
+      </div>
+    </div>
+    <div class="callout">
+      All ticks use the same color: <code>#94a3b8</code> (slate-400). No visual cue for "now." No code change needed.
+    </div>
+  </div>
+
+  <!-- PROPOSED -->
+  <div class="panel">
+    <div class="panel-label">B. Proposed (MonthTick component)</div>
+    <div class="chart-title">Monthly Totals</div>
+    <div class="chart-area">
+      <div class="grid">
+        <div class="grid-line"></div>
+        <div class="grid-line"></div>
+        <div class="grid-line"></div>
+        <div class="bars">
+          <div class="bar-group">
+            <div class="bar budget" style="height: 55%"></div>
+            <div class="bar actual" style="height: 48%"></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar budget" style="height: 60%"></div>
+            <div class="bar actual" style="height: 72%"></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar budget" style="height: 65%"></div>
+            <div class="bar actual" style="height: 58%"></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar budget" style="height: 60%"></div>
+            <div class="bar actual" style="height: 52%"></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar budget" style="height: 70%"></div>
+            <div class="bar actual" style="height: 64%"></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar budget" style="height: 60%"></div>
+            <div class="bar actual" style="height: 35%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="x-axis">
+        <span class="tick muted">Oct '25</span>
+        <span class="tick muted">Nov '25</span>
+        <span class="tick muted">Dec '25</span>
+        <span class="tick muted">Jan '26</span>
+        <span class="tick muted">Feb '26</span>
+        <span class="tick current highlight-ring">Mar '26</span>
+      </div>
+      <div class="legend legend-proposed">
+        <div class="legend-item legend-a"><div class="legend-dot"></div> Budget</div>
+        <div class="legend-item legend-b"><div class="legend-dot"></div> Actual</div>
+      </div>
+    </div>
+    <div class="callout">
+      Current month highlighted in <code>#4D9FFF</code> cobalt. Other ticks use <code>#4A6080</code> (design guide muted). Requires a 6-line <code>MonthTick</code> render function inside BudgetChart.jsx.
+    </div>
+  </div>
+
+</div>
+
+<!-- Code diff -->
+<div class="diff">
+  <div class="diff-title">Code Change (BudgetChart.jsx)</div>
+  <span class="diff-comment">// New: ~6-line render function above BudgetChart</span><br>
+  <span class="diff-new">+ function MonthTick({ x, y, payload }) {</span><br>
+  <span class="diff-new">+   const label = fmtBudgetMonth(payload.value)</span><br>
+  <span class="diff-new">+   const now = new Date()</span><br>
+  <span class="diff-new">+   const [yr, mo] = payload.value.split('-')</span><br>
+  <span class="diff-new">+   const isCurrent = +yr === now.getFullYear() && +mo === now.getMonth() + 1</span><br>
+  <span class="diff-new">+   return &lt;text x={x} y={y + 10} textAnchor="middle"</span><br>
+  <span class="diff-new">+     fill={isCurrent ? COLOR_ACCENT : AXIS_TICK.fill} fontSize={12}&gt;{label}&lt;/text&gt;</span><br>
+  <span class="diff-new">+ }</span><br>
+  <br>
+  <span class="diff-comment">// Change: XAxis tick prop</span><br>
+  <span class="diff-old">- tick={{ fill: '#94a3b8', fontSize: 12 }}</span><br>
+  <span class="diff-new">+ tick={&lt;MonthTick /&gt;}</span><br>
+</div>
+
+</body>
+</html>
