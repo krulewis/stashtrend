@@ -13,21 +13,25 @@ function renderSidebar(route = '/networth') {
 }
 
 describe('Sidebar', () => {
-  it('renders all 5 nav items with correct labels', () => {
+  it('renders all 7 nav items with correct labels', () => {
     renderSidebar()
     expect(screen.getByRole('link', { name: /Net Worth/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Investments/ })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Account Groups/ })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Budgets/ })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Budget Builder/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Forecasting/ })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Sync Data/ })).toBeInTheDocument()
   })
 
   it('each nav item links to the correct href', () => {
     renderSidebar()
     expect(screen.getByRole('link', { name: /Net Worth/ })).toHaveAttribute('href', '/networth')
+    expect(screen.getByRole('link', { name: /Investments/ })).toHaveAttribute('href', '/investments')
     expect(screen.getByRole('link', { name: /Account Groups/ })).toHaveAttribute('href', '/groups')
     expect(screen.getByRole('link', { name: /Budgets/ })).toHaveAttribute('href', '/budgets')
     expect(screen.getByRole('link', { name: /Budget Builder/ })).toHaveAttribute('href', '/builder')
+    expect(screen.getByRole('link', { name: /Forecasting/ })).toHaveAttribute('href', '/forecasting')
     expect(screen.getByRole('link', { name: /Sync Data/ })).toHaveAttribute('href', '/sync')
   })
 

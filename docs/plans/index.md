@@ -15,7 +15,7 @@
 - **Phase 2.1 — Dual-View Milestone Hero Card** — `MilestoneHeroCard` (Cards + Skyline views) between TypeStackedChart and AccountsBreakdown. Investable capital (Retirement + Brokerage) is the correct baseline. ReferenceLine loop removed from TypeStackedChart. New files: `milestoneUtils.js`, `useMilestoneData.js`, `MilestoneHeroCard.jsx/.module.css`, `MilestoneCardsView.jsx/.module.css`, `MilestoneSkylineView.jsx/.module.css`. New tokens: `--green-tint`, `--amber-tint` in `index.css`. New constant: `COLOR_ACCENT_LIGHT` in `chartUtils.jsx`. Implementation in progress (not yet committed).
 
 ## Active
-None — Phase 2.1 implementation complete (pending commit/PR).
+None — Phases 3 and 4 implementation complete (pending PR review).
 
 ## Roadmap — Net Worth + Investments + Forecasting
 

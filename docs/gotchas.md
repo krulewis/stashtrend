@@ -218,6 +218,34 @@ screen.getByRole('button', { name: (_, el) =>
 **Fix:** Changed to `"Shares accounts with: ${names.join(', ')}"` using a `conflictingNames()` helper that looks up the names of whichever selected groups the blocked chip conflicts with.
 **Rule:** Conflict/error messages that reference specific data (groups, accounts, users) must name that data. "Something conflicts with something" sends the user on a blind investigation; "X conflicts with Y" lets them fix it immediately.
 
+### Pyright: defaultdict Lambda with Mixed Value Types
+**Where:** `backend/routes/investments.py` — `get_investments_performance()`.
+**Symptom:** Pyright reports `float | dict[Any, Any]` union type errors when accessing dict values on a `defaultdict` whose factory returns a dict with both `float` and `dict` fields.
+**Root cause:** `defaultdict(lambda: {"total": 0.0, "accounts": {}})` has a factory that returns `dict[str, float | dict]`, so Pyright infers the value type as a union. Accessing `d[key]["total"]` or `d[key]["accounts"]` fails type-checking because the value could be either.
+**Fix:** Split into two separate typed defaultdicts: `date_totals: defaultdict = defaultdict(float)` and `date_accounts: defaultdict = defaultdict(dict)`.
+**Rule:** Don't use a single defaultdict with a mixed-type factory. Split into one defaultdict per value type and annotate with `defaultdict` (unparameterized) to avoid Pyright inferences on values you access with string keys.
+
+### Pyright: Variable Possibly Unbound Across Conditional Blocks
+**Where:** `backend/routes/investments.py` — `cutoff_str` variable.
+**Symptom:** Pyright reports `cutoff_str` possibly unbound when the variable is assigned inside an `if` block and referenced in a subsequent `if` block.
+**Root cause:** If the first `if cutoff is not None:` block sets `cutoff_str`, and a separate `if cutoff is not None:` block uses it, Pyright treats each block independently and flags the second usage as "possibly unbound" if the variable wasn't assigned at the function's outer scope.
+**Fix:** Assign `cutoff_str` at the outer scope before the conditional blocks: `cutoff_str = cutoff.strftime("%Y-%m-%d") if cutoff is not None else None`. Use `if cutoff_str is not None:` for both guards.
+**Rule:** Don't spread the initialization and use of a variable across separate conditional blocks. Compute it once at the enclosing scope with a ternary, then use `is not None` checks consistently.
+
+### datetime.utcnow() Deprecated in Python 3.12+
+**Where:** Any backend file using `datetime.utcnow()`.
+**Symptom:** `DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version.`
+**Fix:** Replace with `datetime.now(timezone.utc)` for timezone-aware datetimes, or `datetime.now(timezone.utc).replace(tzinfo=None)` to get a naive UTC datetime that matches the old behavior.
+**Rule:** Never use `datetime.utcnow()`. Use `datetime.now(timezone.utc)` instead.
+
+### investments.py API Response Keys (Renamed from Initial Design)
+**Where:** `backend/routes/investments.py` + `backend/tests/test_investments.py`.
+**Issue:** During implementation, allocation fields were renamed from the initial design:
+- Holdings `allocation_by_type` key → `allocation`
+- Inside allocation entries: `security_type` → `type`, `total_value` → `value`, `allocation_pct` → `pct`
+- Summary totals: `total_value` → `current_value`
+**Rule:** The canonical response shapes are now: summary totals has `current_value` (not `total_value`); holdings response key is `allocation` (not `allocation_by_type`) with inner fields `type`/`value`/`pct`. Frontend `InvestmentsPage.jsx` uses these keys.
+
 ### Dual-Axis Recharts Domain Mismatch (TypeStackedChart)
 **Where:** `TypeStackedChart.jsx` — YAxis left (positive buckets) and YAxis right (debt, plotted as absolute values).
 **Symptom:** Right-axis tick marks didn't align with left-axis ticks — e.g. the $1M gridline on the left was not at -$1M on the right.

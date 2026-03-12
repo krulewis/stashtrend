@@ -15,6 +15,8 @@ vi.mock('./pages/SetupPage.jsx',       () => ({ default: ({ onComplete }) => (
   </div>
 )}))
 vi.mock('./pages/NetWorthPage.jsx',    () => ({ default: () => <div data-testid="networth-page" /> }))
+vi.mock('./pages/InvestmentsPage.jsx', () => ({ default: () => <div data-testid="investments-page" /> }))
+vi.mock('./pages/ForecastingPage.jsx', () => ({ default: () => <div data-testid="forecasting-page" /> }))
 
 // Helper: renders App inside MemoryRouter at the given initial route.
 // App uses <Routes> and <NavLink> which require a router context.
@@ -46,7 +48,7 @@ describe('App', () => {
     expect(await screen.findByText('Stashtrend')).toBeInTheDocument()
   })
 
-  // Both Sidebar and BottomTabBar render all 5 NAV_ITEMS as links.
+  // Both Sidebar and BottomTabBar render all 7 NAV_ITEMS as links.
   // Both components are in the DOM simultaneously (one hidden via CSS).
   // Use getAllByRole to find all instances and assert count.
   it('renders all nav links in sidebar and bottom tab bar', async () => {
@@ -55,9 +57,11 @@ describe('App', () => {
 
     // Each label appears twice: once in Sidebar, once in BottomTabBar
     expect(screen.getAllByRole('link', { name: /Net Worth/ })).toHaveLength(2)
+    expect(screen.getAllByRole('link', { name: /Investments/ })).toHaveLength(2)
     expect(screen.getAllByRole('link', { name: /Account Groups/ })).toHaveLength(2)
     expect(screen.getAllByRole('link', { name: /Budgets/ })).toHaveLength(2)
     expect(screen.getAllByRole('link', { name: /Budget Builder/ })).toHaveLength(2)
+    expect(screen.getAllByRole('link', { name: /Forecasting/ })).toHaveLength(2)
     expect(screen.getAllByRole('link', { name: /Sync Data/ })).toHaveLength(2)
   })
 

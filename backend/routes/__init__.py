@@ -7,6 +7,7 @@ from routes.networth import bp as networth_bp
 from routes.sync import bp as sync_bp
 from routes.ai_routes import bp as ai_bp
 from routes.budget_builder import bp as budget_builder_bp
+from routes.investments import bp as investments_bp
 
 
 def register_blueprints(app):
@@ -19,3 +20,4 @@ def register_blueprints(app):
     app.register_blueprint(sync_bp)
     app.register_blueprint(ai_bp)
     app.register_blueprint(budget_builder_bp)
+    app.register_blueprint(investments_bp)
