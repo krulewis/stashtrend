@@ -1,11 +1,10 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import NetWorthPage from './NetWorthPage.jsx'
-import { MOCK_STATS, MOCK_HISTORY, MOCK_ACCOUNTS, MOCK_NETWORTH_BY_TYPE, MOCK_RETIREMENT, MOCK_RETIREMENT_EMPTY, mockFetch } from '../test/fixtures.js'
+import { MOCK_STATS, MOCK_ACCOUNTS, MOCK_NETWORTH_BY_TYPE, MOCK_RETIREMENT, MOCK_RETIREMENT_EMPTY, mockFetch } from '../test/fixtures.js'
 
 // Mock child components so this test only exercises NetWorthPage's own behavior
 vi.mock('../components/StatsCards.jsx',        () => ({ default: () => <div data-testid="stats-cards" /> }))
-vi.mock('../components/NetWorthChart.jsx',     () => ({ default: () => <div data-testid="networth-chart" /> }))
 vi.mock('../components/AccountsBreakdown.jsx', () => ({ default: () => <div data-testid="accounts-breakdown" /> }))
 vi.mock('../components/TypeStackedChart.jsx',  () => ({ default: () => <div data-testid="type-stacked-chart" /> }))
 vi.mock('../components/RetirementPanel.jsx',   () => ({ default: () => <div data-testid="retirement-panel" /> }))
@@ -15,7 +14,6 @@ describe('NetWorthPage', () => {
   beforeEach(() => {
     mockFetch({
       '/api/networth/stats':   MOCK_STATS,
-      '/api/networth/history': MOCK_HISTORY,
       '/api/accounts/summary': MOCK_ACCOUNTS,
       '/api/networth/by-type': MOCK_NETWORTH_BY_TYPE,
       '/api/retirement':       MOCK_RETIREMENT,
@@ -33,12 +31,11 @@ describe('NetWorthPage', () => {
     expect(screen.getByTestId('networth-loading')).toBeInTheDocument()
   })
 
-  it('renders StatsCards, NetWorthChart, TypeStackedChart, AccountsBreakdown after data loads', async () => {
+  it('renders StatsCards, TypeStackedChart, AccountsBreakdown after data loads', async () => {
     render(<NetWorthPage />)
     await waitFor(() => {
       expect(screen.getByTestId('stats-cards')).toBeInTheDocument()
     })
-    expect(screen.getByTestId('networth-chart')).toBeInTheDocument()
     expect(screen.getByTestId('type-stacked-chart')).toBeInTheDocument()
     expect(screen.getByTestId('accounts-breakdown')).toBeInTheDocument()
     expect(screen.getByTestId('milestone-hero-card')).toBeInTheDocument()
@@ -70,7 +67,7 @@ describe('NetWorthPage', () => {
     await waitFor(() => expect(screen.queryByTestId('networth-loading')).not.toBeInTheDocument())
     const callsBefore = global.fetch.mock.calls.length
     fireEvent.click(screen.getByRole('button', { name: /Refresh/ }))
-    // Refresh triggers 5 more fetch calls (stats, history, accounts, by-type, retirement)
+    // Refresh triggers 4 more fetch calls (stats, accounts, by-type, retirement)
     await waitFor(() => {
       expect(global.fetch.mock.calls.length).toBeGreaterThan(callsBefore)
     })
@@ -85,11 +82,11 @@ describe('NetWorthPage', () => {
 
   // ── Retirement integration ────────────────────────────────────────────────
 
-  it('fetches retirement data in Promise.all (5 total fetches on mount)', async () => {
+  it('fetches retirement data in Promise.all (4 total fetches on mount)', async () => {
     render(<NetWorthPage />)
     await waitFor(() => expect(screen.getByTestId('stats-cards')).toBeInTheDocument())
-    // 5 fetch calls: stats, history, accounts, by-type, retirement
-    expect(global.fetch.mock.calls.length).toBe(5)
+    // 4 fetch calls: stats, accounts, by-type, retirement
+    expect(global.fetch.mock.calls.length).toBe(4)
     const urls = global.fetch.mock.calls.map((c) => c[0])
     expect(urls.some((u) => u.includes('/api/retirement'))).toBe(true)
   })
@@ -102,7 +99,6 @@ describe('NetWorthPage', () => {
   it('does not crash when retirement returns exists=false', async () => {
     mockFetch({
       '/api/networth/stats':   MOCK_STATS,
-      '/api/networth/history': MOCK_HISTORY,
       '/api/accounts/summary': MOCK_ACCOUNTS,
       '/api/networth/by-type': MOCK_NETWORTH_BY_TYPE,
       '/api/retirement':       MOCK_RETIREMENT_EMPTY,

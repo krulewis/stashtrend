@@ -1,16 +1,14 @@
 import { useEffect, useState, useCallback } from 'react'
 import styles from './NetWorthPage.module.css'
 import StatsCards from '../components/StatsCards.jsx'
-import NetWorthChart from '../components/NetWorthChart.jsx'
 import AccountsBreakdown from '../components/AccountsBreakdown.jsx'
 import TypeStackedChart from '../components/TypeStackedChart.jsx'
 import RetirementPanel from '../components/RetirementPanel.jsx'
 import MilestoneHeroCard from '../components/MilestoneHeroCard.jsx'
-import { fetchNetworthStats, fetchNetworthHistory, fetchAccountsSummary, fetchNetworthByType, fetchRetirement, saveRetirement } from '../api.js'
+import { fetchNetworthStats, fetchAccountsSummary, fetchNetworthByType, fetchRetirement, saveRetirement } from '../api.js'
 
 export default function NetWorthPage() {
   const [stats,       setStats]       = useState(null)
-  const [history,     setHistory]     = useState(null)
   const [accounts,    setAccounts]    = useState(null)
   const [typeData,    setTypeData]    = useState(null)
   const [retirement,  setRetirement]  = useState(null)
@@ -25,14 +23,12 @@ export default function NetWorthPage() {
     setLoading(true)
     Promise.all([
       fetchNetworthStats(),
-      fetchNetworthHistory(),
       fetchAccountsSummary(),
       fetchNetworthByType(),
       fetchRetirement().catch(() => ({ exists: false })),
     ])
-      .then(([s, h, a, t, ret]) => {
+      .then(([s, a, t, ret]) => {
         setStats(s)
-        setHistory(h)
         setAccounts(a)
         setTypeData(t)
         setRetirement(ret)
@@ -96,7 +92,6 @@ export default function NetWorthPage() {
       {!loading && !error && (
         <>
           <StatsCards stats={stats} />
-          <NetWorthChart history={history} />
           <TypeStackedChart data={typeData} />
           <MilestoneHeroCard typeData={typeData} retirement={retirement} />
           <AccountsBreakdown accounts={accounts} />

@@ -22,6 +22,7 @@
   - Frontend: `BudgetBuilderPage` (3-step workflow), `BuilderProfileForm`, `BuilderRegionalData`, `BuilderResultsTable`, 11 API functions in `api.js`
   - Flow: profile → AI regional fetch → AI budget generation → editable table → apply to Monarch via `set_budget_amount`
   - Apply endpoint uses `asyncio.run()` pattern, processes months chronologically, `apply_to_future=False`, partial failure handling
+- **NetWorthChart removed (2026-03-12):** The standalone total-NW-over-time line chart (`NetWorthChart.jsx`) was removed from `NetWorthPage`. The page now fetches 4 endpoints (stats, accounts, by-type, retirement) instead of 5. `fetchNetworthHistory` is no longer called from `NetWorthPage`. The `TypeStackedChart` (stacked area by bucket type) remains.
 - **NW by Account Type + CAGR:** COMPLETE — stacked area chart + CAGR sidebar ✅
   - Backend: `GET /api/networth/by-type` — `BUCKET_MAP`/`TYPE_MAP` constants, `_get_bucket()`, `_compute_bucket_cagr()`. Buckets: Retirement, Brokerage, Cash, Real Estate, Debt, Other. Filter: `include_in_net_worth=1` only (matches `networth_history`, no `is_hidden` filter)
   - Frontend: `TypeStackedChart.jsx` (stacked area + CAGR table, no milestone ReferenceLines since Phase 2.1), `AccountsBreakdown.jsx` simplified (pie charts removed, collapsible list retained), `fmtPct` moved to `chartUtils.jsx`
