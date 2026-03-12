@@ -24,8 +24,8 @@ These rules govern all development on this project. Agent definitions live in `.
    Architect waits for BOTH to complete before starting.
 3. **Architect Agent** — dispatch to `architect` agent → architecture decision with rationale and rejected alternatives
 3b. **Frontend Designer** (UI features only) — dispatch to `frontend-designer` agent → design specification with component designs, tokens, states, responsive behavior
-4. **Engineer Agent — Initial Plan** — dispatch to `engineer` agent → file-level implementation plan with parallelism tags (incorporates design spec for UI work). Must include a **"Deviations from Architecture"** section listing where/why the plan diverges from the architect's decision. Staff-reviewer uses this to focus review.
-5. **Staff Engineer Agent — Review** — dispatch to `staff-reviewer` agent → pressure-tests plan for bugs, ambiguities, edge cases, incorrect assumptions → required changes list with **severity classification** (Critical / High / Medium / Low) on each finding
+4. **Engineer Agent — Initial Plan** — dispatch to `engineer` agent → file-level implementation plan with parallelism tags (incorporates design spec for UI work). Must include a **"Deviations from Architecture"** section listing where/why the plan diverges from the architect's decision. Must include a **"Test Coverage Plan"** section listing: (a) every new test file and test class/function to be written, (b) which source files/functions each test covers, (c) estimated per-file coverage for new/changed source files (target: ≥80% per file). Staff-reviewer uses these sections to focus review.
+5. **Staff Engineer Agent — Review** — dispatch to `staff-reviewer` agent → pressure-tests plan for bugs, ambiguities, edge cases, incorrect assumptions, **and test coverage adequacy (flags any new/changed file below 80% estimated coverage as High)** → required changes list with **severity classification** (Critical / High / Medium / Low) on each finding
 6. **Engineer Agent — Final Plan** — dispatch to `engineer` agent with original plan + staff feedback delta as input (patch operation, not clean-room re-derivation) → complete corrected plan ready for implementation
 7. **Cost Estimate** — run `/tokencostscope` on the final plan in background (non-blocking). Record estimate when it arrives. Proceed without it if user approves the plan before it finishes. If the estimate agent fails, log the missing estimate; step 10 notes "no baseline estimate recorded."
 
@@ -171,11 +171,11 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 1. **Planning pipeline** (required for M/L) — use a `{feature}-planning` team. Dispatch to `pm`, two `researcher` instances (codebase + web, in parallel), then `architect`, `engineer`, `staff-reviewer` agents per pipeline steps above. For UI features, include `frontend-designer` after architecture to produce design specs before engineering plan.
 2. **Confirm** approach with user before writing code. If unavailable: proceed but note it — this does NOT waive any subsequent step.
 2b. **Pre-flight checks** (parallel) — dispatch `explorer` (Haiku) agents for pre-flight dependency check + regression risk scorer + `changelog-scanner` (Haiku) for dependency changelog summaries + `explorer` (Haiku) as file change classifier (git-history churn/bug-fix risk scoring). All advisory — flags risks for QA but does not block.
-3. **Write tests first** — dispatch to `qa` agent. Tests must fail before implementation exists. Cover happy path, edge cases, and error cases. Prioritize high-risk files flagged by regression risk scorer.
+3. **Write tests first** — dispatch to `qa` agent. Tests must fail before implementation exists. Cover happy path, edge cases, and error cases. Prioritize high-risk files flagged by regression risk scorer. **Tests must target ≥80% line coverage per new/changed source file** (as specified in the plan's Test Coverage Plan section). QA agent receives the engineer's test coverage plan as input.
 4. **Implement** — use a `{feature}-impl` team. Spawn `qa`, `implementer` (x N for independent file groups), `code-reviewer`, `playwright-qa`, `frontend-designer` (for UI work), and `docs-updater` as teammates. Coordinate via shared task list. QA + frontend-designer can overlap within a feature.
 4b. **Lint/format check** — dispatch `lint-fixer` (Haiku) to run linters, parse output, and auto-fix trivial violations (import order, trailing whitespace, formatting). Keeps the Sonnet code-reviewer focused on logic.
 4c. **Safety scan** — dispatch `code-reviewer` (Sonnet) on the uncommitted diff with a security-focused prompt: scan for OWASP top 10 (injection, XSS, SSRF, secrets in code, insecure deserialization), unsafe patterns, and credential exposure. Any Critical finding blocks proceeding to tests. This is a fast, targeted pass — the full logic/style review happens at step 7/7b.
-5. **Run all automated tests** — failures → dispatch `test-triager` (Haiku) to parse test output, classify failures (flaky vs. real, related vs. unrelated to the change), and surface actionable ones before returning to step 4.
+5. **Run all automated tests with coverage** — run `make test-coverage` (backend: pytest --cov, frontend: vitest --coverage). Failures → dispatch `test-triager` (Haiku) to parse test output, classify failures (flaky vs. real, related vs. unrelated to the change), and surface actionable ones before returning to step 4. **Coverage gate:** if any new/changed source file has <80% line coverage, return to step 3 to add tests before proceeding. Report per-file coverage for all new/changed files in the step output.
 6. **Update memory and docs** — dispatch to `docs-updater` agent after tests pass (see Memory Rules below for paths). As-you-go memory updates during implementation are still expected; this is the formal pass.
 7/7b. **Lightweight code review + Playwright UI QA** (parallel) — dispatch `code-reviewer` on the uncommitted diff (`git diff`) AND `playwright-qa` to exercise the feature in the running app, in parallel. Fixes any Critical/High findings before proceeding. If code changes result from review, re-run Playwright QA. Combined fix cycle if either finds issues → return to step 4.
 8. **Commit to feature branch** — dispatch `commit-drafter` (Haiku) to generate commit message from `git diff`, then `pr-drafter` (Haiku) to generate PR title/body from diff + plan context. Push and create PR against main via `gh pr create`.
@@ -196,14 +196,16 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 ```
 [ ] Change size classified — pipeline run if M/L
 [ ] Cost estimate launched (tokencostscope, non-blocking)
+[ ] Plan includes Test Coverage Plan section (≥80% per new/changed file)
 [ ] Plan confirmed with user
 [ ] Pre-flight checks + regression risk scorer run (parallel, advisory)
-[ ] Tests written before implementation (high-risk files prioritized)
+[ ] Tests written before implementation (high-risk files prioritized, ≥80% coverage target)
 ```
 
 **POST-WORK** (after completing):
 ```
 [ ] Tests: written first (failed initially), all passing (new + existing)
+[ ] Coverage gate passed: ≥80% line coverage per new/changed source file
 [ ] Memory/docs updated after tests pass (formal docs-updater pass)
 [ ] Code review + Playwright QA — run in parallel, no Critical/High findings
 [ ] Cost analysis — actual vs estimate compared, calibration updated
