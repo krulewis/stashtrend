@@ -30,6 +30,13 @@ ALLOWED=(
   "code-reviewer"
   "explorer"
   "playwright-qa"
+  "commit-drafter"
+  "pr-drafter"
+  "test-triager"
+  "lint-fixer"
+  "packet-summarizer"
+  "changelog-scanner"
+  "loop-guard"
 )
 
 for allowed in "${ALLOWED[@]}"; do
