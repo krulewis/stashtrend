@@ -1,6 +1,6 @@
 # Stashtrend
 
-Self-hosted personal finance dashboard for [Monarch Money](https://monarchmoney.com) users.
+Track net worth, spot budget patterns, plan your retirement — built on the [Monarch Money](https://monarchmoney.com) API.
 Your data stays on your computer — no accounts, no cloud.
 
 <!-- TODO: add screenshots (docs/screenshots/) once captured -->
@@ -27,7 +27,7 @@ Stashtrend pulls your account balances, transactions, and budgets from Monarch M
 ## Features
 
 ### Net Worth
-Track your total net worth over time with a line chart, month-over-month and year-over-year changes, and a full account breakdown.
+Track your total net worth over time with a stacked area chart broken down by account type, month-over-month and year-over-year changes, and a full account breakdown. A Milestone Hero Card shows your progress toward custom financial goals, with toggle between milestone cards (with state pills and progress bars) and a Skyline chart (investable capital history + projection + milestones).
 
 ### Account Groups
 Bundle accounts into custom groups (e.g. "Liquid Cash", "Retirement", "Debt") and track each group's balance history over time.
@@ -74,6 +74,18 @@ AI-powered budget recommendation engine that builds a personalized budget based 
 
 Requires an AI provider configured in the Budgets tab (see AI Analysis setup above).
 
+### Investments
+Track your investment accounts with a performance dashboard and per-account holdings drill-down.
+- Dashboard view: total invested value, CAGR estimates per account, allocation donut chart
+- Drill-down view: per-account holdings table (ticker, quantity, cost basis, current value), contribution bars on the performance chart
+
+### Forecasting
+Project your investment portfolio's future growth with interactive controls.
+- Historical investable capital (Retirement + Brokerage) with three projected scenarios
+- Adjust assumed return rate and monthly contributions with sliders for instant feedback
+- Gap analysis: required contribution to reach your retirement nest egg target
+- Connects directly to your retirement settings and CAGR data
+
 ### Sync Data
 Manually trigger a sync of any combination of entities (accounts, transactions, budgets, etc.), or configure auto-sync on a schedule.
 
@@ -102,38 +114,53 @@ To restore, extract the archive into a fresh volume with `tar xzf`.
 
 ```
 stashtrend/
-├── backend/          Flask API (Python 3.12)
-│   ├── app.py        All endpoints
-│   ├── wsgi.py       Gunicorn entry point
+├── backend/              Flask API (Python 3.12)
+│   ├── app.py            ~107-line shim — imports/registers all blueprints, re-exports public names
+│   ├── db.py             DB helpers: get_db(), get_db_connection(), DB_PATH, init_dashboard_schema(), DDL
+│   ├── ai.py             AI helpers: _call_ai(), _get_ai_key(), _check_ai_rate_limit(), _extract_json()
+│   ├── wsgi.py           Gunicorn entry point
+│   ├── routes/
+│   │   ├── setup.py          Token validation + setup status
+│   │   ├── settings.py        App settings (sync interval, etc.)
+│   │   ├── networth.py        Net worth stats, history, by-type
+│   │   ├── groups.py          Account group CRUD + history + snapshot
+│   │   ├── budgets.py         Budget vs actuals + custom groups
+│   │   ├── ai_routes.py       AI config + budget analysis
+│   │   ├── budget_builder.py  AI budget builder (profile, regional, generate, plans, apply)
+│   │   ├── investments.py     Investment summary, holdings, performance
+│   │   ├── retirement.py      Retirement settings + milestones
+│   │   └── sync.py            Sync jobs, worker, status
 │   └── tests/
-│       ├── test_helpers.py        Shared DDL fixtures (canonical schema imports)
-│       ├── test_budgets.py        12 tests: budget history, income/expense split
-│       ├── test_ai.py             12 tests: AI config, analyze endpoint
-│       ├── test_budget_builder.py 27 tests: profile, regional, generate, plans, apply
-│       ├── test_groups.py         55 tests: group CRUD, history, snapshot, configs
-│       ├── test_sync.py           35 tests: sync jobs, worker logic, concurrency
-│       ├── test_settings.py       36 tests: settings API, scheduler
-│       ├── test_setup.py          15 tests: setup status, token validation
-│       └── test_db_improvements.py 10 tests: WAL mode, context manager
-├── frontend/         React + Vite
+│       ├── test_helpers.py            Shared DDL fixtures (canonical schema imports)
+│       ├── test_budgets.py            12 tests
+│       ├── test_ai.py                 12 tests
+│       ├── test_budget_builder.py     27 tests
+│       ├── test_groups.py             55 tests
+│       ├── test_sync.py               35 tests
+│       ├── test_settings.py           36 tests
+│       ├── test_setup.py              15 tests
+│       ├── test_db_improvements.py    10 tests
+│       ├── test_networth.py           ~50 tests
+│       ├── test_investments.py        ~50 tests
+│       └── test_retirement.py         ~16 tests
+├── frontend/             React + Vite
 │   └── src/
-│       ├── App.jsx                Root — tab shell + setup gate
+│       ├── App.jsx                Root — setup gate + AppShell (routes)
+│       ├── nav.js                 NAV_ITEMS — single source of truth for sidebar + bottom tab
 │       ├── pages/
-│       │   ├── SetupPage.jsx      First-run token wizard
-│       │   ├── GroupsPage.jsx     Account group management
-│       │   ├── BudgetPage.jsx     Budget vs Actuals (range picker + chart + table + AI)
+│       │   ├── SetupPage.jsx          First-run token wizard
+│       │   ├── NetWorthPage.jsx       Net worth stats + TypeStackedChart + MilestoneHeroCard + AccountsBreakdown + RetirementPanel
+│       │   ├── InvestmentsPage.jsx    Investment dashboard + holdings drill-down
+│       │   ├── ForecastingPage.jsx    Projection chart + sliders + gap analysis
+│       │   ├── GroupsPage.jsx         Account group management + history + snapshot
+│       │   ├── BudgetPage.jsx         Budget vs Actuals (desktop + mobile) + AI analysis
 │       │   ├── BudgetBuilderPage.jsx  AI budget builder (3-step workflow)
-│       │   └── SyncPage.jsx       Sync controls + history + auto-sync settings
-│       └── components/            StatsCards, NetWorthChart, AccountsBreakdown,
-│                                  BudgetChart, BudgetTable, AIAnalysisPanel,
-│                                  BuilderProfileForm, BuilderRegionalData,
-│                                  BuilderResultsTable, GroupManager,
-│                                  GroupsTimeChart, GroupsSnapshot,
-│                                  GroupSnapshotControls, AutoSyncSettings,
-│                                  RangeSelector, SyncControl, SyncJobStatus,
-│                                  SyncHistory
-├── pipeline/         Monarch Money API client (local package)
-├── nginx/            nginx reverse-proxy config (production)
+│       │   └── SyncPage.jsx           Sync controls + history + auto-sync settings
+│       ├── components/            (shared + feature-specific components)
+│       ├── hooks/                 useMilestoneData, useResponsive, etc.
+│       └── utils/                 budgetUtils.js, milestoneUtils.js, retirementMath.js, chartUtils.jsx
+├── pipeline/             Monarch Money API client (local package)
+├── nginx/                nginx reverse-proxy config (production)
 ├── Dockerfile.backend
 ├── Dockerfile.frontend
 ├── docker-compose.yml          Production stack (port 80)
@@ -160,7 +187,7 @@ Runs `docker compose -f docker-compose.yml -f docker-compose.dev.yml up`. Code c
 ### Running tests
 
 ```bash
-make test      # backend pytest + frontend vitest (~480 tests)
+make test      # backend pytest + frontend vitest (~1140 tests)
 ```
 
 Or individually:
@@ -180,6 +207,9 @@ A git pre-commit hook runs the full test suite before every commit. Install it w
 | POST | `/api/setup/token` | Validate and save a Monarch Money API token |
 | GET | `/api/networth/stats` | Current net worth + MoM / YoY changes |
 | GET | `/api/networth/history` | Historical net worth series |
+| GET | `/api/networth/by-type` | Net worth broken down by account bucket |
+| GET | `/api/retirement` | Get retirement settings + milestones |
+| POST | `/api/retirement` | Save retirement settings + milestones |
 | GET | `/api/accounts/summary` | All accounts with current balances |
 | GET | `/api/groups` | Account group definitions |
 | POST | `/api/groups` | Create an account group |
@@ -190,6 +220,8 @@ A git pre-commit hook runs the full test suite before every commit. Install it w
 | GET | `/api/groups/history` | Time-series balance per group |
 | GET | `/api/groups/snapshot` | Current balance per group |
 | GET | `/api/budgets/history` | Budget vs actual per category, `?months=3\|6\|12` |
+| GET | `/api/budgets/custom-groups` | Budget custom group assignments |
+| POST | `/api/budgets/custom-groups` | Save budget custom group assignments |
 | GET | `/api/ai/config` | AI provider config (key never returned) |
 | POST | `/api/ai/config` | Save AI provider, model, and API key |
 | POST | `/api/ai/analyze` | Run AI analysis on budget data |
@@ -210,3 +242,6 @@ A git pre-commit hook runs the full test suite before every commit. Install it w
 | PUT | `/api/budget-builder/plans/:id` | Update a plan |
 | DELETE | `/api/budget-builder/plans/:id` | Delete a plan |
 | POST | `/api/budget-builder/plans/:id/apply` | Apply plan to Monarch Money |
+| GET | `/api/investments/summary` | Investment account summaries with CAGR |
+| GET | `/api/investments/accounts/:id/holdings` | Holdings for a specific account |
+| GET | `/api/investments/performance` | Portfolio performance time series |

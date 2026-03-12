@@ -1,28 +1,31 @@
 # StashTrend Wiki
 
-StashTrend is a self-hosted personal finance dashboard for [Monarch Money](https://monarchmoney.com) users. It pulls your financial data from Monarch Money and stores it locally in a SQLite database — no accounts, no cloud, nothing leaves your machine.
+Stashtrend is a self-hosted personal finance tool for [Monarch Money](https://monarchmoney.com) users. Track net worth, spot budget patterns, and plan your retirement — powered by AI, with nothing leaving your machine. Your data lives in a local SQLite database — no accounts, no cloud.
 
 ---
 
 ## Table of Contents
 
-- [Net Worth Dashboard](#net-worth-dashboard)
+- [Net Worth Tracker](#net-worth-dashboard)
 - [Account Groups](#account-groups)
 - [Budget vs Actuals](#budget-vs-actuals)
 - [Budget Builder](#budget-builder)
+- [Investments Dashboard](#investments-dashboard)
+- [Forecasting](#forecasting)
 - [Sync Data](#sync-data)
 - [AI Integration](#ai-integration)
 - [Retirement Planning](#retirement-planning)
+- [Milestones](#milestones)
 - [Investment Holdings](#investment-holdings)
 - [Privacy & Security](#privacy--security)
 
 ---
 
-## Net Worth Dashboard
+## Net Worth Tracker
 
 **Route:** `/networth`
 
-The Net Worth Dashboard is your financial home base. It gives you a historical view of your overall financial picture.
+The Net Worth Tracker is your financial home base. It gives you a historical view of your overall financial picture.
 
 ### Stat Cards
 
@@ -30,10 +33,6 @@ At the top of the page, three cards show:
 - **Current Net Worth** — your total net worth as of the most recent sync
 - **Month-over-Month Change** — difference vs. the same day last month
 - **Year-over-Year Change** — difference vs. the same day last year
-
-### Net Worth Over Time Chart
-
-A line chart showing your net worth history. Milestone markers (if configured) appear as labeled reference lines on the chart. You can refresh the chart to pick up newly synced data.
 
 ### Account Breakdown
 
@@ -150,6 +149,63 @@ You can save any budget plan with a name and timestamp and reload it later. Save
 
 ---
 
+## Investments Dashboard
+
+**Route:** `/investments` (dashboard) · `/investments/:accountId` (drill-down)
+
+The Investments page gives you a consolidated view of all your investment accounts and their performance.
+
+### Dashboard View
+
+- **Summary cards** — total invested value across all accounts, overall CAGR estimates
+- **Allocation donut chart** — your portfolio allocation by security type
+- **Account table** — each investment account with current value, CAGR (1Y / 3Y / 5Y), and a link to drill down
+
+### Account Drill-Down
+
+Click any account to see:
+- **Holdings table** — each position with ticker, security type, quantity, cost basis, current price, current value, and whether it was entered manually
+- **Sortable and filterable** — sort by any column, filter by security type
+- **Performance chart** — time-series of account value with contribution bars overlaid
+
+Holdings data is synced from the **Holdings** entity on the Sync page.
+
+---
+
+## Forecasting
+
+**Route:** `/forecasting`
+
+The Forecasting page projects your investment portfolio's future growth based on your current balances, CAGR history, and retirement settings.
+
+### Projection Chart
+
+Shows your historical investable capital (Retirement + Brokerage accounts) as a solid line, with three dashed projected lines extending to your target retirement age:
+- **Conservative** — lower assumed return
+- **Base** — blended CAGR from your actual account history
+- **Optimistic** — higher assumed return
+
+A horizontal reference line marks your retirement nest egg target.
+
+### Interactive Controls
+
+Two sliders let you adjust:
+- **Assumed annual return** — the blended rate used for projections
+- **Monthly contribution** — how much you plan to add per month
+
+Charts and summary cards update instantly as you move the sliders.
+
+### Gap Analysis
+
+The summary panel shows:
+- **Projected balance** at retirement under each scenario
+- **On-track status** for your nest egg target
+- **Required monthly contribution** to reach your target (if not already on track)
+
+Forecasting reads your retirement settings (current age, target age, nest egg target, withdrawal rate) automatically. Configure those on the Net Worth page's Retirement Target panel.
+
+---
+
 ## Sync Data
 
 **Route:** `/sync`
@@ -219,7 +275,7 @@ A 2-second rate limit between AI calls prevents accidental runaway usage.
 
 ## Retirement Planning
 
-Retirement planning lives in the **Net Worth Dashboard** as a collapsible panel — scroll to the bottom of the `/networth` page to find the **Retirement Target** section.
+Retirement planning lives in the **Net Worth Tracker** as a collapsible panel — scroll to the bottom of the `/networth` page to find the **Retirement Target** section.
 
 ### Settings
 
@@ -231,10 +287,6 @@ Configure:
 - **Expected annual Social Security income**
 - **Withdrawal rate (%)** — defaults to 4% (the classic safe withdrawal rule) but is fully adjustable
 
-### Milestones
-
-Add custom financial milestones — for example, "Pay off mortgage" or "Reach $1M" — with target dollar amounts. Milestones appear as labeled reference lines on the Net Worth Over Time chart.
-
 ### Retirement Summary
 
 A summary panel shows:
@@ -242,6 +294,17 @@ A summary panel shows:
 - **Required nest egg** derived from your desired income and withdrawal rate
 - **On-track status** — a color-coded badge indicating whether your projected savings meets your goal
 - Social Security offset applied to reduce the required nest egg
+
+---
+
+## Milestones
+
+Add custom financial milestones — for example, "Pay off mortgage" or "Reach $1M" — with target dollar amounts. Milestones are tracked against your **investable capital** (Retirement + Brokerage accounts), not total net worth, since retirement readiness depends on liquid investment assets.
+
+Milestone progress is shown in the **Milestone Hero Card**, which sits between the Net Worth by Account Type chart and the Account Breakdown on the Net Worth page. Toggle between two views:
+
+- **Cards View** — each milestone as a card with a state pill (✓ Achieved / ◆ Next Goal / → In Progress), a progress bar, and a projected achievement date
+- **Skyline View** — a Recharts area chart of your investable capital history with a dashed projection line and horizontal reference lines at each milestone amount
 
 ---
 
