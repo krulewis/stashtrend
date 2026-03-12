@@ -1,6 +1,6 @@
 /**
  * useMilestoneData — Custom hook that computes all derived milestone data
- * consumed by MilestoneCardsView and MilestoneSkylineView.
+ * consumed by MilestoneCardsView.
  *
  * Uses useMemo to memoize expensive computations (series scans, projection generation).
  */

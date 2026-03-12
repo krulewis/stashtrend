@@ -60,7 +60,7 @@ export default function NetWorthPage() {
           <div className={styles.errorTitle}>⚠ Could not connect to the API</div>
           <div className={styles.errorMsg}>Make sure the backend is running:</div>
           <pre className={styles.errorCode}>
-            cd monarch-dashboard/backend{'\n'}
+            cd stashtrend/backend{'\n'}
             pip install -r requirements.txt{'\n'}
             python app.py
           </pre>

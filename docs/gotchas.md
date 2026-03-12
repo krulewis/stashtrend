@@ -253,6 +253,13 @@ screen.getByRole('button', { name: (_, el) =>
 - Summary totals: `total_value` → `current_value`
 **Rule:** The canonical response shapes are now: summary totals has `current_value` (not `total_value`); holdings response key is `allocation` (not `allocation_by_type`) with inner fields `type`/`value`/`pct`. Frontend `InvestmentsPage.jsx` uses these keys.
 
+### RetirementPanel Gate — Must Live Outside the isRetirementTargetInvalid Block (Fixed)
+**Where:** `ForecastingPage.jsx` — `<section id="retirement-settings">`.
+**Symptom:** When `isRetirementTargetInvalid` was true, the user saw the warning but could not access `RetirementPanel` to fix their settings — they were stuck with no way to correct the invalid age.
+**Root cause:** The `<section id="retirement-settings">` containing `RetirementPanel` was inside the `!isRetirementTargetInvalid && !hasNoData` block — the same block that was suppressed by the invalid-age check.
+**Fix:** Moved the `RetirementPanel` section outside that conditional, gated only on `retirement?.exists`. It now renders as a sibling after the main content block, always accessible whenever retirement settings exist.
+**Rule:** Settings panels that fix an invalid state must always be rendered regardless of that invalid state. Never gate a "fix" UI behind the very condition it is meant to resolve.
+
 ### Dual-Axis Recharts Domain Mismatch (TypeStackedChart)
 **Where:** `TypeStackedChart.jsx` — YAxis left (positive buckets) and YAxis right (debt, plotted as absolute values).
 **Symptom:** Right-axis tick marks didn't align with left-axis ticks — e.g. the $1M gridline on the left was not at -$1M on the right.

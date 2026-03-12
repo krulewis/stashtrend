@@ -297,6 +297,7 @@ describe('ForecastingPage', () => {
     render(<ForecastingPage />)
     await waitFor(() => expect(screen.getByTestId('invalid-age-warning')).toBeInTheDocument())
     expect(screen.queryByTestId('forecasting-summary')).not.toBeInTheDocument()
+    expect(screen.getByTestId('retirement-panel')).toBeInTheDocument()
   })
 
   it('shows no-investment-accounts empty state when investableCapital is null', async () => {

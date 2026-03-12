@@ -344,7 +344,7 @@ export default function ForecastingPage() {
             </div>
           )}
 
-          {/* Summary → MilestoneCardsView → Chart → Controls → RetirementPanel */}
+          {/* Summary → MilestoneCardsView → Chart → Controls */}
           {!isRetirementTargetInvalid && !hasNoData && (
             <>
               <ForecastingSummary
@@ -380,21 +380,24 @@ export default function ForecastingPage() {
                 defaultsNote={defaultsNote}
                 cagrWarning={cagrWarning}
               />
-
-              <section
-                id="retirement-settings"
-                ref={retirementRef}
-                aria-label="Retirement Settings"
-              >
-                <RetirementPanel
-                  data={retirement}
-                  onSave={handleSaveRetirement}
-                  loading={retirementLoading}
-                  error={retirementError}
-                  typeData={typeData}
-                />
-              </section>
             </>
+          )}
+
+          {/* RetirementPanel — always accessible when settings exist */}
+          {retirement?.exists && (
+            <section
+              id="retirement-settings"
+              ref={retirementRef}
+              aria-label="Retirement Settings"
+            >
+              <RetirementPanel
+                data={retirement}
+                onSave={handleSaveRetirement}
+                loading={retirementLoading}
+                error={retirementError}
+                typeData={typeData}
+              />
+            </section>
           )}
         </div>
       )}
