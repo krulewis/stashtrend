@@ -1,7 +1,7 @@
 ---
 name: staff-reviewer
 description: Senior staff engineer for rigorous code and plan review. Use in pipeline step 5 (plan review) and step 9 (PR review loop). Must be spawned with fresh context each pass.
-tools: Read, Write, Grep, Glob, Bash
+tools: Read, Grep, Glob, Bash
 model: opus
 ---
 

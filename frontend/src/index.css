@@ -40,6 +40,8 @@
   --accent-light: #7DBFFF;
   --accent-wash:  #99CCFF; /* tags, badges, light accent text */
   --accent-tint:  rgba(77,159,255,0.12);
+  --green-tint:   rgba(46,204,138,0.12);
+  --amber-tint:   rgba(245,166,35,0.12);
   --accent-border-hover: rgba(77,159,255,0.25); /* card hover border glow */
   --accent-glow:  #99CCFF; /* active chip text, highlights */
   --green:        #2ECC8A;

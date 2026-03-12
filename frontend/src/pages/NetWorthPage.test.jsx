@@ -9,6 +9,7 @@ vi.mock('../components/NetWorthChart.jsx',     () => ({ default: () => <div data
 vi.mock('../components/AccountsBreakdown.jsx', () => ({ default: () => <div data-testid="accounts-breakdown" /> }))
 vi.mock('../components/TypeStackedChart.jsx',  () => ({ default: () => <div data-testid="type-stacked-chart" /> }))
 vi.mock('../components/RetirementPanel.jsx',   () => ({ default: () => <div data-testid="retirement-panel" /> }))
+vi.mock('../components/MilestoneHeroCard.jsx', () => ({ default: () => <div data-testid="milestone-hero-card" /> }))
 
 describe('NetWorthPage', () => {
   beforeEach(() => {
@@ -40,7 +41,13 @@ describe('NetWorthPage', () => {
     expect(screen.getByTestId('networth-chart')).toBeInTheDocument()
     expect(screen.getByTestId('type-stacked-chart')).toBeInTheDocument()
     expect(screen.getByTestId('accounts-breakdown')).toBeInTheDocument()
+    expect(screen.getByTestId('milestone-hero-card')).toBeInTheDocument()
     expect(screen.queryByTestId('networth-loading')).not.toBeInTheDocument()
+  })
+
+  it('renders MilestoneHeroCard after data loads', async () => {
+    render(<NetWorthPage />)
+    await waitFor(() => expect(screen.getByTestId('milestone-hero-card')).toBeInTheDocument())
   })
 
   it('renders error state when API fetch fails', async () => {

@@ -7,7 +7,7 @@
  */
 import { useState } from 'react'
 import PropTypes from 'prop-types'
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { useResponsive } from '../hooks/useResponsive.js'
 import RangeSelector from './RangeSelector.jsx'
 import {
@@ -59,7 +59,7 @@ CagrCell.propTypes = {
   value: PropTypes.number,
 }
 
-export default function TypeStackedChart({ data, milestones }) {
+export default function TypeStackedChart({ data }) {
   const [range, setRange] = useState('All')
   const { isMobile } = useResponsive()
 
@@ -94,6 +94,16 @@ export default function TypeStackedChart({ data, milestones }) {
   const negativeBuckets = activeBuckets.filter((b) => NEGATIVE_BUCKETS.has(b))
   const hasRightAxis = negativeBuckets.length > 0
 
+  // Shared axis domain so left/right ticks mirror each other exactly.
+  // Left is stacked (sum of positive buckets per point); right is per-series max.
+  const leftMax = chartData.length
+    ? Math.max(...chartData.map((d) => positiveBuckets.reduce((sum, b) => sum + (d[b] || 0), 0)))
+    : 0
+  const rightMax = chartData.length
+    ? Math.max(...chartData.flatMap((d) => negativeBuckets.map((b) => d[b] || 0)))
+    : 0
+  const axisDomain = [0, Math.max(leftMax, rightMax) || 1]
+
   return (
     <div className={styles.container} data-testid="type-stacked-chart">
       <div className={styles.header}>
@@ -113,11 +123,12 @@ export default function TypeStackedChart({ data, milestones }) {
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} vertical={false} />
           <XAxis dataKey="date" tick={AXIS_TICK} tickLine={false} axisLine={false} tickFormatter={formatDateLabel} interval="preserveStartEnd" />
-          <YAxis yAxisId="left" tickFormatter={fmtCompact} tick={AXIS_TICK} tickLine={false} axisLine={false} width={yAxisWidth} />
+          <YAxis yAxisId="left" domain={axisDomain} tickFormatter={fmtCompact} tick={AXIS_TICK} tickLine={false} axisLine={false} width={yAxisWidth} />
           {hasRightAxis && (
             <YAxis
               yAxisId="right"
               orientation="right"
+              domain={axisDomain}
               tickFormatter={(v) => `-${fmtCompact(v)}`}
               tick={{ ...AXIS_TICK, fill: bucket_colors.Debt || COLOR_NEGATIVE }}
               tickLine={false}
@@ -154,16 +165,6 @@ export default function TypeStackedChart({ data, milestones }) {
             />
           ))}
           <Legend iconType="line" wrapperStyle={{ color: '#8BA8CC', fontSize: 12 }} />
-          {milestones && milestones.map((m, i) => (
-            <ReferenceLine
-              key={`milestone-${i}`}
-              yAxisId="left"
-              y={m.amount}
-              stroke="#F5A623"
-              strokeDasharray="4 3"
-              label={{ value: m.label || '', fill: '#F5A623', fontSize: 11 }}
-            />
-          ))}
         </AreaChart>
       </ResponsiveContainer>
 
@@ -215,8 +216,4 @@ TypeStackedChart.propTypes = {
     bucket_colors: PropTypes.object,
     bucket_order:  PropTypes.arrayOf(PropTypes.string),
   }),
-  milestones: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    amount: PropTypes.number,
-  })),
 }

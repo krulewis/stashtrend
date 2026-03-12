@@ -2,7 +2,7 @@
 
 Generated: 2026-03-10
 
-**Note:** Phase B has a detailed final implementation plan. Phases 3-6 have requirements only (no final plans yet). Phase 3-6 diagrams show estimated work areas derived from `investment-forecasting-requirements.md` and will be refined once each phase completes the planning pipeline.
+**Note:** All phases (B, 3, 4, 5, 6) have completed the full planning pipeline and have final implementation plans ready. Phase 3-6 diagrams show the high-level component structure; see each phase's `*-final-plan.md` for the authoritative implementation details and staff-review corrections.
 
 ---
 
@@ -16,11 +16,11 @@ graph TD
     P1["Phase 1: NW by Account Type + CAGR<br/>(DONE - PR #4)"]
     P2["Phase 2: NW Milestones + Retirement<br/>(DONE - PR #5)"]
     P2_1["Phase 2.1: Investable Capital Fix<br/>(S - Next)"]
-    PB["Phase B: Backend Modularization<br/>(M - Planned)"]
-    P3["Phase 3: Investments Page<br/>(L - Planned)"]
-    P4["Phase 4: Forecasting Page<br/>(L - Planned)"]
-    P5["Phase 5: Monte Carlo + AI Narrative<br/>(M - Planned)"]
-    P6["Phase 6: Benchmark Comparison<br/>(S - Planned)"]
+    PB["Phase B: Backend Modularization<br/>(M - Planning Done, Ready)"]
+    P3["Phase 3: Investments Page<br/>(L - Planning Done, Ready)"]
+    P4["Phase 4: Forecasting Page<br/>(L - Planning Done, Ready)"]
+    P5["Phase 5: Monte Carlo + AI Narrative<br/>(M - Planning Done, Ready)"]
+    P6["Phase 6: Benchmark Comparison<br/>(S - Planning Done, Ready)"]
 
     P0 --> P1
     P1 --> P2
@@ -144,7 +144,7 @@ graph TD
 
 ## 3. Phase 3: Investments Page — Preliminary Diagram
 
-Source: `investment-forecasting-requirements.md` (Feature Area 2). No final plan exists yet.
+Source: `phase3-final-plan.md`. See final plan for authoritative file list and staff-review corrections.
 
 ```mermaid
 graph TD
@@ -192,7 +192,7 @@ graph TD
 
 ## 4. Phase 4: Forecasting Page — Preliminary Diagram
 
-Source: `investment-forecasting-requirements.md` (Feature Area 3, Layer 1 + Retirement Planner). No final plan exists yet.
+Source: `phase4-final-plan.md`. See final plan for authoritative file list and staff-review corrections.
 
 ```mermaid
 graph TD
@@ -238,7 +238,7 @@ graph TD
 
 ## 5. Phase 5: Monte Carlo + AI Narrative — Preliminary Diagram
 
-Source: `investment-forecasting-requirements.md` (Feature Area 3, Layers 2-3). No final plan exists yet.
+Source: `phase5-final-plan.md`. See final plan for authoritative file list and staff-review corrections.
 
 ```mermaid
 graph TD
@@ -277,7 +277,7 @@ graph TD
 
 ## 6. Phase 6: Benchmark Comparison — Preliminary Diagram
 
-Source: `investment-forecasting-requirements.md` (Feature 2c). No final plan exists yet.
+Source: `phase6-final-plan.md`. See final plan for authoritative file list and staff-review corrections.
 
 ```mermaid
 graph TD

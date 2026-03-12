@@ -117,6 +117,7 @@ export const COLOR_ACCENT   = '#4D9FFF'
 export const COLOR_POSITIVE = '#2ECC8A'
 export const COLOR_NEGATIVE = '#FF5A7A'
 export const COLOR_AMBER    = '#F5A623'
+export const COLOR_ACCENT_LIGHT = '#7DBFFF'
 
 /** Range options shared by both time-series charts; NetWorthChart prepends '1M'. */
 export const COMMON_RANGES = [

@@ -52,7 +52,7 @@ A stacked area chart that buckets your accounts into categories:
 | **Debt** | Mortgages, student loans, credit cards (shown as negative) |
 | **Other** | Vehicles, collectibles, and anything else |
 
-Debt uses a secondary Y-axis (right side) with inverted ticks so you can read the magnitude without negative signs cluttering the chart.
+Debt uses a secondary Y-axis (right side) with inverted ticks so you can read the magnitude without negative signs cluttering the chart. The right-axis ticks mirror the left-axis values exactly — for example, $1M on the left aligns with −$1M on the right.
 
 ### CAGR by Bucket
 
