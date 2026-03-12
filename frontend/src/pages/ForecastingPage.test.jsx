@@ -289,10 +289,8 @@ describe('ForecastingPage', () => {
   // ── Edge cases ────────────────────────────────────────────────────────────
 
   it('shows invalid age warning when target age <= current age', async () => {
-    // NOTE: ForecastingPage.jsx computes `years = y > 0 ? y : null`. When target <= current,
-    // years is null, making isRetirementTargetInvalid always false (dead code path).
-    // This test documents the intended spec behavior and will fail until the implementation
-    // is corrected to preserve non-positive y values so the warning can render.
+    // isRetirementTargetInvalid computes y independently (not via the `years` useMemo which
+    // returns null for non-positive values), so it correctly returns true when target <= current.
     setupDefaultFetch({ ...MOCK_RETIREMENT, current_age: 65, target_retirement_age: 60 })
     render(<ForecastingPage />)
     await waitFor(() => expect(screen.getByTestId('invalid-age-warning')).toBeInTheDocument())

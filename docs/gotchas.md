@@ -213,6 +213,9 @@ screen.getByRole('button', { name: (_, el) =>
 **Fix:** Add an explicit `vi.mock('recharts', () => ({ ... }))` factory at the top of the test file, before the import of the component under test. Render `ResponsiveContainer` as `<div data-testid="responsive-container">{children}</div>`, `AreaChart` as `<div data-testid="area-chart">{children}</div>`, and `ReferenceLine` as `<div data-testid={y != null ? \`reference-line-\${y}\` : \`reference-line-x-\${x}\`} />`.
 **Rule:** Every test file that renders a component containing Recharts charts must define its own explicit `vi.mock('recharts', ...)` factory. Never rely on the global auto-mock when the test file has other `vi.mock` calls.
 
+### isRetirementTargetInvalid: Don't Derive from `years` useMemo
+`years` useMemo returns `null` when `target_retirement_age <= current_age` (guards against `y <= 0`). Any validator that checks `years != null && years <= 0` will always be false because `years` is already `null` by then. Fix: compute `y` directly from `retirement.target_retirement_age - retirement.current_age` in the validator itself, independent of the `years` memo. Found and fixed in `ForecastingPage.jsx::isRetirementTargetInvalid` (2026-03-12).
+
 ### getByText Ambiguity — Pill Text + Status Line Share "Achieved"
 **Where:** `MilestoneCardsView.test.jsx` — any test querying `/Achieved/`.
 **Symptom:** `getByText(/Achieved/)` throws "Found multiple elements" — the pill text "✓ Achieved" and the status line "Achieved Jan '24" both match.
