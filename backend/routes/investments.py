@@ -191,7 +191,7 @@ def get_investments_summary():
         return jsonify({"accounts": result_accounts, "totals": totals})
     except Exception:
         logger.exception("Failed to fetch investments summary")
-        return jsonify({"error": "Failed to fetch investments summary"}), 500
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @bp.route("/api/investments/accounts/<account_id>/holdings")
@@ -300,7 +300,7 @@ def get_account_holdings(account_id):
         })
     except Exception:
         logger.exception("Failed to fetch holdings for account %s", account_id)
-        return jsonify({"error": "Failed to fetch holdings"}), 500
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @bp.route("/api/investments/performance")
@@ -369,8 +369,7 @@ def get_investments_performance():
 
         series = []
         for d in sorted(date_totals.keys()):
-            point = {"date": d, "total": round(date_totals[d], 2)}
-            point.update(date_accounts[d])
+            point = {"date": d, "total": round(date_totals[d], 2), "accounts": date_accounts[d]}
             series.append(point)
 
         # Query contributions (transfer transactions into investment accounts)
@@ -411,4 +410,4 @@ def get_investments_performance():
         })
     except Exception:
         logger.exception("Failed to fetch investments performance")
-        return jsonify({"error": "Failed to fetch investments performance"}), 500
+        return jsonify({"error": "Internal server error"}), 500

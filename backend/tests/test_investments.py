@@ -297,10 +297,11 @@ class TestInvestmentsPerformance(unittest.TestCase):
         self.assertIn("contributions", data)
         self.assertIn("account_names", data)
         self.assertGreater(len(data["series"]), 0)
-        # Each series point has a date and total
+        # Each series point has a date, total, and per-account nested dict
         for point in data["series"]:
             self.assertIn("date", point)
             self.assertIn("total", point)
+            self.assertIn("accounts", point)
         # Account names present
         self.assertIn("acct-401k", data["account_names"])
         self.assertIn("acct-brok", data["account_names"])

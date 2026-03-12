@@ -48,7 +48,7 @@ describe('App', () => {
     expect(await screen.findByText('Stashtrend')).toBeInTheDocument()
   })
 
-  // Both Sidebar and BottomTabBar render all 5 NAV_ITEMS as links.
+  // Both Sidebar and BottomTabBar render all 7 NAV_ITEMS as links.
   // Both components are in the DOM simultaneously (one hidden via CSS).
   // Use getAllByRole to find all instances and assert count.
   it('renders all nav links in sidebar and bottom tab bar', async () => {
