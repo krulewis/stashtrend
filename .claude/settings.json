@@ -16,6 +16,15 @@
             "command": "./.claude/hooks/validate-agent-type.sh"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./.claude/hooks/pre-push-gate.sh"
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -25,6 +34,20 @@
           {
             "type": "command",
             "command": "./.claude/hooks/edit-count-detector.sh"
+          },
+          {
+            "type": "command",
+            "command": "./.claude/hooks/inline-edit-guard.sh"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./.claude/hooks/pre-compact-reminder.sh"
           }
         ]
       }
