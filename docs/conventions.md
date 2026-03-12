@@ -1,5 +1,8 @@
 # Active Conventions — Stashtrend
 
+## File Organization
+- **HTML mockups** go in `docs/mockups/` — design briefs, UI decision docs, dependency diagrams, and any other rendered HTML artifacts.
+
 ## Backend Architecture (Phase B)
 - **Blueprint modularization:** `backend/app.py` is now a ~107-line shim. Route logic split into 9 blueprints under `backend/routes/`. DB helpers in `db.py`, AI helpers in `ai.py`.
 - **`import app as _app` pattern:** Route modules import the `app` module as `_app` and call `_app.get_db()` at call time (not module load time). This preserves all existing `patch("app.X", ...)` mocking in tests — the patch intercepts the `_app` reference, and call-time resolution uses the mocked version.
