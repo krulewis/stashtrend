@@ -125,6 +125,15 @@ Models are defined in each agent's frontmatter — not chosen at dispatch time. 
 | **Standard work** | sonnet | Produces artifacts by following patterns | `researcher`, `engineer`, `implementer`, `qa`, `code-reviewer`, `security-scanner`, `debugger`, `frontend-designer` |
 | **Mechanical** | haiku | Procedural tasks, no deep reasoning needed | `explorer` (incl. pre-flight checker, regression scorer, file change classifier), `docs-updater`, `playwright-qa`, `commit-drafter`, `pr-drafter`, `test-triager`, `lint-fixer`, `packet-summarizer`, `changelog-scanner`, `loop-guard` |
 
+### Plan Before Code — MANDATORY
+
+**No code edits without a stated plan first — regardless of size classification.**
+
+- **XS:** State the file name and the specific change in your response before touching it (one sentence is enough).
+- **S/M/L:** A written plan document must exist before any implementer agent is dispatched. For S, a brief inline plan in the response suffices. For M/L, use the full planning pipeline.
+
+This rule has no exceptions. "It's just a quick fix" is not a reason to skip it — that is exactly when plans are skipped and bugs are introduced.
+
 ### Agent Delegation — MANDATORY
 
 **All execution work MUST be dispatched to a named agent.** The orchestrator coordinates and dispatches but does not perform execution tasks inline.
