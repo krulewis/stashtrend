@@ -48,7 +48,7 @@ Placed between the AI section and "How It Works". Follows the same alternating l
   - Skyline chart: investable capital + dashed projection curve
   - All computed locally from your Monarch data
 
-**Screen mockup contents:** Milestone hero card showing 3 milestones (Emergency Fund ✓, House Down Payment 67%, Early Retirement 12%) with a mini area chart showing investable capital trajectory.
+**Screen mockup contents:** Milestone hero card showing 3 milestones (Emergency Fund ✓, House Down Payment 67%, Early Retirement 12%) with a mini area chart showing investable capital trajectory — flat for the first third, then steadily rising curve (mirrors the real MilestoneSkylineView shape). Drawn as inline SVG, same style as the existing chart mockups in the file.
 
 ### 1.4 GitHub Links
 
@@ -65,7 +65,7 @@ The current file has no `@media` queries. Add a single responsive breakpoint at 
 
 | Element | Mobile behavior |
 |---------|----------------|
-| Nav | Hide nav links; show logo + CTA only |
+| Nav | Hide nav links; show logo + "Clone on GitHub" CTA only |
 | Hero | Single column (stack text above screen) |
 | Feature grid | Single column |
 | Screenshot sections | Single column (screen above text) |
@@ -112,7 +112,7 @@ Deploy trigger: every push to `main` auto-deploys.
 Once `stashtrend.com` is registered via Cloudflare Registrar:
 1. Cloudflare Pages → Custom domains → Add `stashtrend.com`
 2. Cloudflare automatically provisions SSL and sets the DNS record
-3. Add `www` redirect: `www.stashtrend.com` → `stashtrend.com` (Cloudflare Page Rule or Redirect Rule)
+3. Add `www` redirect: `www.stashtrend.com` → `stashtrend.com` via Cloudflare **Redirect Rule** (not Page Rules — those are deprecated)
 
 ### 2.4 README for stashtrend-website
 
