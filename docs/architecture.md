@@ -29,13 +29,13 @@
   - CAGR: aggregate-balance approximation `(end/start)^(1/years) - 1` for 1Y/3Y/5Y. Null for <30 days non-zero history. UI tooltip: "Estimated CAGR — actual returns may differ."
   - **Dual-axis chart:** Left YAxis for positive buckets (stacked), Right YAxis for Debt (absolute values, minus-prefixed ticks). `NEGATIVE_BUCKETS` Set in TypeStackedChart.jsx. CustomTooltip negates values back for display. As of the axis sync fix, both YAxes share a computed `axisDomain` of `[0, Math.max(leftMax, rightMax)]` where `leftMax` is the max stacked sum of positive buckets per data point and `rightMax` is the max absolute debt value per data point. This ensures tick marks mirror exactly: 1M on left aligns with −1M on right.
   - **AccountsBreakdown:** Groups by `bucket` field (from API) instead of raw Monarch `type`. API adds `bucket` via `_get_bucket()`.
-- **Investments Page (Phase 3):** COMPLETE ✅
+- **Investments Page (Phase 3):** COMPLETE ✅ (merged PR #19, 2026-03-12)
   - Backend: 3 new endpoints (`/api/investments/summary`, `/api/investments/accounts/<id>/holdings`, `/api/investments/performance`), batch CAGR computation (`_compute_all_cagrs`), security type normalization, contribution detection via transfer-categorized transactions, `python-dateutil` relativedelta for date arithmetic
   - Frontend: `InvestmentsPage` with dashboard/drill-down views, `InvestmentAccountsTable`, `InvestmentPerformanceChart` (ComposedChart with merged contribution bars), `AccountDetailHeader`, `HoldingsTable` (sortable/filterable), `AllocationChart` (donut)
   - Routing: `/investments` (dashboard) + `/investments/:accountId` (drill-down)
   - RangeSelector updated for value-based selection (backward compatible with label-based callers)
   - `fetchJSON` extended to attach `.status` on thrown errors
-- **Forecasting Page (Phase 4):** COMPLETE ✅
+- **Forecasting Page (Phase 4):** COMPLETE ✅ (merged PR #19, 2026-03-12)
   - Frontend-only: All projection math runs in the browser
   - Math: 3 new functions in `retirementMath.js` — `getInvestableCapital`, `computeBlendedCAGR`, `calculateContributionToTarget` (annuity formula with floor guard)
   - Components: `ForecastingPage`, `ForecastingChart` (historical + 3 projected lines + nest egg target), `ForecastingControls` (dual `SliderInput`), `ForecastingSummary` (readiness cards + gap analysis), `ForecastingSetup` (first-time inline form, purely presentational)
@@ -47,7 +47,7 @@
   - Components: `RetirementPanel.jsx` (form container, useEffect hydration, onSave callback), `MilestoneEditor.jsx` (editable milestone rows, add/remove, max 20), `RetirementSummary.jsx` (nest egg, projected amount, on/off track badge with `color-mix()`).
   - Integration: `NetWorthPage.jsx` fetches retirement in `Promise.all` with `.catch(() => ({ exists: false }))` for graceful degradation.
   - Tests: 16 backend + 47 frontend = 63 new tests.
-- **Phase 2.1 — Dual-View Milestone Hero Card:** COMPLETE (pending commit) ✅
+- **Phase 2.1 — Dual-View Milestone Hero Card:** COMPLETE ✅ (merged)
   - Fixes the Phase 2 bug where milestones compared against total NW instead of investable capital.
   - **Investable capital:** `Retirement + Brokerage` bucket sum from `typeData.series` last point. Lives in `useMilestoneData` hook.
   - **`MilestoneHeroCard`:** Full-width card between `TypeStackedChart` and `AccountsBreakdown`. Two views toggled by `aria-pressed` button strip:

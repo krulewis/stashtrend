@@ -12,10 +12,12 @@
 - **Budget Heatmap View** — Mobile-only 6-month heatmap as pane 0 in `HorizontalSwipeContainer`. All groups (A–F) complete. 607 frontend tests. Merged (PR #11).
 - **Heatmap Refinements** — 6 visual/interaction improvements to `HeatmapView` + `WindowPicker`. 625 frontend tests. Merged (PR #12).
 - **Net Worth Phases 0–2** — Holdings sync pipeline (PR #3), NW by account type + CAGR (PR #4), NW milestones + retirement tracker (PR #5). All merged.
-- **Phase 2.1 — Dual-View Milestone Hero Card** — `MilestoneHeroCard` (Cards + Skyline views) between TypeStackedChart and AccountsBreakdown. Investable capital (Retirement + Brokerage) is the correct baseline. ReferenceLine loop removed from TypeStackedChart. New files: `milestoneUtils.js`, `useMilestoneData.js`, `MilestoneHeroCard.jsx/.module.css`, `MilestoneCardsView.jsx/.module.css`, `MilestoneSkylineView.jsx/.module.css`. New tokens: `--green-tint`, `--amber-tint` in `index.css`. New constant: `COLOR_ACCENT_LIGHT` in `chartUtils.jsx`. Implementation in progress (not yet committed).
+- **Phase 2.1 — Dual-View Milestone Hero Card** — `MilestoneHeroCard` (Cards + Skyline views) between TypeStackedChart and AccountsBreakdown. Investable capital (Retirement + Brokerage) is the correct baseline. ReferenceLine loop removed from TypeStackedChart. New files: `milestoneUtils.js`, `useMilestoneData.js`, `MilestoneHeroCard.jsx/.module.css`, `MilestoneCardsView.jsx/.module.css`, `MilestoneSkylineView.jsx/.module.css`. New tokens: `--green-tint`, `--amber-tint` in `index.css`. New constant: `COLOR_ACCENT_LIGHT` in `chartUtils.jsx`. Merged.
+- **Phase 3 — Investments Page** — New Investments page at `/investments`. Backend: 3 endpoints (`/api/investments/summary`, `/<id>/holdings`, `/performance`), batch CAGR (`_compute_all_cagrs`), contribution detection via transfers, `python-dateutil` relativedelta. Frontend: `InvestmentsPage`, `InvestmentAccountsTable`, `InvestmentPerformanceChart`, `AccountDetailHeader`, `HoldingsTable`, `AllocationChart`. Routing: `/investments` (dashboard) + `/investments/:accountId` (drill-down). Merged (PR #19, 2026-03-12).
+- **Phase 4 — Forecasting Page** — New Forecasting page at `/forecasting`. Frontend-only projection math. New `retirementMath.js` functions: `getInvestableCapital`, `computeBlendedCAGR`, `calculateContributionToTarget` (annuity with floor guard). Components: `ForecastingPage`, `ForecastingChart` (historical + 3 projected lines + nest egg target), `ForecastingControls` (dual `SliderInput`), `ForecastingSummary` (readiness cards + gap analysis), `ForecastingSetup`. `SliderInput` reusable component. Routing: `/forecasting`. Merged (PR #19, 2026-03-12).
 
 ## Active
-None — Phases 3 and 4 implementation complete (pending PR review).
+- **Milestones Page Consolidation** (M, in-progress 2026-03-12): Consolidate MilestoneCardsView + RetirementPanel into ForecastingPage; delete MilestoneSkylineView + MilestoneHeroCard; rename /forecasting → /milestones route. Plan: `plans/milestones-page-impl-plan.md`. Implementation underway in milestones-impl team.
 
 ## Roadmap — Net Worth + Investments + Forecasting
 
@@ -30,8 +32,8 @@ Full requirements: `plans/investment-forecasting-requirements.md`
 | **2** | NW milestones + retirement target tracker on Net Worth page | M | 1 | **Done** (PR #5, merged) |
 | **2.1** | Fix retirement tracker to use investable capital, not total NW | S | 2 | **Done** (merged) |
 | **B** | Backend decomposition — split `app.py` into route blueprints + service modules | M | — | **Done** (PR #18, 2026-03-12) |
-| **3** | New Investments page — account-level performance dashboard + holdings drill-down | L | 0, B | **Planning complete — ready for implementation** |
-| **4** | New Forecasting page — simple projections + retirement planner | L | 1, 2, B | **Planning complete — ready for implementation** |
+| **3** | New Investments page — account-level performance dashboard + holdings drill-down | L | 0, B | **Done** (PR #19, 2026-03-12) |
+| **4** | New Forecasting page — simple projections + retirement planner | L | 1, 2, B | **Done** (PR #19, 2026-03-12) |
 | **5** | Monte Carlo simulation + AI narrative layer on Forecasting page | M | 4 | **Planning complete — ready for implementation** |
 | **6** | Benchmark comparison vs S&P 500 (nice-to-have) | S | 3 | **Planning complete — ready for implementation** |
 
