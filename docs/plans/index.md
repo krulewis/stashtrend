@@ -28,8 +28,8 @@ Full requirements: `plans/investment-forecasting-requirements.md`
 | **0** | Sync holdings data from Monarch API (new `holdings` DB table + pipeline) | M | — | **Done** (PR #3) |
 | **1** | NW by account type + CAGR estimates on existing Net Worth page | M | 0 | **Done** (PR #4) |
 | **2** | NW milestones + retirement target tracker on Net Worth page | M | 1 | **Done** (PR #5, merged) |
-| **2.1** | Fix retirement tracker to use investable capital, not total NW | S | 2 | **Implementation complete — pending commit** |
-| **B** | Backend decomposition — split `app.py` into route blueprints + service modules | M | — | **Planning complete — ready for implementation** |
+| **2.1** | Fix retirement tracker to use investable capital, not total NW | S | 2 | **Done** (merged) |
+| **B** | Backend decomposition — split `app.py` into route blueprints + service modules | M | — | **Done** (PR #18, 2026-03-12) |
 | **3** | New Investments page — account-level performance dashboard + holdings drill-down | L | 0, B | **Planning complete — ready for implementation** |
 | **4** | New Forecasting page — simple projections + retirement planner | L | 1, 2, B | **Planning complete — ready for implementation** |
 | **5** | Monte Carlo simulation + AI narrative layer on Forecasting page | M | 4 | **Planning complete — ready for implementation** |
@@ -113,22 +113,26 @@ All planning uses fresh-context agents per CLAUDE.md — each step gets only wri
 
 ### Phase B — Backend Modularization
 
-**Problem:** `backend/app.py` is a 2,442-line Flask monolith combining route handlers, DB helpers, sync logic, AI integration, background scheduling, DDL, and startup code. This makes Phases 3–6 development error-prone and creates merge conflicts as all new routes land in the same file.
+**Status:** COMPLETE — Merged PR #18 (2026-03-12)
 
-**Approach:** Blueprint split with a backward-compatible shim in `app.py`. The monolith is split into `db.py`, `ai.py`, `sync_core.py`, `token_auth.py`, and 9 route modules under `routes/`. The original `app.py` becomes a ~90-line shim that re-exports all public names — all 15 existing test files and `wsgi.py` require zero changes.
+**Problem:** `backend/app.py` was a 2,442-line Flask monolith combining route handlers, DB helpers, sync logic, AI integration, background scheduling, DDL, and startup code. This makes Phases 3–6 development error-prone and creates merge conflicts as all new routes land in the same file.
 
-**Prerequisites:** Should land before Phases 3–6 begin. Decomposing first avoids merge conflicts as those phases add routes and logic.
+**Solution:** Blueprint split with a backward-compatible shim in `app.py`. The monolith is now split into:
+- `db.py` — DB helpers and constants
+- `ai.py` — AI integration helpers
+- `routes/` (9 blueprints) — `setup.py`, `settings.py`, `retirement.py`, `groups.py`, `budgets.py`, `networth.py`, `sync.py`, `ai_routes.py`, `budget_builder.py`
+- `app.py` — now a ~107-line shim that re-exports all public names
 
-**Size:** M — multi-file refactor, no new features, existing tests must keep passing.
+All 15 existing test files and `wsgi.py` require zero changes. Route modules use `import app as _app` pattern to preserve all `patch("app.X")` test mocks at call time.
 
-**Planning complete. Artifacts in `plans/`:**
+**Implementation artifacts (for reference):**
 - `phase-b-research.md` — codebase exploration of `app.py` monolith
 - `phase-b-architecture.md` — architecture decision: backward-compatible shim approach
 - `phase-b-impl-plan.md` — initial implementation plan
 - `phase-b-review.md` — staff review: 8 findings (3 Blockers, 5 Major)
-- `phase-b-final-plan.md` — final corrected plan, ready for implementation
+- `phase-b-final-plan.md` — final corrected plan
 
-**Key resolutions from review:** Route modules use `import app as _app` and call `_app.get_db()` at call time (preserves all `patch("app.get_db", ...)` mocking), `db.DB_PATH` patch target in `test_db_improvements.py`, `_ai_cooldowns` + lock re-exported in shim, `routes/networth.py` uses `logging.getLogger(__name__)`, functions COPIED during steps 1–12 (originals removed only in step 13).
+**Key implementation details:** Route modules use `import app as _app` and call `_app.get_db()` at call time. Patch targets: `db.DB_PATH` in `test_db_improvements.py`, `routes.networth` for logger. Functions were COPIED during refactoring (originals removed only in final step).
 
 ---
 

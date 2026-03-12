@@ -1,7 +1,11 @@
 # Architecture — Stashtrend
 
 ## Stack
-- **Backend:** `backend/app.py` — all Flask endpoints, port 5050
+- **Backend:** Blueprint-modularized Flask app (Phase B complete, PR #18). Port 5050.
+  - **`backend/app.py`** — ~107-line shim with backward-compatible re-exports of all public names (DB_PATH, logger, routes, test mocks). Imports and registers blueprints from `routes/`.
+  - **`backend/db.py`** — DB helpers: `get_db()`, `get_db_connection()`, `DB_PATH`, `init_dashboard_schema()`, DDL constants
+  - **`backend/ai.py`** — AI helpers: `_call_ai()`, `_get_ai_key()`, `_check_ai_rate_limit()`, `_ai_cooldowns`/`_ai_cooldowns_lock`, `_extract_json()`
+  - **`backend/routes/`** — 9 Flask Blueprints (one file each): `setup.py`, `settings.py`, `retirement.py`, `groups.py`, `budgets.py`, `networth.py`, `sync.py`, `ai_routes.py`, `budget_builder.py`. Route modules use `import app as _app` to preserve all `patch("app.X")` test mocks.
 - **Frontend:** `frontend/` — React + Vite + Recharts, port 5173 (dev) / 80 (prod via nginx)
 - **Pipeline:** `pipeline/monarch_pipeline/` — Monarch Money API client, schema, storage
 - **DB:** SQLite at `~/.monarch_pipeline/monarch.db` (local) or `/data/monarch.db` (Docker volume), WAL mode enabled

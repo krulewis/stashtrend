@@ -1,5 +1,14 @@
 # Active Conventions — Stashtrend
 
+## Backend Architecture (Phase B)
+- **Blueprint modularization:** `backend/app.py` is now a ~107-line shim. Route logic split into 9 blueprints under `backend/routes/`. DB helpers in `db.py`, AI helpers in `ai.py`.
+- **`import app as _app` pattern:** Route modules import the `app` module as `_app` and call `_app.get_db()` at call time (not module load time). This preserves all existing `patch("app.X", ...)` mocking in tests — the patch intercepts the `_app` reference, and call-time resolution uses the mocked version.
+- **Blueprint registration:** Each route module defines a `bp = Blueprint(...)` and endpoint functions decorated with `@bp.route(...)`. The shim imports and registers all blueprints: `app.register_blueprint(bp)` at module level.
+- **Patch targets for tests:**
+  - `db.DB_PATH` (not `app.DB_PATH`) for database path overrides
+  - `routes.networth` for logger patching in networth-specific tests
+  - `app.X` still works for backward compatibility (shim re-exports everything)
+
 ## Data Boundaries
 - **snake_case/camelCase:** backend always snake_case; frontend destructures with alias
   - e.g. `const { groups_meta: groupsMeta } = data`
@@ -106,6 +115,20 @@ All colors in CSS module files MUST use CSS custom properties defined in `index.
 - **Prompt sanitization:** Always use `_sanitize_prompt_field(value, max_length)` on user-supplied fields at prompt construction time, NOT at save time (profile_overrides can bypass save validation).
 - **AI key storage:** Use `_get_ai_key(conn)` to read (keychain → DB fallback). Never delete key from settings table — Docker has no keyring. Catch `keyring.errors.KeyringError` (base class), not just `NoKeyringError` — covers locked keychains too.
 - **CORS:** Explicit localhost-only origins list. Add new origins only if needed (e.g., new dev port).
+
+## Agent Pipeline & Team Coordination (PR #17)
+- **Named agent dispatch:** All agents defined in `.claude/agents/` with model pinned in frontmatter. Orchestrator dispatches by name (e.g. `pm`, `researcher`, `engineer`, `docs-updater`). See `~/.claude/CLAUDE.md` for full agent-to-pipeline-step mapping.
+- **Haiku-tier mechanical agents (PR #17):** New 8 agents for procedural tasks (model: Haiku):
+  - `changelog-scanner` — summarizes dependency changelogs
+  - `commit-drafter` — generates commit messages from `git diff`
+  - `lint-fixer` — runs linters, parses output, auto-fixes trivial violations
+  - `loop-guard` — detects cycling comments in PR review loop
+  - `packet-summarizer` — compresses pipeline context packets >500 words
+  - `pr-drafter` — generates PR title/body from diff + plan context
+  - `test-triager` — parses test output, classifies failures, prioritizes actionable ones
+  - `security-scanner` — scans for OWASP top 10 patterns, unsafe code, credential exposure
+- **Agent teams:** For M/L changes, use `TeamCreate` to coordinate 3+ agents. Standard team compositions: `{feature}-planning` (PM + 2 researchers), `{feature}-impl` (QA + implementers + code-reviewer + playwright-qa + frontend-designer + docs-updater), `{feature}-review` (staff-reviewer + implementer/debugger). New team per phase. See `~/.claude/CLAUDE.md` for lifecycle.
+- **Pipeline context packet:** Ephemeral ≤500-word-per-step summary passed to each pipeline agent. Orchestrator maintains packet; `packet-summarizer` (Haiku) compresses steps exceeding 500 words before appending. Prevents context bloat for downstream agents.
 
 ## Distribution & Docker
 - **Self-hosted:** Docker Compose — each user runs locally, no data leaves their machine
