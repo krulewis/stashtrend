@@ -12,6 +12,6 @@ export const NAV_ITEMS = [
   { path: '/groups',       label: 'Account Groups', icon: '⬡'  },
   { path: '/budgets',  label: 'Budgets',        icon: '💰' },
   { path: '/builder',  label: 'Budget Builder', icon: '🏗'  },
-  { path: '/forecasting', label: 'Forecasting', icon: '🔮' },
+  { path: '/milestones', label: 'Milestones', icon: '🎯' },
   { path: '/sync',     label: 'Sync Data',      icon: '🔄' },
 ]

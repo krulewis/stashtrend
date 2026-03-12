@@ -1,10 +1,11 @@
-import { useEffect, useState, useCallback, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import styles from './ForecastingPage.module.css'
 import ForecastingChart from '../components/ForecastingChart.jsx'
 import ForecastingControls from '../components/ForecastingControls.jsx'
 import ForecastingSummary from '../components/ForecastingSummary.jsx'
 import ForecastingSetup from '../components/ForecastingSetup.jsx'
+import MilestoneCardsView from '../components/MilestoneCardsView.jsx'
+import RetirementPanel from '../components/RetirementPanel.jsx'
 import { fetchNetworthByType, fetchRetirement, saveRetirement } from '../api.js'
 import {
   getInvestableCapital,
@@ -15,6 +16,7 @@ import {
   calculateContributionToTarget,
 } from '../utils/retirementMath.js'
 import { fmtFull } from '../components/chartUtils.jsx'
+import { useMilestoneData } from '../hooks/useMilestoneData.js'
 
 export default function ForecastingPage() {
   const [typeData,     setTypeData]     = useState(null)
@@ -31,7 +33,9 @@ export default function ForecastingPage() {
   const [setupLoading, setSetupLoading] = useState(false)
   const [setupError,   setSetupError]   = useState(null)
 
-  const navigate = useNavigate()
+  const [retirementLoading, setRetirementLoading] = useState(false)
+  const [retirementError,   setRetirementError]   = useState(null)
+  const retirementRef = useRef(null)
 
   function loadData() {
     setError(null)
@@ -92,11 +96,33 @@ export default function ForecastingPage() {
     }
   }, [typeData])
 
-  // Navigates to /networth where RetirementPanel is located.
-  // No hash anchor is used because RetirementPanel has no id attribute today.
-  // If a deep-link is needed in future, add id="retirement" to RetirementPanel's container
-  // and change this to navigate('/networth#retirement').
-  const handleEditSettings = useCallback(() => navigate('/networth'), [navigate])
+  const handleEditSettings = useCallback(() => {
+    retirementRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [])
+
+  const handleSaveRetirement = useCallback(async (data) => {
+    setRetirementLoading(true)
+    setRetirementError(null)
+    try {
+      await saveRetirement(data)
+      const updated = await fetchRetirement()
+      setRetirement(updated)
+      // Re-derive slider defaults from updated settings (mirrors handleSetupSave logic)
+      const blendedCAGR = computeBlendedCAGR(typeData)
+      const savedReturn = updated?.exists ? (updated.expected_return_pct ?? null) : null
+      const initReturn = savedReturn ?? blendedCAGR
+      const clampedReturn = Math.min(15, Math.max(0, initReturn))
+      const initContrib = updated?.exists ? (updated.monthly_contribution ?? 0) : 0
+      setContribution(initContrib)
+      setReturnRate(clampedReturn)
+      setDefaultContribution(initContrib)
+      setDefaultReturnRate(clampedReturn)
+    } catch (err) {
+      setRetirementError(err.message || 'Failed to save retirement settings')
+    } finally {
+      setRetirementLoading(false)
+    }
+  }, [typeData])
 
   // ── Derived values ────────────────────────────────────────────────────────
 
@@ -237,10 +263,11 @@ export default function ForecastingPage() {
   // 0 means accounts exist but have $0 balance — still show the chart at $0
   const hasNoData = investableCapital == null
 
-  const isRetirementTargetInvalid = useMemo(() =>
-    retirement?.exists && years != null && years <= 0,
-    [retirement, years]
-  )
+  const isRetirementTargetInvalid = useMemo(() => {
+    if (!retirement?.exists) return false
+    const y = (retirement.target_retirement_age ?? 0) - (retirement.current_age ?? 0)
+    return y <= 0
+  }, [retirement])
 
   // ── Screen reader summary ─────────────────────────────────────────────────
 
@@ -250,13 +277,15 @@ export default function ForecastingPage() {
     ? `Projected investable capital at retirement: ${fmtFull(projectedAtRetirement)}. ${isOnTrack ? 'On track' : 'Off track'}.`
     : ''
 
+  const milestoneData = useMilestoneData(typeData, retirement)
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div>
       {/* Page header */}
       <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>Forecasting</h1>
+        <h1 className={styles.pageTitle}>Milestones</h1>
         <div className={styles.pageActions}>
           {lastUpdated && (
             <span className={styles.updatedAt}>Updated at {lastUpdated}</span>
@@ -315,26 +344,9 @@ export default function ForecastingPage() {
             </div>
           )}
 
-          {/* Controls + Chart + Summary — only when we have investable capital and valid years */}
+          {/* Summary → MilestoneCardsView → Chart → Controls → RetirementPanel */}
           {!isRetirementTargetInvalid && !hasNoData && (
             <>
-              <ForecastingControls
-                contribution={contribution}
-                returnRate={returnRate}
-                onContributionChange={setContribution}
-                onReturnRateChange={setReturnRate}
-                onReset={handleReset}
-                contributionMax={contributionMax}
-                defaultsNote={defaultsNote}
-                cagrWarning={cagrWarning}
-              />
-              <ForecastingChart
-                chartData={mergedChartData}
-                nestEgg={nestEgg}
-                showVariants={showVariants}
-                retirementYear={targetYear}
-                srSummary={srSummary}
-              />
               <ForecastingSummary
                 investableCapital={investableCapital}
                 nestEgg={nestEgg}
@@ -345,6 +357,43 @@ export default function ForecastingPage() {
                 onEditSettings={handleEditSettings}
                 hasSettings={!!retirement?.exists}
               />
+
+              {milestoneData.shouldRender && (
+                <MilestoneCardsView milestones={milestoneData.milestones} />
+              )}
+
+              <ForecastingChart
+                chartData={mergedChartData}
+                nestEgg={nestEgg}
+                showVariants={showVariants}
+                retirementYear={targetYear}
+                srSummary={srSummary}
+              />
+
+              <ForecastingControls
+                contribution={contribution}
+                returnRate={returnRate}
+                onContributionChange={setContribution}
+                onReturnRateChange={setReturnRate}
+                onReset={handleReset}
+                contributionMax={contributionMax}
+                defaultsNote={defaultsNote}
+                cagrWarning={cagrWarning}
+              />
+
+              <section
+                id="retirement-settings"
+                ref={retirementRef}
+                aria-label="Retirement Settings"
+              >
+                <RetirementPanel
+                  data={retirement}
+                  onSave={handleSaveRetirement}
+                  loading={retirementLoading}
+                  error={retirementError}
+                  typeData={typeData}
+                />
+              </section>
             </>
           )}
         </div>

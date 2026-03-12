@@ -61,7 +61,7 @@ describe('App', () => {
     expect(screen.getAllByRole('link', { name: /Account Groups/ })).toHaveLength(2)
     expect(screen.getAllByRole('link', { name: /Budgets/ })).toHaveLength(2)
     expect(screen.getAllByRole('link', { name: /Budget Builder/ })).toHaveLength(2)
-    expect(screen.getAllByRole('link', { name: /Forecasting/ })).toHaveLength(2)
+    expect(screen.getAllByRole('link', { name: /Milestones/ })).toHaveLength(2)
     expect(screen.getAllByRole('link', { name: /Sync Data/ })).toHaveLength(2)
   })
 
@@ -77,6 +77,13 @@ describe('App', () => {
     renderApp('/')
     await waitFor(() => {
       expect(screen.getByTestId('networth-page')).toBeInTheDocument()
+    })
+  })
+
+  it('redirects /forecasting to /milestones', async () => {
+    renderApp('/forecasting')
+    await waitFor(() => {
+      expect(screen.getByTestId('forecasting-page')).toBeInTheDocument()
     })
   })
 

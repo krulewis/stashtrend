@@ -1,14 +1,12 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import NetWorthPage from './NetWorthPage.jsx'
-import { MOCK_STATS, MOCK_ACCOUNTS, MOCK_NETWORTH_BY_TYPE, MOCK_RETIREMENT, MOCK_RETIREMENT_EMPTY, mockFetch } from '../test/fixtures.js'
+import { MOCK_STATS, MOCK_ACCOUNTS, MOCK_NETWORTH_BY_TYPE, mockFetch } from '../test/fixtures.js'
 
 // Mock child components so this test only exercises NetWorthPage's own behavior
 vi.mock('../components/StatsCards.jsx',        () => ({ default: () => <div data-testid="stats-cards" /> }))
 vi.mock('../components/AccountsBreakdown.jsx', () => ({ default: () => <div data-testid="accounts-breakdown" /> }))
 vi.mock('../components/TypeStackedChart.jsx',  () => ({ default: () => <div data-testid="type-stacked-chart" /> }))
-vi.mock('../components/RetirementPanel.jsx',   () => ({ default: () => <div data-testid="retirement-panel" /> }))
-vi.mock('../components/MilestoneHeroCard.jsx', () => ({ default: () => <div data-testid="milestone-hero-card" /> }))
 
 describe('NetWorthPage', () => {
   beforeEach(() => {
@@ -16,7 +14,6 @@ describe('NetWorthPage', () => {
       '/api/networth/stats':   MOCK_STATS,
       '/api/accounts/summary': MOCK_ACCOUNTS,
       '/api/networth/by-type': MOCK_NETWORTH_BY_TYPE,
-      '/api/retirement':       MOCK_RETIREMENT,
     })
   })
 
@@ -38,13 +35,7 @@ describe('NetWorthPage', () => {
     })
     expect(screen.getByTestId('type-stacked-chart')).toBeInTheDocument()
     expect(screen.getByTestId('accounts-breakdown')).toBeInTheDocument()
-    expect(screen.getByTestId('milestone-hero-card')).toBeInTheDocument()
     expect(screen.queryByTestId('networth-loading')).not.toBeInTheDocument()
-  })
-
-  it('renders MilestoneHeroCard after data loads', async () => {
-    render(<NetWorthPage />)
-    await waitFor(() => expect(screen.getByTestId('milestone-hero-card')).toBeInTheDocument())
   })
 
   it('renders error state when API fetch fails', async () => {
@@ -67,7 +58,7 @@ describe('NetWorthPage', () => {
     await waitFor(() => expect(screen.queryByTestId('networth-loading')).not.toBeInTheDocument())
     const callsBefore = global.fetch.mock.calls.length
     fireEvent.click(screen.getByRole('button', { name: /Refresh/ }))
-    // Refresh triggers 4 more fetch calls (stats, accounts, by-type, retirement)
+    // Refresh triggers 3 more fetch calls (stats, accounts, by-type)
     await waitFor(() => {
       expect(global.fetch.mock.calls.length).toBeGreaterThan(callsBefore)
     })
@@ -80,31 +71,13 @@ describe('NetWorthPage', () => {
     })
   })
 
-  // ── Retirement integration ────────────────────────────────────────────────
-
-  it('fetches retirement data in Promise.all (4 total fetches on mount)', async () => {
+  it('fetches 3 endpoints on mount (stats, accounts, by-type)', async () => {
     render(<NetWorthPage />)
     await waitFor(() => expect(screen.getByTestId('stats-cards')).toBeInTheDocument())
-    // 4 fetch calls: stats, accounts, by-type, retirement
-    expect(global.fetch.mock.calls.length).toBe(4)
+    expect(global.fetch.mock.calls.length).toBe(3)
     const urls = global.fetch.mock.calls.map((c) => c[0])
-    expect(urls.some((u) => u.includes('/api/retirement'))).toBe(true)
-  })
-
-  it('renders RetirementPanel after data loads', async () => {
-    render(<NetWorthPage />)
-    await waitFor(() => expect(screen.getByTestId('retirement-panel')).toBeInTheDocument())
-  })
-
-  it('does not crash when retirement returns exists=false', async () => {
-    mockFetch({
-      '/api/networth/stats':   MOCK_STATS,
-      '/api/accounts/summary': MOCK_ACCOUNTS,
-      '/api/networth/by-type': MOCK_NETWORTH_BY_TYPE,
-      '/api/retirement':       MOCK_RETIREMENT_EMPTY,
-    })
-    render(<NetWorthPage />)
-    await waitFor(() => expect(screen.getByTestId('stats-cards')).toBeInTheDocument())
-    expect(screen.getByTestId('retirement-panel')).toBeInTheDocument()
+    expect(urls.some((u) => u.includes('/api/networth/stats'))).toBe(true)
+    expect(urls.some((u) => u.includes('/api/accounts/summary'))).toBe(true)
+    expect(urls.some((u) => u.includes('/api/networth/by-type'))).toBe(true)
   })
 })

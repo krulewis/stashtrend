@@ -42,7 +42,8 @@ function AppShell() {
           <Route path="/groups"  element={<GroupsPage />} />
           <Route path="/budgets" element={<BudgetPage />} />
           <Route path="/builder" element={<BudgetBuilderPage />} />
-          <Route path="/forecasting" element={<ForecastingPage />} />
+          <Route path="/milestones" element={<ForecastingPage />} />
+          <Route path="/forecasting" element={<Navigate to="/milestones" replace />} />
           <Route path="/sync"    element={<SyncPage />} />
           <Route path="*"        element={<Navigate to="/networth" replace />} />
         </Routes>

@@ -199,6 +199,13 @@ screen.getByRole('button', { name: (_, el) =>
 **Fix:** Reverse the array to most-recent-first: `['2026-02-01', '2026-01-01', '2025-12-01', '2025-11-01', '2025-10-01', '2025-09-01']`.
 **Rule:** All `months[]` arrays passed to `WindowPicker` (and used in its tests) must be sorted most-recent-first. The `open()` function derives `gridYear` from the oldest month in the current window, which is `windowSlice[windowSlice.length - 1]` — the last element of a most-recent-first slice is the furthest-past date.
 
+### isRetirementTargetInvalid — Compute y Directly in useMemo
+**Where:** `RetirementPanel.jsx` → `isRetirementTargetInvalid` useMemo.
+**Symptom:** Input validation logic always returned false, allowing invalid (y≤0) years to pass through.
+**Root cause:** The years useMemo returns `null` when the computed y value is ≤0 (signaling an invalid input state). Checking `years != null && years <= 0` always evaluates to false because `years` is already null when y≤0.
+**Fix:** Inside `isRetirementTargetInvalid`, compute the raw y value directly instead of relying on the `years` useMemo: `const y = targetAge - currentAge; ... if (y <= 0) return true;`. Do NOT chain the check to the `years` useMemo which returns null for invalid inputs.
+**Rule:** When a useMemo returns null to signal invalidity, don't use it as the basis for other validation checks. Recompute the value locally in the validator function.
+
 ### Recharts Components Require Explicit vi.mock in Test Files
 **Where:** Any test file that imports a component using Recharts (`MilestoneSkylineView.test.jsx`, etc.)
 **Symptom:** Tests fail with "Unable to find an element by: [data-testid='reference-line-500000']" or "data-testid='responsive-container'" — elements rendered inside Recharts chart components never appear in the DOM.

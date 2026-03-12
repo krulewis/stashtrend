@@ -20,7 +20,7 @@ describe('Sidebar', () => {
     expect(screen.getByRole('link', { name: /Account Groups/ })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Budgets/ })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Budget Builder/ })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Forecasting/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Milestones/ })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Sync Data/ })).toBeInTheDocument()
   })
 
@@ -31,7 +31,7 @@ describe('Sidebar', () => {
     expect(screen.getByRole('link', { name: /Account Groups/ })).toHaveAttribute('href', '/groups')
     expect(screen.getByRole('link', { name: /Budgets/ })).toHaveAttribute('href', '/budgets')
     expect(screen.getByRole('link', { name: /Budget Builder/ })).toHaveAttribute('href', '/builder')
-    expect(screen.getByRole('link', { name: /Forecasting/ })).toHaveAttribute('href', '/forecasting')
+    expect(screen.getByRole('link', { name: /Milestones/ })).toHaveAttribute('href', '/milestones')
     expect(screen.getByRole('link', { name: /Sync Data/ })).toHaveAttribute('href', '/sync')
   })
 
