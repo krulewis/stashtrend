@@ -5,6 +5,10 @@
 set -e
 INPUT=$(cat)
 
+# Reset inline-edit-guard unique file counter on each user message
+SESSION_DIR="${TMPDIR:-/tmp}/claude-unique-files-${PPID}"
+rm -f "$SESSION_DIR/unique_files.txt"
+
 # Don't inject on resume/continuation messages (short prompts)
 PROMPT=$(echo "$INPUT" | jq -r '.prompt // empty')
 PROMPT_LEN=${#PROMPT}
