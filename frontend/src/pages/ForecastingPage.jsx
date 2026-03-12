@@ -214,15 +214,11 @@ export default function ForecastingPage() {
     if (blendedCAGR < 0) {
       return 'Your historical return rate is negative. Projections assume continued decline unless adjusted.'
     }
-    if (
-      retirement?.exists &&
-      retirement.expected_return_pct != null &&
-      retirement.expected_return_pct > 15
-    ) {
+    if (blendedCAGR > 15) {
       return `Your historical CAGR of ${blendedCAGR.toFixed(1)}% exceeds the slider range. Adjust manually if needed.`
     }
     return null
-  }, [blendedCAGR, retirement])
+  }, [blendedCAGR])
 
   const defaultsNote = useMemo(() => {
     const usedBlended = !(retirement?.exists && retirement.expected_return_pct != null)

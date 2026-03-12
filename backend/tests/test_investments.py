@@ -129,9 +129,9 @@ class TestInvestmentsSummary(unittest.TestCase):
                 self.assertIn(field, acct, f"Missing field {field!r} on account")
         # totals
         totals = data["totals"]
-        self.assertIn("total_value", totals)
+        self.assertIn("current_value", totals)
         # 401k: 10000+20000=30000; brok: 1800+2500=4300 → total 34300
-        self.assertAlmostEqual(totals["total_value"], 34300.0, places=1)
+        self.assertAlmostEqual(totals["current_value"], 34300.0, places=1)
 
     def test_summary_empty(self):
         """No investment accounts → empty list, totals with zeros."""
@@ -147,7 +147,7 @@ class TestInvestmentsSummary(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         data = resp.get_json()
         self.assertEqual(data["accounts"], [])
-        self.assertIn("total_value", data["totals"])
+        self.assertIn("current_value", data["totals"])
 
     def test_summary_mixed_types(self):
         """Only investment-type accounts are returned — checking is excluded."""
@@ -212,7 +212,7 @@ class TestInvestmentsHoldings(unittest.TestCase):
         data = resp.get_json()
         self.assertIn("account", data)
         self.assertIn("holdings", data)
-        self.assertIn("allocation_by_type", data)
+        self.assertIn("allocation", data)
         self.assertIn("totals", data)
         self.assertEqual(len(data["holdings"]), 2)
         account = data["account"]
@@ -226,11 +226,11 @@ class TestInvestmentsHoldings(unittest.TestCase):
             self.assertIn("unrealized_gain_loss_dollars", h)
             self.assertIn("security_type", h)
         # Allocation by type present
-        self.assertGreater(len(data["allocation_by_type"]), 0)
-        for alloc in data["allocation_by_type"]:
-            self.assertIn("security_type", alloc)
-            self.assertIn("total_value", alloc)
-            self.assertIn("allocation_pct", alloc)
+        self.assertGreater(len(data["allocation"]), 0)
+        for alloc in data["allocation"]:
+            self.assertIn("type", alloc)
+            self.assertIn("value", alloc)
+            self.assertIn("pct", alloc)
 
     def test_holdings_empty(self):
         """Valid investment account with no holdings returns empty list."""
@@ -245,7 +245,7 @@ class TestInvestmentsHoldings(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         data = resp.get_json()
         self.assertEqual(data["holdings"], [])
-        self.assertEqual(data["allocation_by_type"], [])
+        self.assertEqual(data["allocation"], [])
 
     def test_holdings_invalid_id(self):
         """Non-existent account ID returns 404."""

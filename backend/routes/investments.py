@@ -1,6 +1,6 @@
 import logging
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from dateutil.relativedelta import relativedelta
 from flask import Blueprint, jsonify, request
 import app as _app
@@ -61,8 +61,8 @@ def _compute_all_cagrs(account_ids, conn):
         if elapsed_years < 0.1:
             result[acct_id] = None
             continue
-        cagr = round((latest_bal / earliest_bal) ** (1.0 / elapsed_years) - 1, 4) * 100
-        result[acct_id] = cagr
+        cagr_raw = (latest_bal / earliest_bal) ** (1.0 / elapsed_years) - 1
+        result[acct_id] = round(cagr_raw * 100, 2)
     return result
 
 
@@ -137,10 +137,9 @@ def get_investments_summary():
                     synced_dt = datetime.fromisoformat(synced_str)
                     # Make now offset-aware if synced_dt is
                     if synced_dt.tzinfo is not None:
-                        from datetime import timezone
                         now_dt = datetime.now(timezone.utc)
                     else:
-                        now_dt = datetime.utcnow()
+                        now_dt = datetime.now(timezone.utc).replace(tzinfo=None)
                     delta = now_dt - synced_dt
                     stale_days = delta.days
                     is_stale = delta.total_seconds() > 86400
@@ -172,19 +171,22 @@ def get_investments_summary():
             acct["allocation_weight_pct"] = round(val / total_value * 100, 2) if total_value > 0 else 0.0
 
         totals = {
-            "total_value": round(total_value, 2),
+            "current_value": round(total_value, 2),
             "total_cost_basis": round(
                 sum(a["total_cost_basis"] for a in result_accounts if a["total_cost_basis"] is not None), 2
             ) if any(a["total_cost_basis"] is not None for a in result_accounts) else None,
         }
         total_cb = totals["total_cost_basis"]
-        total_tv = totals["total_value"]
+        total_tv = totals["current_value"]
         if total_cb is not None:
             totals["total_return_dollars"] = round(total_tv - total_cb, 2)
             totals["total_return_pct"] = round((total_tv - total_cb) / total_cb * 100, 2) if total_cb > 0 else None
         else:
             totals["total_return_dollars"] = None
             totals["total_return_pct"] = None
+
+        cagr_values = [a["cagr_pct"] for a in result_accounts if a["cagr_pct"] is not None]
+        totals["cagr_pct"] = round(sum(cagr_values) / len(cagr_values), 2) if cagr_values else None
 
         return jsonify({"accounts": result_accounts, "totals": totals})
     except Exception:
@@ -254,12 +256,12 @@ def get_account_holdings(account_id):
             })
 
         # Allocation by type
-        allocation_by_type = []
+        allocation = []
         for sec_type, type_val in type_totals.items():
-            allocation_by_type.append({
-                "security_type": sec_type,
-                "total_value": round(type_val, 2),
-                "allocation_pct": round(type_val / total_value * 100, 2) if total_value > 0 else 0.0,
+            allocation.append({
+                "type": sec_type,
+                "value": round(type_val, 2),
+                "pct": round(type_val / total_value * 100, 2) if total_value > 0 else 0.0,
             })
 
         # Last synced
@@ -270,18 +272,19 @@ def get_account_holdings(account_id):
         last_synced_at = sync_row["last_synced_at"] if sync_row else None
 
         totals = {
-            "total_value": round(total_value, 2),
+            "current_value": round(total_value, 2),
             "total_cost_basis": round(total_cost_basis, 2) if has_cost_basis else None,
+            "holdings_count": len(holdings),
         }
         if has_cost_basis and total_cost_basis is not None:
-            totals["total_gain_loss_dollars"] = round(total_value - total_cost_basis, 2)
-            totals["total_gain_loss_pct"] = (
+            totals["unrealized_gain_loss_dollars"] = round(total_value - total_cost_basis, 2)
+            totals["unrealized_gain_loss_pct"] = (
                 round((total_value - total_cost_basis) / total_cost_basis * 100, 2)
                 if total_cost_basis > 0 else None
             )
         else:
-            totals["total_gain_loss_dollars"] = None
-            totals["total_gain_loss_pct"] = None
+            totals["unrealized_gain_loss_dollars"] = None
+            totals["unrealized_gain_loss_pct"] = None
 
         return jsonify({
             "account": {
@@ -292,7 +295,7 @@ def get_account_holdings(account_id):
                 "last_synced_at": last_synced_at,
             },
             "holdings": holdings,
-            "allocation_by_type": allocation_by_type,
+            "allocation": allocation,
             "totals": totals,
         })
     except Exception:
@@ -337,12 +340,12 @@ def get_investments_performance():
         elif range_param == "5y":
             cutoff = today - relativedelta(years=5)
         # 'all' or unknown: no cutoff
+        cutoff_str = cutoff.strftime("%Y-%m-%d") if cutoff is not None else None
 
         placeholders = ",".join("?" * len(account_ids))
         params = list(account_ids)
 
-        if cutoff is not None:
-            cutoff_str = cutoff.strftime("%Y-%m-%d")
+        if cutoff_str is not None:
             history_rows = conn.execute(
                 f"SELECT account_id, date, balance FROM account_history "
                 f"WHERE account_id IN ({placeholders}) AND date >= ? ORDER BY date",
@@ -356,21 +359,22 @@ def get_investments_performance():
             ).fetchall()
 
         # Build time series: sum totals per date, include per-account values
-        date_data = defaultdict(lambda: {"total": 0.0, "accounts": {}})
+        date_totals: defaultdict = defaultdict(float)
+        date_accounts: defaultdict = defaultdict(dict)
         for r in history_rows:
             d = r["date"]
             bal = r["balance"] or 0.0
-            date_data[d]["total"] += bal
-            date_data[d]["accounts"][r["account_id"]] = bal
+            date_totals[d] += bal
+            date_accounts[d][r["account_id"]] = bal
 
         series = []
-        for d in sorted(date_data.keys()):
-            point = {"date": d, "total": round(date_data[d]["total"], 2)}
-            point.update(date_data[d]["accounts"])
+        for d in sorted(date_totals.keys()):
+            point = {"date": d, "total": round(date_totals[d], 2)}
+            point.update(date_accounts[d])
             series.append(point)
 
         # Query contributions (transfer transactions into investment accounts)
-        if cutoff is not None:
+        if cutoff_str is not None:
             contrib_rows = conn.execute(
                 f"""
                 SELECT strftime('%Y-%m', t.date) as month, SUM(ABS(t.amount)) as total
