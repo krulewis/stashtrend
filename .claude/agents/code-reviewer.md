@@ -27,13 +27,19 @@ You provide quick code review feedback during active development. You are not th
   // suggested fix
   ```
 
-### Warning (should fix)
+### High (must fix — triggers escalation back to Opus in PR review loop)
 - `file:line` — Description
   ```suggestion
   // suggested fix
   ```
 
-### Suggestion (consider)
+### Medium (should fix)
+- `file:line` — Description
+  ```suggestion
+  // suggested fix
+  ```
+
+### Low (consider)
 - `file:line` — Description and rationale
 
 If the code looks good, say so briefly. Do not manufacture findings.
