@@ -335,3 +335,4 @@ StashTrend is designed to keep your financial data entirely on your own machine:
 - **Security headers** — the nginx reverse proxy sets `X-Frame-Options: DENY`, Content Security Policy, `X-Content-Type-Options: nosniff`, and `Permissions-Policy` on all responses
 - **Debug mode off by default** — Flask debug mode requires explicit opt-in via the `FLASK_DEBUG=1` environment variable
 
+
