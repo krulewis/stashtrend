@@ -11,11 +11,11 @@
 This plan achieves 80%+ per-file coverage in four phases:
 
 1. **Tooling** — install coverage packages, configure thresholds with an allowlist for currently-uncovered files, add `.coveragerc`, update Makefiles, update `.gitignore`.
-2. **Backend gap-fill** — write new test cases in existing test files to cover branches that are currently untested (budgets validation paths, ai.py branches, budget_builder partial-failure apply, networth empty-data and CAGR edge cases).
+2. **Backend gap-fill** — write new test cases in existing test files to cover branches that are currently untested (ai.py branches, budget_builder partial-failure apply, networth empty-data and CAGR edge cases).
 3. **Frontend new test files** — create `.test.jsx` files for the 5 untested components/pages (`GroupAssignmentSheet`, `MonthDetailView`, `MonthlySummaryView`, `BudgetLineItem`, `MobileBudgetPage`).
 4. **Allowlist removal** — once each file reaches 80%, remove it from the per-file exclusion list and lock the threshold.
 
-No production source files are changed. All new test files follow existing project conventions: `patch("app.X", ...)` for backend, colocated `.test.jsx` for frontend, `make_test_db()` from `test_helpers.py` for in-memory SQLite.
+No application source files are changed. Only tooling configuration files (Makefiles, vite.config.js, package.json, .coveragerc, .gitignore) and test files are modified. All new test files follow existing project conventions: `patch("app.X", ...)` for backend, colocated `.test.jsx` for frontend, `make_test_db()` from `test_helpers.py` for in-memory SQLite.
 
 The architect's open question ("should `make test` run coverage, or a separate `make coverage`?") is resolved in favor of a **separate `make coverage` target** so the default `make test` run stays fast. Coverage enforcement (with `--cov-fail-under`) only runs in CI via `make coverage`.
 
@@ -60,6 +60,7 @@ Details:
       wsgi.py
       venv/*
       tests/*
+      */__init__.py
   - [report] section:
       fail_under = 80
       show_missing = true
@@ -77,7 +78,7 @@ Details:
 
 ```
 File: /home/user/stashtrend/backend/Makefile
-Lines: 17 (after existing `test` target)
+Lines: after line 18 (after existing test target block)
 Parallelism: independent
 Description: Add a `coverage` target that runs pytest with coverage reporting and fail_under enforcement.
 Details:
@@ -115,10 +116,8 @@ Details:
       reporter: ['text', 'html'],
       reportsDirectory: './coverage',
       thresholds: {
+        // Only line coverage enforced per CLAUDE.md
         lines: 80,
-        functions: 80,
-        branches: 80,
-        statements: 80,
         perFile: true,
       },
       exclude: [
@@ -194,45 +193,6 @@ All backend test additions follow the existing `patch("app.X", ...)` convention 
 ---
 
 ```
-File: /home/user/stashtrend/backend/tests/test_budgets.py
-Lines: append after line 177 (after existing TestBudgetHistory class)
-Parallelism: independent
-Description: Add tests for the two currently untested endpoints: GET/POST /api/budgets/custom-groups.
-  The existing file covers budget_history fully. This adds two new test classes.
-Details:
-  New class TestBudgetCustomGroupsGet:
-    - test_get_empty_returns_empty_groups: empty DB → {"groups": {}}
-    - test_get_returns_grouped_by_custom_group: seed budget_custom_groups with 2 groups, 3 items → correct structure
-    - test_get_excludes_transfer_categories: seed a transfer category in budget_custom_groups → it must not appear in response
-    - test_get_500_on_db_error: patch get_db_connection to raise Exception → 500 response with error key
-
-  New class TestBudgetCustomGroupsPost:
-    - test_post_missing_groups_key: body = {} → 400, error mentions 'groups'
-    - test_post_groups_not_dict: body = {"groups": []} → 400
-    - test_post_empty_group_name: body = {"groups": {"": [{"category_id": "cat_1", "sort_order": 0}]}} → 400, error mentions 'non-empty'
-    - test_post_whitespace_group_name: name = "   " → 400
-    - test_post_invalid_category_id_empty_string: → 400
-    - test_post_invalid_sort_order_negative: sort_order = -1 → 400
-    - test_post_invalid_sort_order_bool: sort_order = True → 400 (isinstance(True, int) is True but bool check)
-    - test_post_too_many_rows: build 501 valid entries → 400, error mentions 'maximum is 500'
-    - test_post_duplicate_category_id: same category_id in two groups → 400, error mentions 'Duplicate'
-    - test_post_success_replaces_all: POST valid payload, verify count returned and DB rows match
-    - test_post_500_on_db_error: patch get_db_connection to raise Exception → 500
-
-  Seeding helper (module-level function):
-    def seed_custom_groups(conn, groups_dict):
-        for group_name, items in groups_dict.items():
-            for item in items:
-                conn.execute(
-                    "INSERT INTO budget_custom_groups (category_id, custom_group, sort_order) VALUES (?, ?, ?)",
-                    (item["category_id"], group_name, item["sort_order"])
-                )
-        conn.commit()
-```
-
----
-
-```
 File: /home/user/stashtrend/backend/tests/test_ai.py
 Lines: append after line 225 (after existing TestAIAnalyze class)
 Parallelism: independent
@@ -251,6 +211,7 @@ Details:
     - test_valid_category_ids_none_skips_filter: valid_category_ids=None → recommendations untouched
     - test_valid_category_ids_empty_set_filters_all: valid_category_ids=set() → all recommendations removed
     - test_discarded_count_logged: patch builtins.print, verify discard count message printed when items filtered
+      # Coupled to print() in ai.py:66 — update if changed to logging
 
   New class TestCheckAIRateLimit:
     Import: import app as app_module; from app import _check_ai_rate_limit
@@ -262,6 +223,10 @@ Details:
 
   New class TestCallAI:
     Import: from app import _call_ai
+    Setup: use make_test_db() so the settings table exists (required by _get_ai_key).
+      Apply DASHBOARD_DDL to the connection before calling _call_ai.
+    Mock targets: patch "anthropic.Anthropic" and "openai.OpenAI" at the top-level module
+      (not app.anthropic.Anthropic) because ai.py imports them at module level.
     - test_missing_api_key_returns_none_triple: DB with no api_key setting, auth.load_ai_key=None → (None, None, None)
     - test_unknown_provider_raises_valueerror: DB with provider="bad_provider" → raises ValueError
     - test_anthropic_provider_calls_sdk: mock anthropic.Anthropic, verify messages.create called with correct args
@@ -279,7 +244,8 @@ Description: Add missing branch tests for _build_budget_prompt, _save_budget_pla
 Details:
   New class TestBuildBudgetPrompt:
     Import: from routes.budget_builder import _build_budget_prompt, _save_budget_plan
-    Note: these are pure functions — call directly, no HTTP client needed.
+    Note: _build_budget_prompt executes SQL queries — tests must use make_test_db() and seed
+      relevant tables before calling. No HTTP client needed.
     - test_prompt_contains_future_months: call _build_budget_prompt with months_ahead=2 → returned prompt
       string contains two future month keys in "YYYY-MM-01" format
     - test_prompt_excludes_transfer_categories: db has a transfer category → cat_list in prompt
@@ -323,16 +289,25 @@ Details:
     - test_cagr_positive_growth: 400 days of data, bal doubles → 1y ≈ 100% growth (verify > 0 and < 200)
 
   New class TestNetworthHistoryEndpoint:
+    Setup: each test must create a fresh DB via make_test_db() because the endpoint calls conn.close().
+      Use the same setUp/tearDown pattern as the existing TestNetworthByTypeEndpoint class.
     - test_empty_db_returns_empty_list: GET /api/networth/history with empty db → 200, []
     - test_returns_sorted_by_date: seed 3 history rows out of order → response dates are sorted asc
 
   New class TestNetworthStatsEndpoint:
+    Setup: each test must create a fresh DB via make_test_db() because the endpoint calls conn.close().
+      Use the same setUp/tearDown pattern as the existing TestNetworthByTypeEndpoint class.
     - test_empty_db_returns_null_values: GET /api/networth/stats with empty db → 200,
       current.net_worth = None, mom.change = None, yoy.change = None
     - test_zero_prior_net_worth_pct_change_null: mom_nw = 0 → mom.pct_change = None (divide-by-zero guard)
     - test_stats_with_data: seed accounts + history, verify current/mom/yoy non-null
+    - test_mom_exists_but_current_none_does_not_crash: seed a mom history row but no current-month row
+      → documents edge case behavior (expected: may TypeError or return None — record actual behavior
+      and assert accordingly; do not mask the bug if it exists)
 
   New class TestAccountsSummaryEndpoint:
+    Setup: each test must create a fresh DB via make_test_db() because the endpoint calls conn.close().
+      Use the same setUp/tearDown pattern as the existing TestNetworthByTypeEndpoint class.
     - test_empty_db_returns_empty_list: GET /api/accounts/summary with empty db → 200, []
     - test_excludes_hidden_accounts: is_hidden=1 account not returned
     - test_excludes_not_in_net_worth: include_in_net_worth=0 account not returned
@@ -371,19 +346,15 @@ Details:
 File: /home/user/stashtrend/backend/tests/test_ai_routes.py (new file)
 Lines: new file
 Parallelism: independent
-Description: New dedicated test file for routes/ai_routes.py — the ai_analyze endpoint already has
-  tests in test_ai.py, but the module-level route tests for get_ai_config / save_ai_config already
-  live there too. This file covers the rate-limit integration tests at the HTTP route level
-  to complement the unit-level tests added to test_ai.py.
+Description: New dedicated test file for routes/ai_routes.py — covers only the 2 tests that are
+  genuinely new at the HTTP route level and not already covered in test_ai.py:
+  the rate-limit 429 integration path and the exception-to-500 path.
 Details:
   - Import: from app import app, _ai_cooldowns; from tests.test_helpers import make_test_db
   - setUp: _ai_cooldowns.clear()
   - test_analyze_rate_limit_blocks_rapid_second_call: POST /api/ai/analyze twice in rapid succession
     → second call returns 429
   - test_analyze_exception_returns_500: patch _call_ai to raise RuntimeError → 500, "failed" in error
-  - test_get_config_returns_base_url_field: config has base_url set → GET /api/ai/config includes base_url
-  - test_save_config_keyring_fallback: patch auth.save_ai_key to raise keyring.errors.KeyringError,
-    patch auth.load_ai_key=None → still returns 200, key stored in settings table (set_setting called)
 ```
 
 ---
@@ -396,16 +367,21 @@ Description: New test file for db.py — currently untested. Tests get_setting, 
   get_db_connection context manager, and init_dashboard_schema idempotency.
 Details:
   - Import: from db import get_setting, set_setting, get_db_connection, init_dashboard_schema, DASHBOARD_DDL
-  - Use in-memory sqlite3 connection (NOT make_test_db which goes through app.DASHBOARD_DDL)
+  - Use an in-memory sqlite3 connection for all tests.
   - class TestGetSetting:
+    setUp: create an in-memory connection and apply DASHBOARD_DDL via conn.executescript(DASHBOARD_DDL)
+      so the settings table exists before calling get_setting/set_setting.
     - test_returns_default_when_key_missing: empty settings table → get_setting(conn, "missing", "default") == "default"
     - test_returns_none_default_when_not_provided: get_setting(conn, "missing") is None
     - test_returns_stored_value: insert row, get_setting → value returned
   - class TestSetSetting:
+    setUp: create an in-memory connection and apply DASHBOARD_DDL via conn.executescript(DASHBOARD_DDL).
     - test_inserts_new_key: set_setting(conn, "k", "v") → SELECT returns "v"
     - test_upserts_existing_key: set twice with different values → second value wins
     - test_commit_persists: after set_setting, reconnect to same in-memory db (same conn) → value readable
   - class TestGetDbConnection:
+    Note: TestGetDbConnection and TestInitDashboardSchema do NOT need DASHBOARD_DDL applied —
+      they test the connection/schema helpers themselves, not settings operations.
     - test_context_manager_yields_connection: with get_db_connection() as conn: conn is not None
     - test_context_manager_closes_on_exit: after with block, conn is unusable (execute raises)
     - Note: cannot easily test the real DB path (requires MONARCH_DATA_DIR); mock DB_PATH via patch
@@ -447,9 +423,11 @@ Details:
   Tests:
   - test renders category name: render with categoryName="Groceries" → "Groceries" in document
   - test renders BudgetPill with actual and budgeted: render → BudgetPill receives props (spy or query)
-  - test hides drag handle when not in reorder mode: isReorderMode=false → no element with
-    aria-roledescription="sortable item"
-  - test shows drag handle when in reorder mode: isReorderMode=true → drag handle visible
+  - test hides drag handle when not in reorder mode: isReorderMode=false → no element containing the
+    drag handle's visual content (query for data-testid="drag-handle" or the "⠿" braille dots character)
+  - test shows drag handle when in reorder mode: isReorderMode=true → drag handle element is visible
+    (query for data-testid="drag-handle" or the "⠿" character; do NOT rely on aria-roledescription
+    which is provided by the mocked @dnd-kit/sortable attributes object)
   - test shows move button when in reorder mode: isReorderMode=true → button with aria-label containing "Move"
   - test hides move button when not in reorder mode: isReorderMode=false → no move button
   - test move button calls onMoveRequest with categoryId: click move button → onMoveRequest("cat_1") called
@@ -531,8 +509,11 @@ Details:
     → onClose called
   - test Escape via cancel event calls onClose and prevents default: fire 'cancel' event on dialog →
     onClose called
-  - test swipe down > 80px calls onClose: touchstart at y=100, touchend at y=185 (delta=85) → onClose called
-  - test swipe down < 80px does NOT call onClose: delta=50 → onClose not called
+  - test swipe down > 80px calls onClose: locate the indicator element (div with className styles.indicator
+    or aria-hidden="true" within the dialog), fire touchstart at y=100 and touchend at y=185 (delta=85)
+    on that indicator element → onClose called
+  - test swipe down < 80px does NOT call onClose: fire touch events on the indicator element with delta=50
+    → onClose not called
   - test isOpen=false does not call showModal: render with isOpen=false → showModal not called
   - test dialog.close called when isOpen changes to false: start with isOpen=true, rerender with
     isOpen=false → dialog.close called
@@ -706,7 +687,6 @@ Phase 1 (all parallel):
   .gitignore
 
 Phase 2 (all parallel, no cross-dependencies; requires Phase 1 .coveragerc):
-  backend/tests/test_budgets.py (additions)
   backend/tests/test_ai.py (additions)
   backend/tests/test_ai_routes.py (new file)
   backend/tests/test_budget_builder.py (additions)
@@ -743,13 +723,14 @@ Phase 4 (depends-on Phase 2 + Phase 3 all passing):
 
 | File | Gap | New Tests |
 |---|---|---|
-| `routes/budgets.py` | custom-groups GET/POST entirely untested | 16 new tests in test_budgets.py |
 | `ai.py` | `_extract_json` fences, filter, `_check_ai_rate_limit` cooldown, `_call_ai` provider paths | 12 new tests in test_ai.py |
-| `routes/ai_routes.py` | rate-limit 429 at HTTP level, exception→500 path | 4 new tests in test_ai_routes.py |
-| `routes/budget_builder.py` | `_build_budget_prompt` helper branches, `_save_budget_plan` | 10 new tests in test_budget_builder.py |
-| `routes/networth.py` | `_compute_bucket_cagr` unit tests (empty, leap day, zero-bal), stats/history empty DB | 12 new tests in test_networth_by_type.py |
+| `routes/ai_routes.py` | rate-limit 429 at HTTP level, exception→500 path | 2 new tests in test_ai_routes.py |
+| `routes/budget_builder.py` | `_build_budget_prompt` helper branches (SQL-executing, requires make_test_db), `_save_budget_plan` | 13 new tests in test_budget_builder.py |
+| `routes/networth.py` | `_compute_bucket_cagr` unit tests (empty, leap day, zero-bal), stats/history/accounts empty DB, mixed-None edge case | 16 new tests in test_networth_by_type.py |
 | `routes/retirement.py` | numeric field upper bounds, string type check, DB exception→500 | 9 new tests in test_retirement.py |
 | `db.py` | get_setting, set_setting, context manager, schema idempotency | 10 new tests in test_db.py |
+
+**Total new backend tests: 62** (across 6 files; custom-groups tests are NOT included here — they already exist in test_custom_groups.py)
 
 **Tests that may break from Phase 1 tooling changes only:** None. `requirements.txt` only adds a new package; no existing test imports change.
 
@@ -764,7 +745,7 @@ Phase 4 (depends-on Phase 2 + Phase 3 all passing):
 |---|---|---|
 | `BudgetLineItem.test.jsx` | ~60 lines | dnd-kit mock, reorder mode, move button |
 | `MonthlySummaryView.test.jsx` | ~70 lines | range filter, expense-only totals, empty state |
-| `GroupAssignmentSheet.test.jsx` | ~120 lines | dialog mock, radio group, new-group flow, swipe, keyboard |
+| `GroupAssignmentSheet.test.jsx` | ~120 lines | dialog mock, radio group, new-group flow, swipe (on indicator element), keyboard |
 | `MonthDetailView.test.jsx` | ~140 lines | groupExpenses mock, reorder lifecycle, move sheet, error |
 | `MobileBudgetPage.test.jsx` | ~100 lines | loading/error/empty/content states, handleDone |
 
@@ -773,6 +754,7 @@ Phase 4 (depends-on Phase 2 + Phase 3 all passing):
 - `@dnd-kit/sortable` and `@dnd-kit/utilities` must be mocked in `BudgetLineItem.test.jsx`.
 - `groupExpenses` from `budgetUtils.js` is mocked in `MonthDetailView.test.jsx` so the test is isolated from that utility's logic.
 - CSS modules are auto-handled by jsdom (class names pass through as undefined strings but do not throw).
+- Swipe tests in `GroupAssignmentSheet.test.jsx` must target the `.indicator` div (div with className styles.indicator or aria-hidden="true" within the dialog), not the dialog root element.
 
 **Existing tests at risk:** None — all 5 new files are for components that have zero existing tests. No existing test file is modified. The only risk is if the new vite.config.js `coverage` block causes an import error (it should not since coverage is only active when `--coverage` flag is passed).
 
